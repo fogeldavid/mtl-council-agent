@@ -125,7 +125,9 @@ def replace_item_chunks(
     embeddings: list[list[float]],
 ) -> None:
     conn.execute("delete from item_chunks where agenda_item_id = %s", (agenda_item_id,))
-    for index, (content, embedding) in enumerate(zip(chunks, embeddings)):
+    # strict=True: a length mismatch means the embedder dropped something, and
+    # silently storing the shorter list would lose chunks without any error.
+    for index, (content, embedding) in enumerate(zip(chunks, embeddings, strict=True)):
         conn.execute(
             """
             insert into item_chunks (agenda_item_id, chunk_index, content, embedding)

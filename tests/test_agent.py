@@ -94,7 +94,7 @@ def test_parallel_tool_calls_return_in_one_user_message(stub_search):
             FakeResponse(
                 [
                     FakeBlock("tool_use", name="semantic_search", id="a", input={"query": "pont"}),
-                    FakeBlock("tool_use", name="full_text_search", id="b", input={"query": "CM26 0677"}),
+                    FakeBlock("tool_use", name="full_text_search", id="b", input={"query": "CM26"}),
                 ],
                 "tool_use",
             ),

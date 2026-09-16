@@ -52,10 +52,14 @@ class QualityReport:
                 f"meetings ingested:   {self.meetings_ingested}",
                 f"completeness:        {self.completeness:.1%}",
                 f"items loaded:        {self.items_total}",
-                f"decision linkage:    {self.linkage:.1%} "
-                f"({self.items_with_summary}/{self.items_with_dossier} dossier items)",
-                f"embedded text:       {self.text_quality:.1%} "
-                f"({self.items_with_chunks}/{self.items_total} items)",
+                (
+                    f"decision linkage:    {self.linkage:.1%} "
+                    f"({self.items_with_summary}/{self.items_with_dossier} dossier items)"
+                ),
+                (
+                    f"embedded text:       {self.text_quality:.1%} "
+                    f"({self.items_with_chunks}/{self.items_total} items)"
+                ),
                 f"items missing title: {self.items_missing_title}",
             ]
         )

@@ -60,7 +60,10 @@ _MOTION_NUMBER_RE = re.compile(r"^(CM|CG|CE)\d{2} \d{3,4}$", re.MULTILINE)
 _MOVER_RE = re.compile(r"Il est proposé par\s+(.+)")
 _SECONDER_RE = re.compile(r"appuyé par\s+(.+)")
 
-_OUTCOME_RE = re.compile(r"Adopté(e)? à l'unanimité|Adopté(e)?\b|Rejeté(e)?\b|Retiré(e)?\b", re.IGNORECASE)
+_OUTCOME_RE = re.compile(
+    r"Adopté(e)? à l'unanimité|Adopté(e)?\b|Rejeté(e)?\b|Retiré(e)?\b",
+    re.IGNORECASE,
+)
 
 
 @dataclass
@@ -75,6 +78,13 @@ class MinutesItem:
 
 def _clean_name(raw: str) -> str:
     return " ".join(raw.split()).rstrip(" \t")
+
+
+def _first_line_name(match: re.Match | None) -> str | None:
+    """The name on the same line as the proposer/seconder label, cleaned."""
+    if match is None:
+        return None
+    return _clean_name(match.group(1).split("\n")[0])
 
 
 def _extract_outcome(block: str) -> str:
@@ -137,8 +147,8 @@ def parse_minutes(text: str) -> list[MinutesItem]:
                 item_number=item_number,
                 dossier_number=dossier_number,
                 motion_number=motion_match.group(0) if motion_match else None,
-                mover=_clean_name(mover_match.group(1).split("\n")[0]) if mover_match else None,
-                seconder=_clean_name(seconder_match.group(1).split("\n")[0]) if seconder_match else None,
+                mover=_first_line_name(mover_match),
+                seconder=_first_line_name(seconder_match),
                 vote_outcome=_extract_outcome(block),
             )
         )
