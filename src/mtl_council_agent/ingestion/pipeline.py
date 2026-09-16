@@ -68,7 +68,11 @@ def ingest_meeting(conn, http: httpx.Client, meeting: MeetingRef) -> tuple[int, 
     linked = link_items(agenda_items, minutes_items, bundle_text)
 
     meeting_id = db.upsert_meeting(
-        conn, meeting.meeting_date, meeting.meeting_type, meeting.source_url
+        conn,
+        meeting.meeting_date,
+        meeting.meeting_time,
+        meeting.meeting_type,
+        meeting.source_url,
     )
     for doc in meeting.documents:
         if doc.doc_type in {"agenda", "minutes", "bundle"}:

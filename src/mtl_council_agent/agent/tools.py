@@ -16,6 +16,8 @@ from __future__ import annotations
 from dataclasses import dataclass
 from datetime import date
 
+from pgvector import HalfVector
+
 from mtl_council_agent.ingestion.embed import embed_query
 
 
@@ -73,12 +75,12 @@ def semantic_search(conn, query: str, limit: int = 8) -> list[ItemResult]:
     Works cross-lingually: an English question matches French passages,
     because both sit in one multilingual embedding space.
     """
-    vector = embed_query(query)
+    vector = HalfVector(embed_query(query))
     rows = conn.execute(
         """
         with matches as (
             select agenda_item_id, content,
-                   embedding <=> %s::vector as distance
+                   embedding <=> %s::halfvec as distance
             from item_chunks
             where embedding is not null
             order by distance

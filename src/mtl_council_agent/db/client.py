@@ -9,10 +9,11 @@ from __future__ import annotations
 
 import os
 from contextlib import contextmanager
-from datetime import date
+from datetime import date, time
 from pathlib import Path
 
 import psycopg
+from pgvector import HalfVector
 from pgvector.psycopg import register_vector
 
 SCHEMA_PATH = Path(__file__).parent / "schema.sql"
@@ -43,16 +44,21 @@ def init_schema(conn: psycopg.Connection) -> None:
 
 
 def upsert_meeting(
-    conn: psycopg.Connection, meeting_date: date, meeting_type: str, source_url: str
+    conn: psycopg.Connection,
+    meeting_date: date,
+    meeting_time: time,
+    meeting_type: str,
+    source_url: str,
 ) -> int:
     row = conn.execute(
         """
-        insert into meetings (meeting_date, meeting_type, source_url)
-        values (%s, %s, %s)
-        on conflict (source_url) do update set meeting_date = excluded.meeting_date
+        insert into meetings (meeting_date, meeting_time, meeting_type, source_url)
+        values (%s, %s, %s, %s)
+        on conflict (meeting_date, meeting_time, meeting_type) do update
+            set source_url = excluded.source_url
         returning id
         """,
-        (meeting_date, meeting_type, source_url),
+        (meeting_date, meeting_time, meeting_type, source_url),
     ).fetchone()
     return row[0]
 
@@ -142,7 +148,7 @@ def replace_item_chunks(
             insert into item_chunks (agenda_item_id, chunk_index, content, embedding)
             values (%s, %s, %s, %s)
             """,
-            (agenda_item_id, index, content, embedding),
+            (agenda_item_id, index, content, HalfVector(embedding)),
         )
 
 

@@ -3,12 +3,20 @@
 
 create extension if not exists vector;
 
+-- Identity is (date, time, type), not source_url. The legacy portal has no
+-- per-meeting page: source_url is the year listing, identical for every
+-- meeting in that year, so a unique constraint on it collapses all ~10
+-- meetings of a year into one row and their agenda items overwrite each
+-- other by position. Time is part of the key because a single day can hold
+-- both an ordinary sitting and an extraordinary one at different hours.
 create table if not exists meetings (
     id serial primary key,
     meeting_date date not null,
+    meeting_time time not null,
     meeting_type text not null check (meeting_type in ('ordinaire', 'extraordinaire')),
-    source_url text not null unique,
-    created_at timestamptz not null default now()
+    source_url text not null,
+    created_at timestamptz not null default now(),
+    unique (meeting_date, meeting_time, meeting_type)
 );
 
 create table if not exists documents (
@@ -63,12 +71,18 @@ create table if not exists agenda_items (
 -- Decision summaries run to ~26,000 characters, far past the embedding
 -- model's 512-token window, so vectors live per chunk rather than per item.
 -- Semantic search hits chunks and joins back up to the item for citation.
+-- Embeddings are halfvec, not vector. At full precision a 768-dim vector is
+-- 3KB, which overflows the inline row limit into TOAST and builds a large HNSW
+-- index: measured on real data, 5,592 chunks cost 36.7MB of TOAST plus a
+-- 35.3MB index, projecting to 557MB for the corpus against a 500MB free tier.
+-- Half precision halves both. The vectors are L2-normalized, so the precision
+-- loss is far below the noise floor of the retrieval itself.
 create table if not exists item_chunks (
     id serial primary key,
     agenda_item_id integer not null references agenda_items(id) on delete cascade,
     chunk_index integer not null,
     content text not null,
-    embedding vector(768),
+    embedding halfvec(768),
     unique (agenda_item_id, chunk_index)
 );
 
@@ -76,5 +90,5 @@ create index if not exists agenda_items_search_idx on agenda_items using gin (se
 create index if not exists agenda_items_mover_idx on agenda_items (mover_id);
 create index if not exists agenda_items_seconder_idx on agenda_items (seconder_id);
 create index if not exists agenda_items_dossier_idx on agenda_items (dossier_number);
-create index if not exists item_chunks_embedding_idx on item_chunks using hnsw (embedding vector_cosine_ops);
+create index if not exists item_chunks_embedding_idx on item_chunks using hnsw (embedding halfvec_cosine_ops);
 create index if not exists item_chunks_item_idx on item_chunks (agenda_item_id);
