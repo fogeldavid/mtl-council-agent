@@ -82,6 +82,7 @@ def upsert_official(conn: psycopg.Connection, name: str) -> int:
 def upsert_agenda_item(
     conn: psycopg.Connection,
     meeting_id: int,
+    position: int,
     item_number: str,
     title: str,
     department: str | None,
@@ -95,11 +96,13 @@ def upsert_agenda_item(
     row = conn.execute(
         """
         insert into agenda_items (
-            meeting_id, item_number, title, department, decision_summary,
-            motion_number, mover_id, seconder_id, vote_outcome, dossier_number
+            meeting_id, position, item_number, title, department,
+            decision_summary, motion_number, mover_id, seconder_id,
+            vote_outcome, dossier_number
         )
-        values (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
-        on conflict (meeting_id, item_number) do update set
+        values (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+        on conflict (meeting_id, position) do update set
+            item_number = excluded.item_number,
             title = excluded.title,
             department = excluded.department,
             decision_summary = excluded.decision_summary,
@@ -111,8 +114,9 @@ def upsert_agenda_item(
         returning id
         """,
         (
-            meeting_id, item_number, title, department, decision_summary,
-            motion_number, mover_id, seconder_id, vote_outcome, dossier_number,
+            meeting_id, position, item_number, title, department,
+            decision_summary, motion_number, mover_id, seconder_id,
+            vote_outcome, dossier_number,
         ),
     ).fetchone()
     return row[0]

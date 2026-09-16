@@ -76,13 +76,14 @@ def ingest_meeting(conn, http: httpx.Client, meeting: MeetingRef) -> tuple[int, 
 
     items_loaded = 0
     chunks_embedded = 0
-    for item in linked:
+    for position, item in enumerate(linked):
         mover_id = db.upsert_official(conn, item.mover) if item.mover else None
         seconder_id = db.upsert_official(conn, item.seconder) if item.seconder else None
 
         item_id = db.upsert_agenda_item(
             conn,
             meeting_id=meeting_id,
+            position=position,
             item_number=item.item_number,
             title=item.title,
             department=None,

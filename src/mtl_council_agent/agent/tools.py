@@ -119,7 +119,7 @@ def full_text_search(conn, query: str, limit: int = 8) -> list[ItemResult]:
 
 def get_meeting_items(conn, meeting_date: date, limit: int = 100) -> list[ItemResult]:
     rows = conn.execute(
-        f"{_ITEM_SELECT} where m.meeting_date = %s order by ai.item_number limit %s",
+        f"{_ITEM_SELECT} where m.meeting_date = %s order by ai.position limit %s",
         (meeting_date, limit),
     ).fetchall()
     return [_row_to_item(row) for row in rows]
@@ -148,7 +148,7 @@ def get_official_record(conn, name: str, limit: int = 50) -> list[ItemResult]:
         f"""
         {_ITEM_SELECT}
         where mover.name ilike %s or seconder.name ilike %s
-        order by m.meeting_date desc, ai.item_number
+        order by m.meeting_date desc, ai.position
         limit %s
         """,
         (f"%{name}%", f"%{name}%", limit),

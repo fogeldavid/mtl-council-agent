@@ -27,8 +27,11 @@ from __future__ import annotations
 import re
 from dataclasses import dataclass
 
+# The leading \f matters: pdftotext puts a form feed at every page break, so an
+# item that happens to start a new page reads as "\f20.05  Service ..." and a
+# bare ^ anchor misses it. That silently dropped 22% of items per agenda.
 _ITEM_HEADER_RE = re.compile(
-    r"^(?P<item_number>\d{2}\.\d{2})\s{2,}(?P<rest>\S.*)$", re.MULTILINE
+    r"^\f?(?P<item_number>\d{2}\.\d{2})\s{2,}(?P<rest>\S.*)$", re.MULTILINE
 )
 _DOSSIER_SUFFIX_RE = re.compile(r"-\s*(\d{6,})\s*$")
 

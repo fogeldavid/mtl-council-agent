@@ -34,9 +34,17 @@ create table if not exists officials (
 -- bundle -> decision_summary. Item numbers repeat across sections, so
 -- dossier_number is the real cross-document key (nullable: procedural items
 -- like "Période de questions du public" have no dossier).
+-- Keyed on (meeting_id, position), not item number. Item numbers repeat within
+-- a single agenda -- the council section and the agglomeration-orientation
+-- section run independent series that both use "20.01", "20.02" and so on.
+-- Measured across 20 real meetings, a unique constraint on item_number would
+-- silently overwrite 29% of items (735 of 2,536). Dossier numbers come close
+-- to unique but still collide a few times per meeting, so position within the
+-- agenda is the only safe key, and it preserves running order for free.
 create table if not exists agenda_items (
     id serial primary key,
     meeting_id integer not null references meetings(id) on delete cascade,
+    position integer not null,
     item_number text not null,
     title text not null,
     department text,
@@ -49,7 +57,7 @@ create table if not exists agenda_items (
     search_vector tsvector generated always as (
         to_tsvector('french', coalesce(title, '') || ' ' || coalesce(decision_summary, ''))
     ) stored,
-    unique (meeting_id, item_number)
+    unique (meeting_id, position)
 );
 
 -- Decision summaries run to ~26,000 characters, far past the embedding

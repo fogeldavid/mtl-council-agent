@@ -1,3 +1,4 @@
+from collections import Counter
 from pathlib import Path
 
 from mtl_council_agent.ingestion.agenda_parser import parse_agenda
@@ -18,6 +19,33 @@ def test_agenda_parses_bridge_item():
     assert bridge.item_number == "20.01"
     assert "urbanisme" in bridge.department.lower()
     assert "pont Guy-Lafleur" in bridge.title
+
+
+def test_items_starting_a_new_page_are_not_dropped():
+    # pdftotext puts a form feed at every page break, so an item landing at the
+    # top of a page reads as "\f20.05  Service ...". A bare ^ anchor missed
+    # those, silently dropping 22% of items from this agenda.
+    text = _read("agenda_sample.txt")
+    assert "\f" in text, "fixture must retain page breaks for this to mean anything"
+
+    items = parse_agenda(text)
+    after_page_break = [i for i in items if i.dossier_number == "1268848007"]
+    assert after_page_break, "item at a page boundary was dropped"
+    assert after_page_break[0].item_number == "20.05"
+
+
+def test_item_numbers_repeat_within_one_agenda():
+    # The council section and the agglomeration-orientation section run
+    # independent series that both use 20.01, 20.02, ... Anything keying on
+    # item number alone will silently collapse them.
+    items = parse_agenda(_read("agenda_sample.txt"))
+    counts = Counter(i.item_number for i in items)
+    repeated = {number: n for number, n in counts.items() if n > 1}
+    assert repeated, "expected repeated item numbers in a real agenda"
+
+    for number in repeated:
+        dossiers = {i.dossier_number for i in items if i.item_number == number}
+        assert len(dossiers) > 1, f"{number} repeats but points at one dossier"
 
 
 def test_agenda_procedural_items_have_no_dossier():
@@ -53,6 +81,21 @@ def test_bundle_splits_into_per_item_chunks():
     chunks = split_bundle_by_dossier(_read("bundle_sample_excerpt.txt"))
     assert set(chunks) == {"1269902004", "1269902007", "1267639001"}
     assert len(chunks["1269902004"]) > 100
+
+
+def test_bundle_trims_attachments_after_the_signoff_block():
+    # Everything after the sign-off is attachments: checklists, contracts, and
+    # financial spreadsheets whose "0.00$" padding is worthless to embed.
+    raw = _read("bundle_sample_excerpt.txt")
+    chunks = split_bundle_by_dossier(raw)
+
+    for dossier, body in chunks.items():
+        assert len(body) < len(raw), f"{dossier} kept the whole slice"
+        # The narrative that answers "why" has to survive the trim.
+        assert "Dossier # :" in body
+
+    trimmed = chunks["1269902004"]
+    assert "Approuvé le" in trimmed or "Approuve le" in trimmed
 
 
 def test_linker_joins_all_three_sources_for_bridge_item():

@@ -50,13 +50,17 @@ from __future__ import annotations
 import re
 from dataclasses import dataclass
 
+# Every anchored pattern here tolerates a leading \f: pdftotext emits a form
+# feed at each page break, so a marker landing at the top of a page reads as
+# "\f20.01 1264139001" and a bare ^ anchor misses it entirely.
 _COUNCIL_FOOTER_RE = re.compile(
-    r"^(?P<item_number>\d{2}\.\d{2}) (?P<dossier_number>\d{6,})$", re.MULTILINE
+    r"^\f?(?P<item_number>\d{2}\.\d{2}) (?P<dossier_number>\d{6,})$", re.MULTILINE
 )
 _AGGLOMERATION_FOOTER_RE = re.compile(
-    r"^(?P<dossier_number>\d{6,})\s*\n\s*\d{2}\.\d{2} \(\d{2}\.\d{2}\)\s*$", re.MULTILINE
+    r"^\f?(?P<dossier_number>\d{6,})\s*\n\s*\f?\d{2}\.\d{2} \(\d{2}\.\d{2}\)\s*$",
+    re.MULTILINE,
 )
-_MOTION_NUMBER_RE = re.compile(r"^(CM|CG|CE)\d{2} \d{3,4}$", re.MULTILINE)
+_MOTION_NUMBER_RE = re.compile(r"^\f?(?P<motion>(?:CM|CG|CE)\d{2} \d{3,4})$", re.MULTILINE)
 _MOVER_RE = re.compile(r"Il est proposé par\s+(.+)")
 _SECONDER_RE = re.compile(r"appuyé par\s+(.+)")
 
@@ -146,7 +150,7 @@ def parse_minutes(text: str) -> list[MinutesItem]:
             MinutesItem(
                 item_number=item_number,
                 dossier_number=dossier_number,
-                motion_number=motion_match.group(0) if motion_match else None,
+                motion_number=motion_match.group("motion") if motion_match else None,
                 mover=_first_line_name(mover_match),
                 seconder=_first_line_name(seconder_match),
                 vote_outcome=_extract_outcome(block),

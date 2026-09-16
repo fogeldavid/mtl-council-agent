@@ -25,7 +25,8 @@ Testing against real documents surfaced each of these. All are covered by a regr
 - **The item marker in the minutes is a footer, not a header.** A line like `20.01 1264139001` stamps the resolution above it. Reading it as a header shifts every item's vote and mover onto the wrong decision, and nothing fails loudly to signal it.
 - **A block can open with a procedural motion before the real one.** Council groups items "for study" under its own proposer and seconder. Taking the first `Il est proposé par` in a block attributes the vote to the wrong councillor, so the parser takes the last.
 - **Two independent numbering series collide.** Items nested as `80.01 (20.01)` are the city council's non-binding *orientation* vote on agglomeration council business, a different body that is out of scope, and they use a two-line footer format. The parser still has to recognize them as boundaries, or the real council items on either side merge into one block.
-- **Item numbers are not unique.** They reset per section. The dossier number is the real key.
+- **Page breaks hide items from anchored patterns.** `pdftotext` emits a form feed at every page break, so an item starting a new page reads as `"\f20.05  Service ..."` and a bare `^` anchor misses it. Across 20 meetings this silently dropped 550 agenda items, 22% of the corpus, along with 179 recorded votes.
+- **Item numbers repeat within a single meeting.** The council section and the agglomeration-orientation section run separate series that both count `20.01`, `20.02`, and so on. Measured across 20 meetings, keying items on their number would overwrite 735 of 2,536 rows, so `agenda_items` is keyed on position in the agenda instead. Dossier numbers come close to unique but still collide a few times per meeting.
 
 ## Architecture
 
@@ -61,6 +62,8 @@ The schema nests `meetings`, then `documents`, then `agenda_items`, then `item_c
 **One embedding space, two languages.** The records are French-only. Translating at ingestion time would double storage and store translation errors permanently. Instead, queries and passages share one multilingual space, so an English question retrieves French records and translation happens once, at answer time, where a reader can check it.
 
 **Vectors live on chunks, not items.** A decision summary runs about 26,000 characters against a 512-token embedding window. Search hits chunks and joins back up to the item for citation.
+
+**Attachments are trimmed before anything is stored.** Each bundle slice is cut at its sign-off block, where the decision summary ends and the attachments begin. Untrimmed, the median item carries 38 KB and the worst carries 634 KB, most of it financial spreadsheets whose `0.00$` padding embeds to nothing useful. The trim removes 75% of the text, keeps every substantive section, and brings the projected corpus from roughly 716 MB to 231 MB, which is the difference between fitting a free Postgres tier and not.
 
 **Hybrid retrieval.** Council text is dense with exact tokens that embeddings blur, such as `CM26 0677`, `1264139001`, and `4 118 154,43 $`. Postgres full-text search handles those. pgvector handles "what's happening with bike paths". The agent chooses between them.
 
