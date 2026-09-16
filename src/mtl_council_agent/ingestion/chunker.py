@@ -57,4 +57,12 @@ def chunk_text(text: str, max_chars: int = MAX_CHARS, overlap: int = OVERLAP_CHA
     if current:
         chunks.append(current)
 
-    return [c for c in chunks if len(c) >= MIN_CHARS]
+    kept = [c for c in chunks if len(c) >= MIN_CHARS]
+    if kept:
+        return kept
+
+    # MIN_CHARS exists to drop page-number artifacts from inside a long
+    # document, not to discard a short one wholesale. Some real items are just
+    # brief ("Dépôt de pétitions"), and dropping every chunk would leave them
+    # with no embedding and invisible to semantic search.
+    return [normalized[:max_chars]] if normalized else []

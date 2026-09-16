@@ -32,3 +32,12 @@ def test_long_paragraph_is_split_with_overlap():
 def test_empty_input_yields_no_chunks():
     assert chunk_text("") == []
     assert chunk_text("   \n\n  ") == []
+
+
+def test_short_but_real_text_is_kept():
+    # Some agenda items are genuinely brief. Dropping them for being under
+    # MIN_CHARS left them with no embedding and unreachable by semantic search.
+    assert chunk_text("Dépôt de pétitions") == ["Dépôt de pétitions"]
+    assert chunk_text("Période de questions du public") == [
+        "Période de questions du public"
+    ]

@@ -28,6 +28,11 @@ def connection_string() -> str:
 @contextmanager
 def connect():
     with psycopg.connect(connection_string()) as conn:
+        # The extension has to exist before the type adapter can be registered,
+        # otherwise a fresh database can never be bootstrapped: registration
+        # fails, so init_schema never gets a chance to create the extension.
+        conn.execute("create extension if not exists vector")
+        conn.commit()
         register_vector(conn)
         yield conn
 
