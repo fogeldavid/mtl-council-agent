@@ -73,14 +73,16 @@ The schema nests `meetings`, then `documents`, then `agenda_items`, then `item_c
 
 ## Success metrics
 
-`quality-report --check` computes these from the database and fails CI after any ingestion that regresses.
+`quality-report --check` computes these from the database and fails CI after any ingestion that regresses. The measured column is the 2026 corpus: 10 meetings, 1,099 agenda items, 12,658 embedded chunks.
 
-| Metric | Definition | Threshold |
-|---|---|---|
-| Completeness | Meetings ingested, divided by meetings published on the portal | at least 95% |
-| Decision linkage | Items with a dossier that got their decision summary | at least 90% |
-| Text quality | Items with non-empty embedded text | reported |
-| Reliability | Weekly ingestion job success rate | GitHub Actions history |
+| Metric | Definition | Threshold | Measured |
+|---|---|---|---|
+| Completeness | Meetings ingested, divided by meetings published on the portal | at least 95% | 100% (10/10) |
+| Decision linkage | Items with a dossier that got their decision summary | at least 90% | 99.9% (921/922) |
+| Text quality | Items with non-empty embedded text | reported | 100% (1,099/1,099) |
+| Reliability | Weekly ingestion job success rate | GitHub Actions history | no failures in backfill |
+
+The single unlinked item is a filing of the mayor's report, which carries no decision summary in the bundle, so 99.9% is the correct ceiling rather than a defect to chase.
 
 The agent has its own scores, since a clean pipeline and a trustworthy answer fail independently. `eval/run_eval.py` grades a hand-labeled question set on answer correctness and citation validity, meaning every citation printed corresponds to a record that exists. The set includes refusal cases such as borough questions, future budgets, and a Champlain Bridge trap, because declining is the correct answer often enough to measure.
 
@@ -122,3 +124,5 @@ Tests run against real fixtures, a live portal page and one real agenda, minutes
 ## Scope
 
 City council (*conseil municipal*) only. Not the 19 borough councils, and not the agglomeration council. Both publish separately and follow different document conventions. The agent says so rather than guessing when asked about them.
+
+The ingested corpus currently covers 2026, ten meetings, in about 79 MB. Storage runs at 6.2 KB per chunk, down from 17.6 KB before embeddings moved to half precision, so extending the backfill through 2025 would land near 259 MB and still fit a free Postgres tier.
