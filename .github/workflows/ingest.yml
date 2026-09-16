@@ -1,0 +1,36 @@
+name: Weekly ingestion
+
+on:
+  schedule:
+    # Mondays 06:00 UTC. Council meets roughly monthly, so weekly is ample
+    # headroom to catch new meetings and late-published minutes.
+    - cron: "0 6 * * 1"
+  workflow_dispatch:
+
+jobs:
+  ingest:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Install poppler (pdftotext)
+        run: sudo apt-get update && sudo apt-get install -y poppler-utils
+
+      - name: Install package
+        run: pip install -e .
+
+      - name: Ingest new meetings
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+        run: mtl-council-agent -v ingest
+
+      - name: Report data quality
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+        run: mtl-council-agent quality-report --check

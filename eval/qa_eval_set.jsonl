@@ -1,0 +1,17 @@
+{"question": "How much was the additional expenditure approved for the Guy-Lafleur bridge project?", "must_include": ["66 758", "4 118 154"], "category": "specific-decision"}
+{"question": "Combien la Ville a-t-elle autorisé comme dépense additionnelle pour le pont Guy-Lafleur?", "must_include": ["66 758"], "category": "specific-decision-fr"}
+{"question": "Who moved and who seconded the Guy-Lafleur bridge expenditure?", "must_include": ["Hénault-Ratelle", "DeSousa"], "category": "accountability"}
+{"question": "What is resolution CM26 0677 about?", "must_include": ["Guy-Lafleur"], "category": "resolution-lookup"}
+{"question": "Why did the Guy-Lafleur bridge contract need more money?", "must_include": ["plans"], "category": "reasoning"}
+{"question": "Is the city in any legal dispute over the Guy-Lafleur bridge work?", "must_include": ["AtkinsR"], "category": "reasoning"}
+{"question": "What did council approve regarding a lease with Hydro-Québec for a bike path?", "must_include": ["46 896", "Rivière-des-Prairies"], "category": "specific-decision"}
+{"question": "How long is the Hydro-Québec bike path lease?", "must_include": ["10"], "category": "specific-decision"}
+{"question": "What was on the agenda for the June 15, 2026 council meeting?", "must_include": ["20.01"], "category": "date-lookup"}
+{"question": "Was the Guy-Lafleur bridge item adopted or rejected?", "must_include": ["adopt"], "category": "vote-outcome"}
+{"question": "What has Julien Hénault-Ratelle moved at council?", "must_include": ["Hénault-Ratelle"], "category": "accountability"}
+{"question": "Summarize what council decided about contracts at the June 15, 2026 meeting.", "must_include": ["2026-06-15"], "category": "open-ended"}
+{"question": "What did the Plateau-Mont-Royal borough council decide about terrasses this year?", "should_refuse": true, "category": "out-of-scope-borough"}
+{"question": "How did council vote on the 2027 municipal budget?", "should_refuse": true, "category": "out-of-scope-future"}
+{"question": "What is the current population of Montreal?", "should_refuse": true, "category": "out-of-scope-not-in-records"}
+{"question": "Who is the current mayor's spouse?", "should_refuse": true, "category": "out-of-scope-private"}
+{"question": "What did council decide about the Champlain Bridge?", "should_refuse": true, "category": "trap-similar-name"}

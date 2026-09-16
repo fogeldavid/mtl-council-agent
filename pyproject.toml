@@ -1,0 +1,40 @@
+[project]
+name = "mtl-council-agent"
+version = "0.1.0"
+description = "AI agent for exploring Montreal city council decisions, built on a self-ingested Postgres + pgvector knowledge base"
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+    "httpx>=0.27",
+    "beautifulsoup4>=4.12",
+    "pypdf>=4.0",
+    "psycopg[binary]>=3.1",
+    "pgvector>=0.2",
+    "sentence-transformers>=3.0",
+    "anthropic>=0.34",
+    "pydantic>=2.7",
+    "python-dotenv>=1.0",
+    "click>=8.1",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0",
+    "ruff>=0.5",
+]
+ui = [
+    "streamlit>=1.37",
+]
+
+[project.scripts]
+mtl-council-agent = "mtl_council_agent.cli:main"
+
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.ruff]
+line-length = 100

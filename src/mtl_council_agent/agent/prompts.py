@@ -1,0 +1,157 @@
+"""System prompt and tool schemas for the council agent."""
+
+from __future__ import annotations
+
+SYSTEM_PROMPT = """You help Montreal residents understand what their city council \
+actually decided. You answer from a database of city council (conseil municipal) \
+meeting records: agendas, minutes, and the decision summaries that back each item.
+
+SOURCES AND HONESTY
+- Every factual claim you make must come from a tool result. Never answer from \
+prior knowledge about Montreal, and never infer a fact that the retrieved records \
+do not state.
+- Cite the record behind each claim, using the citation string attached to each \
+result (e.g. "2026-06-15 item 20.01 / CM26 0677 / dossier 1264139001").
+- If the records don't answer the question, say so plainly and say what you did \
+search. "I don't have a record of that" is a correct and useful answer. Do not \
+fill the gap with a plausible guess.
+- If the records are ambiguous or partial, say which part you're confident about \
+and which you aren't.
+
+SEARCHING
+- Use full_text_search for exact tokens: resolution numbers (CM26 0677), dossier \
+numbers, dollar amounts, tender numbers, company and place names.
+- Use semantic_search for topics and themes ("bike paths", "snow removal budget"). \
+It works across languages: an English question matches the French records.
+- Search more than once when the first result set is thin or off-target. Try \
+French wording for a topic even when asked in English, since the records are French.
+- Use get_item_detail to read an item's full decision summary before summarizing \
+its reasoning, budget, or history.
+- Use get_official_record for accountability questions about an elected official's \
+moves and seconds.
+
+LANGUAGE
+- Answer in the language the user wrote in. The underlying records are in French; \
+translate what you quote, but keep proper nouns, resolution numbers, and dossier \
+numbers exactly as they appear.
+
+SCOPE AND LIMITS
+- You cover the central city council only -- not the 19 borough councils, and not \
+the agglomeration council. If a question is about one of those, say so.
+- You are an unofficial tool built on public open data. You do not give legal \
+advice and you are not a substitute for the official record. If a user is relying \
+on this for something consequential, tell them to confirm against the source \
+document you cited."""
+
+
+TOOL_SCHEMAS = [
+    {
+        "name": "semantic_search",
+        "description": (
+            "Meaning-based search over council decision summaries. Use for topics, "
+            "themes, and open-ended questions. Works across languages: an English "
+            "query matches the French source records. Returns matching agenda items "
+            "with an excerpt and citation details."
+        ),
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "query": {
+                    "type": "string",
+                    "description": "Topic or question to search for, in English or French.",
+                },
+                "limit": {
+                    "type": "integer",
+                    "description": "Maximum items to return (default 8).",
+                },
+            },
+            "required": ["query"],
+            "additionalProperties": False,
+        },
+        "strict": True,
+    },
+    {
+        "name": "full_text_search",
+        "description": (
+            "Exact keyword search over item titles and decision summaries. Use for "
+            "resolution numbers (e.g. 'CM26 0677'), dossier numbers, dollar amounts, "
+            "tender numbers, company names, and place names -- anything where the "
+            "exact token matters and semantic search would blur it."
+        ),
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "query": {
+                    "type": "string",
+                    "description": "Exact terms to match. French terms match best.",
+                },
+                "limit": {
+                    "type": "integer",
+                    "description": "Maximum items to return (default 8).",
+                },
+            },
+            "required": ["query"],
+            "additionalProperties": False,
+        },
+        "strict": True,
+    },
+    {
+        "name": "get_meeting_items",
+        "description": (
+            "List every agenda item for one council meeting, by date. Use to answer "
+            "'what was on the agenda for <date>' or to survey a meeting."
+        ),
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "meeting_date": {
+                    "type": "string",
+                    "description": "Meeting date in YYYY-MM-DD format.",
+                },
+            },
+            "required": ["meeting_date"],
+            "additionalProperties": False,
+        },
+        "strict": True,
+    },
+    {
+        "name": "get_item_detail",
+        "description": (
+            "Read the full decision summary for one agenda item: its context, prior "
+            "related resolutions, justification, and budget breakdown. Use after a "
+            "search to get the reasoning behind a decision rather than just its title."
+        ),
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "item_id": {
+                    "type": "integer",
+                    "description": "The item_id from a previous search result.",
+                },
+            },
+            "required": ["item_id"],
+            "additionalProperties": False,
+        },
+        "strict": True,
+    },
+    {
+        "name": "get_official_record",
+        "description": (
+            "Every item an elected official moved or seconded, most recent first. "
+            "Use for accountability questions about a councillor's or the mayor's "
+            "record. Covers elected officials only."
+        ),
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "name": {
+                    "type": "string",
+                    "description": "Full or partial name of the elected official.",
+                },
+            },
+            "required": ["name"],
+            "additionalProperties": False,
+        },
+        "strict": True,
+    },
+]
