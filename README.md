@@ -84,7 +84,9 @@ The schema nests `meetings`, then `documents`, then `agenda_items`, then `item_c
 
 The single unlinked item is a filing of the mayor's report, which carries no decision summary in the bundle, so 99.9% is the correct ceiling rather than a defect to chase.
 
-The agent has its own scores, since a clean pipeline and a trustworthy answer fail independently. `eval/run_eval.py` grades a hand-labeled question set on answer correctness and citation validity, meaning every citation printed corresponds to a record that exists. The set includes refusal cases such as borough questions, future budgets, and a Champlain Bridge trap, because declining is the correct answer often enough to measure.
+The agent has its own scores, since a clean pipeline and a trustworthy answer fail independently. `eval/run_eval.py` grades a hand-labeled question set on answer correctness and citation validity, meaning every citation printed corresponds to a record that exists. The set includes refusal cases, because declining is the correct answer often enough to measure: borough questions, a future budget, a pre-corpus date, and facts that simply aren't municipal records.
+
+Against the 2026 corpus on `claude-haiku-4-5`, 18 cases score 100% correctness and 100% citation validity, at roughly $0.03 per question. Two caveats worth stating plainly. The scores move between runs, because the agent chooses its own tool calls and phrasing, so a single run is a sample rather than a measurement — treat a one-case regression as noise until it repeats. And the eval found more bugs in itself than in the agent: early cases asserted French number formatting against English answers, and one "trap" assumed the Champlain Bridge was absent from council records when council had in fact granted a sewer servitude in the bridge corridor. Cases written before the corpus existed encode assumptions about data nobody had looked at yet.
 
 ## Setup
 
@@ -109,7 +111,7 @@ mtl-council-agent ask "Combien la Ville a-t-elle dépensé pour des pistes cycla
 mtl-council-agent ask "What has Julien Hénault-Ratelle moved at council?"
 ```
 
-`MTL_AGENT_MODEL` selects the generation model. It defaults to `claude-opus-5`, and `claude-haiku-4-5` cuts the cost. Token use and estimated cost per question print to stderr.
+`MTL_AGENT_MODEL` selects the generation model. It defaults to `claude-haiku-4-5` at roughly $0.03 a question, since the eval sweeps every question on each prompt change and a five-fold cost difference decides how often that actually gets run. Set `claude-opus-5` for harder multi-step questions. Token use and estimated cost print to stderr after each answer.
 
 ## Development
 

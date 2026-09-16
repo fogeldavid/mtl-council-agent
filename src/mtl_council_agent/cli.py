@@ -108,10 +108,18 @@ def quality_report(since: datetime | None, check: bool) -> None:
 @click.argument("question")
 def ask(question: str) -> None:
     """Ask the agent a question about council decisions."""
+    import anthropic
+
     from mtl_council_agent.agent.loop import ask as run_agent
 
-    with db.connect() as conn:
-        answer = run_agent(conn, question)
+    try:
+        with db.connect() as conn:
+            answer = run_agent(conn, question)
+    except anthropic.APIStatusError as exc:
+        # The model API is the one dependency a user can't debug from a stack
+        # trace: an exhausted balance and a bad key both surface as a 4xx here.
+        click.echo(f"Model API error ({exc.status_code}): {exc.message}", err=True)
+        raise SystemExit(1) from None
 
     click.echo(answer.text)
     if answer.citations:

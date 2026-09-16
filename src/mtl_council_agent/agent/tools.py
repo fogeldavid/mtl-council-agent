@@ -119,7 +119,13 @@ def full_text_search(conn, query: str, limit: int = 8) -> list[ItemResult]:
     return [_row_to_item(row) for row in rows]
 
 
-def get_meeting_items(conn, meeting_date: date, limit: int = 100) -> list[ItemResult]:
+def get_meeting_items(conn, meeting_date: date, limit: int = 300) -> list[ItemResult]:
+    """Every item on one meeting's agenda, in running order.
+
+    The limit has to clear the largest real agenda (249 items) or the model
+    silently receives a partial list and answers "what was on the agenda" as
+    though it were complete.
+    """
     rows = conn.execute(
         f"{_ITEM_SELECT} where m.meeting_date = %s order by ai.position limit %s",
         (meeting_date, limit),

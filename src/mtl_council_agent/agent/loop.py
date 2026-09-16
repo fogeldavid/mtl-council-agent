@@ -21,8 +21,11 @@ from mtl_council_agent.agent.prompts import SYSTEM_PROMPT, TOOL_SCHEMAS
 
 logger = logging.getLogger(__name__)
 
-# Opus by default; set MTL_AGENT_MODEL=claude-haiku-4-5 to trade quality for cost.
-DEFAULT_MODEL = os.environ.get("MTL_AGENT_MODEL", "claude-opus-5")
+# Haiku by default: this runs on a free tier and the eval sweeps every question
+# on each prompt change, where a 5x cost difference per run decides how often
+# the eval actually gets run. Set MTL_AGENT_MODEL=claude-opus-5 for harder
+# multi-step questions.
+DEFAULT_MODEL = os.environ.get("MTL_AGENT_MODEL", "claude-haiku-4-5")
 MAX_TURNS = 8
 MAX_TOKENS = 16000
 
@@ -70,6 +73,34 @@ def _serialize_items(items: list[council_tools.ItemResult]) -> str:
     )
 
 
+def _serialize_agenda(items: list[council_tools.ItemResult]) -> str:
+    """Compact form for whole-agenda listings.
+
+    A meeting runs to 249 items. Serializing each with its excerpt and vote
+    detail would spend tens of thousands of tokens restating a table of
+    contents, so a listing carries only what it takes to summarize the agenda
+    or pick an item to open with get_item_detail.
+    """
+    if not items:
+        return "No meeting on that date."
+    return json.dumps(
+        {
+            "meeting_date": items[0].meeting_date.isoformat(),
+            "item_count": len(items),
+            "items": [
+                {
+                    "item_id": item.item_id,
+                    "item_number": item.item_number,
+                    "title": item.title,
+                    "vote_outcome": item.vote_outcome,
+                }
+                for item in items
+            ],
+        },
+        ensure_ascii=False,
+    )
+
+
 def _run_tool(conn, name: str, tool_input: dict) -> tuple[str, list[str]]:
     """Execute one tool call; returns (result text, citations seen)."""
     if name == "semantic_search":
@@ -83,6 +114,7 @@ def _run_tool(conn, name: str, tool_input: dict) -> tuple[str, list[str]]:
     elif name == "get_meeting_items":
         meeting_date = datetime.strptime(tool_input["meeting_date"], "%Y-%m-%d").date()
         items = council_tools.get_meeting_items(conn, meeting_date)
+        return _serialize_agenda(items), [item.citation() for item in items]
     elif name == "get_official_record":
         items = council_tools.get_official_record(conn, tool_input["name"])
     elif name == "get_item_detail":

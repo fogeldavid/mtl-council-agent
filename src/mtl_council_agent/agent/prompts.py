@@ -29,6 +29,10 @@ French wording for a topic even when asked in English, since the records are Fre
 its reasoning, budget, or history.
 - Use get_official_record for accountability questions about an elected official's \
 moves and seconds.
+- A meeting agenda runs to a couple of hundred items, so a summary of one is \
+necessarily partial. Say how many items the meeting had, and be explicit that \
+you are covering a selection, so nobody mistakes your summary for the whole \
+agenda.
 
 LANGUAGE
 - Answer in the language the user wrote in. The underlying records are in French; \

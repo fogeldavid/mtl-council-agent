@@ -24,6 +24,7 @@ import sys
 from dataclasses import dataclass
 from pathlib import Path
 
+import anthropic
 from dotenv import load_dotenv
 
 sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
@@ -33,6 +34,29 @@ from mtl_council_agent.db import client as db  # noqa: E402
 
 EVAL_SET = Path(__file__).parent / "qa_eval_set.jsonl"
 _CITATION_RE = re.compile(r"(\d{4}-\d{2}-\d{2}) item (\S+)")
+_NON_DIGITS = re.compile(r"\D+")
+
+# The records are French but answers come back in the user's language, so the
+# same figure appears as "66 758,51 $" or "$66,758.51" depending on the
+# question. Matching raw substrings tests number formatting, not correctness.
+_EQUIVALENT_CHARS = {"’": "'", " ": " ", " ": " ", "‑": "-"}
+
+
+def _normalize(text: str) -> str:
+    for source, target in _EQUIVALENT_CHARS.items():
+        text = text.replace(source, target)
+    return " ".join(text.lower().split())
+
+
+def _contains(answer: str, term: str) -> bool:
+    if _normalize(term) in _normalize(answer):
+        return True
+    # Compare figures digit-only, so separators and currency placement don't
+    # decide the outcome. Short runs are excluded: "10" would match anything.
+    digits = _NON_DIGITS.sub("", term)
+    if len(digits) >= 4:
+        return digits in _NON_DIGITS.sub("", answer)
+    return False
 
 
 @dataclass
@@ -53,23 +77,27 @@ def _load_cases(limit: int | None) -> list[dict]:
     return cases[:limit] if limit else cases
 
 
+_REFUSAL_PHRASES = (
+    "don't have", "do not have", "dont have", "no record", "not find", "outside",
+    "not in my database", "aren't in my database", "isn't in my database",
+    "only have", "only cover", "beyond what", "can't tell you", "cannot tell you",
+)
+
+
 def _check_answer(case: dict, answer_text: str) -> tuple[bool, str]:
-    lowered = answer_text.lower()
+    normalized = _normalize(answer_text)
 
     if case.get("should_refuse"):
         # The agent should decline rather than fabricate. Accept any of the
         # honest-failure phrasings the system prompt licenses.
-        refused = any(
-            phrase in lowered
-            for phrase in ("don't have", "do not have", "no record", "not find", "outside")
-        )
+        refused = any(phrase in normalized for phrase in _REFUSAL_PHRASES)
         return refused, "" if refused else "answered instead of declining"
 
     missing = [
-        term for term in case.get("must_include", []) if term.lower() not in lowered
+        term for term in case.get("must_include", []) if not _contains(answer_text, term)
     ]
     forbidden = [
-        term for term in case.get("must_not_include", []) if term.lower() in lowered
+        term for term in case.get("must_not_include", []) if _contains(answer_text, term)
     ]
     notes = []
     if missing:
@@ -115,7 +143,14 @@ def main() -> int:
 
     with db.connect() as conn:
         for case in cases:
-            answer = ask(conn, case["question"])
+            try:
+                answer = ask(conn, case["question"])
+            except anthropic.APIStatusError as exc:
+                # Stop rather than scoring the remaining cases as failures: an
+                # exhausted balance would otherwise look like a quality drop.
+                print(f"\nAborted on model API error ({exc.status_code}): {exc.message}")
+                print(f"Scored {len(results)} of {len(cases)} cases before stopping.")
+                break
             answer_ok, answer_notes = _check_answer(case, answer.text)
 
             if case.get("should_refuse"):

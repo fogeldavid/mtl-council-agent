@@ -62,8 +62,17 @@ create table if not exists agenda_items (
     seconder_id integer references officials(id),
     vote_outcome text check (vote_outcome in ('adopted', 'rejected', 'withdrawn', 'unknown')),
     dossier_number text,
+    -- Resolution and dossier numbers belong in here, not just the prose.
+    -- "What is CM26 0677 about" is the plainest exact-token lookup there is,
+    -- and indexing only title and summary made it return nothing: the number
+    -- lives in its own column, and dossier numbers matched only by accident
+    -- when they happened to be quoted inside the summary text.
     search_vector tsvector generated always as (
-        to_tsvector('french', coalesce(title, '') || ' ' || coalesce(decision_summary, ''))
+        to_tsvector(
+            'french',
+            coalesce(title, '') || ' ' || coalesce(decision_summary, '') || ' '
+            || coalesce(motion_number, '') || ' ' || coalesce(dossier_number, '')
+        )
     ) stored,
     unique (meeting_id, position)
 );
