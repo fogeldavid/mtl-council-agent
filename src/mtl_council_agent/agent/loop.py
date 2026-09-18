@@ -137,6 +137,15 @@ def _run_tool(conn, name: str, tool_input: dict) -> tuple[str, list[str]]:
     return _serialize_items(items), [item.citation() for item in items]
 
 
+def _build_client() -> anthropic.Anthropic:
+    # An org-scoped key has to name the workspace to bill against; a
+    # workspace-scoped key already carries it and needs no header.
+    workspace_id = os.environ.get("ANTHROPIC_WORKSPACE_ID")
+    if workspace_id:
+        return anthropic.Anthropic(default_headers={"anthropic-workspace-id": workspace_id})
+    return anthropic.Anthropic()
+
+
 def ask(
     conn,
     question: str,
@@ -144,7 +153,7 @@ def ask(
     model: str = DEFAULT_MODEL,
     max_turns: int = MAX_TURNS,
 ) -> AgentAnswer:
-    client = client or anthropic.Anthropic()
+    client = client or _build_client()
     messages: list[dict] = [{"role": "user", "content": question}]
     answer = AgentAnswer(text="")
     seen_citations: list[str] = []
