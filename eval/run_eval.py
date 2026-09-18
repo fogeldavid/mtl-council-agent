@@ -175,6 +175,10 @@ def main() -> int:
                     print(f"        {results[-1].notes}")
 
     total = len(results)
+    if not total:
+        print("No cases scored.")
+        return 1
+
     answer_score = sum(r.passed_answer for r in results) / total
     citation_score = sum(r.passed_citations for r in results) / total
     both = sum(r.passed_answer and r.passed_citations for r in results) / total
