@@ -16,6 +16,8 @@ import psycopg
 from pgvector import HalfVector
 from pgvector.psycopg import register_vector
 
+from mtl_council_agent import names
+
 SCHEMA_PATH = Path(__file__).parent / "schema.sql"
 
 
@@ -78,14 +80,34 @@ def upsert_document(
     return row[0]
 
 
-def upsert_official(conn: psycopg.Connection, name: str) -> int:
+def upsert_official(conn: psycopg.Connection, raw_name: str) -> int:
+    """Resolve a name from the minutes to one official, creating it if new.
+
+    Looks up by normalized key first, then falls back to a near-identical
+    match so a misspelling in the source doesn't split someone's record.
+    Only genuinely new people are inserted, which also stops the id sequence
+    advancing on every mover and seconder the pipeline reads.
+    """
+    key = names.normalized_name(raw_name)
+
+    row = conn.execute(
+        "select id from officials where normalized_name = %s", (key,)
+    ).fetchone()
+    if row:
+        return row[0]
+
+    existing = conn.execute("select normalized_name, id from officials").fetchall()
+    match = names.closest_match(key, [n for n, _ in existing])
+    if match:
+        return dict(existing)[match]
+
     row = conn.execute(
         """
-        insert into officials (name) values (%s)
-        on conflict (name) do update set name = excluded.name
+        insert into officials (name, normalized_name) values (%s, %s)
+        on conflict (normalized_name) do update set name = officials.name
         returning id
         """,
-        (name,),
+        (names.display_name(raw_name), key),
     ).fetchone()
     return row[0]
 

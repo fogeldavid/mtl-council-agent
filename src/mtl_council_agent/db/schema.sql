@@ -30,9 +30,15 @@ create table if not exists documents (
 -- Elected officials, used for accountability search ("how did X vote").
 -- Role/district are null until backfilled from a maintained roster: the
 -- minutes only give us names on mover/seconder lines.
+-- Identity is normalized_name, not name. The minutes spell one person several
+-- ways -- "M. Claude Pinard" and "Claude Pinard", "Ericka Alneus" and "Ericka
+-- Alnéus" -- and keying on the raw string filed them as separate councillors,
+-- which quietly splits their voting record in accountability searches. `name`
+-- keeps the display spelling, accents and all. See names.py.
 create table if not exists officials (
     id serial primary key,
-    name text not null unique,
+    name text not null,
+    normalized_name text not null unique,
     role text check (role in ('mayor', 'councillor', 'borough_mayor')),
     district text
 );

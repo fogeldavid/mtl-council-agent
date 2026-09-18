@@ -73,23 +73,24 @@ def _serialize_items(items: list[council_tools.ItemResult]) -> str:
     )
 
 
-def _serialize_agenda(items: list[council_tools.ItemResult]) -> str:
-    """Compact form for whole-agenda listings.
+def _serialize_listing(items: list[council_tools.ItemResult], empty: str) -> str:
+    """Compact form for long listings: a whole agenda, or one official's record.
 
-    A meeting runs to 249 items. Serializing each with its excerpt and vote
-    detail would spend tens of thousands of tokens restating a table of
-    contents, so a listing carries only what it takes to summarize the agenda
-    or pick an item to open with get_item_detail.
+    A meeting runs to 249 items and a busy councillor's year to 289.
+    Serializing each with its excerpt and vote detail would spend tens of
+    thousands of tokens, so a listing carries only what it takes to summarize
+    or to pick an item to open with get_item_detail. The count is included so
+    the model can say how much it is summarizing.
     """
     if not items:
-        return "No meeting on that date."
+        return empty
     return json.dumps(
         {
-            "meeting_date": items[0].meeting_date.isoformat(),
             "item_count": len(items),
             "items": [
                 {
                     "item_id": item.item_id,
+                    "meeting_date": item.meeting_date.isoformat(),
                     "item_number": item.item_number,
                     "title": item.title,
                     "vote_outcome": item.vote_outcome,
@@ -114,9 +115,14 @@ def _run_tool(conn, name: str, tool_input: dict) -> tuple[str, list[str]]:
     elif name == "get_meeting_items":
         meeting_date = datetime.strptime(tool_input["meeting_date"], "%Y-%m-%d").date()
         items = council_tools.get_meeting_items(conn, meeting_date)
-        return _serialize_agenda(items), [item.citation() for item in items]
+        return _serialize_listing(items, "No meeting on that date."), [
+            item.citation() for item in items
+        ]
     elif name == "get_official_record":
         items = council_tools.get_official_record(conn, tool_input["name"])
+        return _serialize_listing(items, "No elected official by that name."), [
+            item.citation() for item in items
+        ]
     elif name == "get_item_detail":
         detail = council_tools.get_item_detail(conn, tool_input["item_id"])
         if detail is None:

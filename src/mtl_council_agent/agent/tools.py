@@ -145,8 +145,12 @@ def get_item_detail(conn, item_id: int) -> tuple[ItemResult, str | None] | None:
     return _row_to_item(row), summary
 
 
-def get_official_record(conn, name: str, limit: int = 50) -> list[ItemResult]:
+def get_official_record(conn, name: str, limit: int = 400) -> list[ItemResult]:
     """Accountability search: everything an elected official moved or seconded.
+
+    The limit has to clear a busy councillor's full record -- the majority
+    leader moved 289 items in one year -- or the model silently receives a
+    slice and understates somebody's voting record.
 
     Scoped to the officials roster on purpose. Names of residents, staff, and
     contractors that appear inside documents are reachable only through

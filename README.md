@@ -69,6 +69,8 @@ The schema nests `meetings`, then `documents`, then `agenda_items`, then `item_c
 
 **Postgres does both jobs.** At this corpus size, a dedicated vector database would add a second system to keep in sync for no measurable gain.
 
+**One councillor, one row.** The minutes spell the same person several ways: `M. Claude Pinard` and `Claude Pinard`, `Ericka Alneus` and `Ericka Alnéus`, and one transposed-letter typo. Keyed on the raw string, 25 rows represented 19 people, which silently split their voting records — the majority leader's 289 items were spread across three identities. Identity is now a normalized key with honorifics, accents and case removed, plus a similarity fallback for source typos. The threshold is set from measurement rather than taste: on the real roster the typo pair scores 0.978 and the closest pair of genuinely different people scores below 0.60.
+
 **Accountability search is scoped to elected officials.** `get_official_record` covers the officials roster, because how a councillor votes is public business. Names of residents, staff, and contractors appear inside documents, and only general full-text search reaches them. There is no "search by person" feature, which would turn public records into a people-search tool.
 
 ## Success metrics
