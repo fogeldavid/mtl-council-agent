@@ -43,6 +43,24 @@ create table if not exists officials (
     district text
 );
 
+-- Every spelling the minutes have used for an official, and how it was
+-- resolved. Without this a fuzzy merge is invisible: you cannot tell whether
+-- a councillor's record was assembled from one spelling or four, nor check
+-- that a similarity match was right. `matched_by` and `similarity` make each
+-- decision auditable after the fact.
+create table if not exists official_aliases (
+    id serial primary key,
+    official_id integer not null references officials(id) on delete cascade,
+    raw_name text not null unique,
+    normalized_name text not null,
+    matched_by text not null check (matched_by in ('new', 'normalized', 'similarity')),
+    similarity real,
+    times_seen integer not null default 1,
+    first_seen timestamptz not null default now()
+);
+
+create index if not exists official_aliases_official_idx on official_aliases (official_id);
+
 -- One row per agenda item per meeting, joined across all three document
 -- types: agenda -> title/department, minutes -> mover/seconder/outcome,
 -- bundle -> decision_summary. Item numbers repeat across sections, so

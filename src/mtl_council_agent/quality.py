@@ -23,6 +23,16 @@ class QualityReport:
     items_with_summary: int
     items_with_chunks: int
     items_missing_title: int
+    officials_total: int = 0
+    # Pairs of officials whose names nearly matched: either a misspelling the
+    # merge threshold refused, or two genuinely similar people. Both want a
+    # human's eye, so they surface here rather than being discovered later in
+    # a split voting record.
+    official_near_duplicates: list[tuple[str, str, float]] = None
+
+    def __post_init__(self):
+        if self.official_near_duplicates is None:
+            self.official_near_duplicates = []
 
     @property
     def completeness(self) -> float:
@@ -61,7 +71,19 @@ class QualityReport:
                     f"({self.items_with_chunks}/{self.items_total} items)"
                 ),
                 f"items missing title: {self.items_missing_title}",
+                f"officials:           {self.officials_total}",
             ]
+            + (
+                [
+                    "near-duplicate officials (review these):",
+                    *(
+                        f"  {a!r} ~ {b!r} ({score:.3f})"
+                        for a, b, score in self.official_near_duplicates
+                    ),
+                ]
+                if self.official_near_duplicates
+                else []
+            )
         )
 
 
@@ -86,7 +108,25 @@ def build_report(conn, meetings_on_portal: int) -> QualityReport:
         items_missing_title=scalar(
             "select count(*) from agenda_items where title is null or btrim(title) = ''"
         ),
+        officials_total=scalar("select count(*) from officials"),
+        official_near_duplicates=_near_duplicate_officials(conn),
     )
+
+
+def _near_duplicate_officials(conn) -> list[tuple[str, str, float]]:
+    from itertools import combinations
+
+    from mtl_council_agent.names import near_miss
+
+    roster = [
+        r[0] for r in conn.execute("select normalized_name from officials").fetchall()
+    ]
+    flagged = []
+    for a, b in combinations(roster, 2):
+        match = near_miss(a, [b])
+        if match:
+            flagged.append((a, b, match[1]))
+    return sorted(flagged, key=lambda f: -f[2])
 
 
 def portal_meeting_count(since: date) -> int:

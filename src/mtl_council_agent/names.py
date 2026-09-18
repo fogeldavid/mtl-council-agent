@@ -23,8 +23,12 @@ from difflib import SequenceMatcher
 
 _HONORIFIC_RE = re.compile(r"^(?:M\.|MM\.|Mme\.?|Mmes\.?|Mlle\.?|Dr\.?)\s+", re.IGNORECASE)
 
-# 0.978 (same person, typo) vs <0.60 (different people) on the real roster.
-SIMILARITY_THRESHOLD = 0.92
+# On the real roster the one typo pair scores 0.978 and the closest pair of
+# genuinely different people scores below 0.60. The threshold sits just under
+# the typo rather than midway between: merging two people is a silent
+# correctness bug in the accountability search, while failing to merge leaves
+# a visible duplicate that the alias record makes easy to spot and fix.
+SIMILARITY_THRESHOLD = 0.95
 
 
 def display_name(raw: str) -> str:
@@ -39,15 +43,33 @@ def normalized_name(raw: str) -> str:
     return stripped.lower()
 
 
-def closest_match(candidate: str, existing: list[str]) -> str | None:
-    """The nearest existing normalized name, if one is near-identical.
+def closest_match(candidate: str, existing: list[str]) -> tuple[str, float] | None:
+    """The nearest existing normalized name and its score, if near-identical.
 
     Catches misspellings the deterministic rules can't, without merging
-    distinct people: the threshold sits far above any real pair's score.
+    distinct people: the threshold sits far above any real pair's score. The
+    score comes back so a fuzzy merge can be recorded and audited rather than
+    happening invisibly.
     """
-    best: tuple[float, str] | None = None
+    best: tuple[str, float] | None = None
     for name in existing:
         score = SequenceMatcher(None, candidate, name).ratio()
-        if score >= SIMILARITY_THRESHOLD and (best is None or score > best[0]):
-            best = (score, name)
-    return best[1] if best else None
+        if score >= SIMILARITY_THRESHOLD and (best is None or score > best[1]):
+            best = (name, score)
+    return best
+
+
+def near_miss(candidate: str, existing: list[str], floor: float = 0.80) -> tuple[str, float] | None:
+    """The nearest name that was close but not close enough to merge.
+
+    Surfaces the case the threshold deliberately refuses: a spelling that
+    looks like an existing official but fell short, which is either a bad
+    typo needing a wider threshold or two people who genuinely resemble each
+    other. Either way it should be looked at rather than discovered later.
+    """
+    best: tuple[str, float] | None = None
+    for name in existing:
+        score = SequenceMatcher(None, candidate, name).ratio()
+        if floor <= score < SIMILARITY_THRESHOLD and (best is None or score > best[1]):
+            best = (name, score)
+    return best

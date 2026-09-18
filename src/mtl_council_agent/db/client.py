@@ -94,12 +94,16 @@ def upsert_official(conn: psycopg.Connection, raw_name: str) -> int:
         "select id from officials where normalized_name = %s", (key,)
     ).fetchone()
     if row:
+        _record_alias(conn, row[0], raw_name, key, "normalized", None)
         return row[0]
 
     existing = conn.execute("select normalized_name, id from officials").fetchall()
     match = names.closest_match(key, [n for n, _ in existing])
     if match:
-        return dict(existing)[match]
+        matched_name, score = match
+        official_id = dict(existing)[matched_name]
+        _record_alias(conn, official_id, raw_name, key, "similarity", score)
+        return official_id
 
     row = conn.execute(
         """
@@ -109,7 +113,28 @@ def upsert_official(conn: psycopg.Connection, raw_name: str) -> int:
         """,
         (names.display_name(raw_name), key),
     ).fetchone()
+    _record_alias(conn, row[0], raw_name, key, "new", None)
     return row[0]
+
+
+def _record_alias(
+    conn: psycopg.Connection,
+    official_id: int,
+    raw_name: str,
+    key: str,
+    matched_by: str,
+    similarity: float | None,
+) -> None:
+    conn.execute(
+        """
+        insert into official_aliases
+            (official_id, raw_name, normalized_name, matched_by, similarity)
+        values (%s, %s, %s, %s, %s)
+        on conflict (raw_name) do update
+            set times_seen = official_aliases.times_seen + 1
+        """,
+        (official_id, raw_name.strip(), key, matched_by, similarity),
+    )
 
 
 def upsert_agenda_item(
