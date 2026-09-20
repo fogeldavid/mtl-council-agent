@@ -123,9 +123,21 @@ def run_ingestion(since: date, skip_existing: bool = True) -> IngestionResult:
             if agenda_doc is None:
                 result.failures.append(f"{meeting.meeting_date}: no agenda document")
                 continue
-            if skip_existing and db.meeting_exists(conn, agenda_doc.url):
-                logger.info("skipping already-ingested meeting %s", meeting.meeting_date)
-                continue
+            if skip_existing:
+                listed = [
+                    d.url
+                    for d in meeting.documents
+                    if d.doc_type in {"agenda", "minutes", "bundle"}
+                ]
+                missing = db.missing_documents(conn, listed)
+                if not missing:
+                    logger.info("up to date, skipping %s", meeting.meeting_date)
+                    continue
+                logger.info(
+                    "re-ingesting %s: %d new document(s) published since last run",
+                    meeting.meeting_date,
+                    len(missing),
+                )
 
             try:
                 items, chunks = ingest_meeting(conn, http, meeting)

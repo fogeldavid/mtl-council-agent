@@ -86,7 +86,7 @@ def quality_report(since: datetime | None, check: bool) -> None:
     portal_count = quality.portal_meeting_count(start)
 
     with db.connect() as conn:
-        report = quality.build_report(conn, portal_count)
+        report = quality.build_report(conn, portal_count, since=start)
 
     click.echo(report.format())
 

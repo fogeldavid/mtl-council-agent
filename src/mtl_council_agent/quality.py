@@ -87,13 +87,23 @@ class QualityReport:
         )
 
 
-def build_report(conn, meetings_on_portal: int) -> QualityReport:
+def build_report(conn, meetings_on_portal: int, since: date | None = None) -> QualityReport:
     def scalar(sql: str) -> int:
         return conn.execute(sql).fetchone()[0]
 
+    # Completeness compares the portal against the database over the same
+    # window. Counting every ingested meeting against a windowed portal
+    # listing reports more than 100% and means nothing.
+    if since is None:
+        ingested = scalar("select count(*) from meetings")
+    else:
+        ingested = conn.execute(
+            "select count(*) from meetings where meeting_date >= %s", (since,)
+        ).fetchone()[0]
+
     return QualityReport(
         meetings_on_portal=meetings_on_portal,
-        meetings_ingested=scalar("select count(*) from meetings"),
+        meetings_ingested=ingested,
         items_total=scalar("select count(*) from agenda_items"),
         items_with_dossier=scalar(
             "select count(*) from agenda_items where dossier_number is not null"

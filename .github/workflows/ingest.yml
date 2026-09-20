@@ -25,12 +25,17 @@ jobs:
       - name: Install package
         run: pip install -e .
 
-      - name: Ingest new meetings
+      # A recent window, not the CLI's two-year backfill default. This job
+      # looks for meetings published since it last ran and for minutes that
+      # appeared after a meeting was first ingested; minutes trail their
+      # meeting by weeks, so the window has to be comfortably wider than that
+      # without re-walking years of history every Monday.
+      - name: Ingest new meetings and newly published minutes
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
-        run: mtl-council-agent -v ingest
+        run: mtl-council-agent -v ingest --since "$(date -u -d '120 days ago' +%Y-%m-%d)"
 
       - name: Report data quality
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
-        run: mtl-council-agent quality-report --check
+        run: mtl-council-agent quality-report --check --since "$(date -u -d '120 days ago' +%Y-%m-%d)"

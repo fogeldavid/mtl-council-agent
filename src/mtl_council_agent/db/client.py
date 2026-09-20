@@ -199,8 +199,18 @@ def replace_item_chunks(
         )
 
 
-def meeting_exists(conn: psycopg.Connection, source_pdf_url: str) -> bool:
-    row = conn.execute(
-        "select 1 from documents where source_pdf_url = %s", (source_pdf_url,)
-    ).fetchone()
-    return row is not None
+def missing_documents(conn: psycopg.Connection, urls: list[str]) -> list[str]:
+    """Which of the portal's current documents for a meeting we don't hold.
+
+    Minutes are published weeks after the meeting they record, so a meeting
+    already ingested from its agenda is not finished with. Deciding to skip
+    on the agenda alone meant a meeting was visited once and never revisited,
+    and its votes stayed unknown forever.
+    """
+    if not urls:
+        return []
+    rows = conn.execute(
+        "select source_pdf_url from documents where source_pdf_url = any(%s)", (urls,)
+    ).fetchall()
+    held = {r[0] for r in rows}
+    return [u for u in urls if u not in held]
