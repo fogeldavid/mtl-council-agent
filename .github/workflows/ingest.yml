@@ -25,6 +25,13 @@ jobs:
       - name: Install package
         run: pip install -e .
 
+      # Idempotent and 40KB. Runs first so roll-call surnames and roster
+      # details resolve against the current council.
+      - name: Load council roster
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+        run: mtl-council-agent load-roster
+
       # A recent window, not the CLI's two-year backfill default. This job
       # looks for meetings published since it last ran and for minutes that
       # appeared after a meeting was first ingested; minutes trail their

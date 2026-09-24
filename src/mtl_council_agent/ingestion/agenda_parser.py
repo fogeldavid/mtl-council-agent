@@ -16,10 +16,13 @@ in "- <dossier_number>", a blank line, then a free-text description paragraph
 running until the next blank-line-separated item header (or a section banner
 like "20 – Décisions..." which we skip over).
 
-Item numbers are NOT globally unique within a meeting (they reset per section),
-so the dossier number is the true stable key used to join against minutes and
-bundle data downstream (see linker.py). Items with no dossier number (e.g.
-"01.01 Période de questions du public") are procedural and carry no dossier.
+Item numbers are NOT unique within a meeting. The agenda ends with a section
+"80 – Conseil d'agglomération - Dossiers pour orientation" that restarts the
+numbering under its own sub-banners (20.01, 30.01, ...), so every item carries
+the section it sits in, and (section, item_number) is what identifies it. In
+all ten 2026 agendas section 80 is the last one, so everything after its
+banner belongs to it. Items with no dossier number (e.g. "01.01 Période de
+questions du public") are procedural and carry no dossier.
 """
 
 from __future__ import annotations
@@ -34,6 +37,19 @@ _ITEM_HEADER_RE = re.compile(
     r"^\f?(?P<item_number>\d{2}\.\d{2})\s{2,}(?P<rest>\S.*)$", re.MULTILINE
 )
 _DOSSIER_SUFFIX_RE = re.compile(r"-\s*(\d{6,})\s*$")
+_ORIENTATION_BANNER_RE = re.compile(
+    r"^\f?[ \t]*(?:Page \d+[ \t]+)?80 [–-] Conseil d.agglom", re.MULTILINE
+)
+# Any section banner ("20 – Affaires contractuelles"), optionally glued to the
+# page footer before it. A description paragraph never contains one, so one
+# showing up means the paragraph ran into page furniture.
+_BANNER_LINE_RE = re.compile(
+    r"^\f?[ \t]*(?:Page \d+[ \t]+)?\d{2} [–-] [A-ZÀ-Ý]", re.MULTILINE
+)
+_PAGE_FOOTER_LINE_RE = re.compile(r"^\f?[ \t]*Page \d+[ \t]*$", re.MULTILINE)
+
+COUNCIL = "council"
+ORIENTATION = "agglomeration_orientation"
 
 
 @dataclass
@@ -42,10 +58,23 @@ class AgendaItem:
     department: str
     dossier_number: str | None
     title: str
+    section: str = COUNCIL
+
+
+def _first_paragraph(description: str) -> str:
+    """The item's title: its first paragraph, cut before any page furniture."""
+    paragraph = description.split("\n\n")[0]
+    for pattern in (_BANNER_LINE_RE, _PAGE_FOOTER_LINE_RE):
+        match = pattern.search(paragraph)
+        if match:
+            paragraph = paragraph[: match.start()]
+    return " ".join(paragraph.split())
 
 
 def parse_agenda(text: str) -> list[AgendaItem]:
     headers = list(_ITEM_HEADER_RE.finditer(text))
+    orientation = _ORIENTATION_BANNER_RE.search(text)
+    orientation_start = orientation.start() if orientation else len(text)
     items: list[AgendaItem] = []
 
     for i, match in enumerate(headers):
@@ -78,7 +107,8 @@ def parse_agenda(text: str) -> list[AgendaItem]:
                 item_number=match.group("item_number"),
                 department=department,
                 dossier_number=dossier_number,
-                title=" ".join(description.split("\n\n")[0].split()),
+                title=_first_paragraph(description),
+                section=ORIENTATION if match.start() > orientation_start else COUNCIL,
             )
         )
 

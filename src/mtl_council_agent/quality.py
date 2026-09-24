@@ -6,6 +6,9 @@ so they can be printed into the README or asserted in CI rather than eyeballed:
   completeness  -- share of meetings published on the portal that we hold
   linkage       -- share of items carrying the decision summary they should
   text_quality  -- share of items with non-empty title and embedded chunks
+  outcomes      -- share of council items, in meetings whose minutes are in,
+                   that carry an outcome
+  roster        -- every official named in the minutes is on the City roster
 """
 
 from __future__ import annotations
@@ -29,10 +32,25 @@ class QualityReport:
     # human's eye, so they surface here rather than being discovered later in
     # a split voting record.
     official_near_duplicates: list[tuple[str, str, float]] = None
+    # Named in the minutes but not matched to the roster: a new councillor
+    # (by-election), a stale roster, or a name the matcher missed.
+    officials_off_roster: list[str] = None
+    council_items_in_minuted_meetings: int = 0
+    council_items_with_outcome: int = 0
+    meetings_with_attendance: int = 0
+    recorded_votes: int = 0
 
     def __post_init__(self):
         if self.official_near_duplicates is None:
             self.official_near_duplicates = []
+        if self.officials_off_roster is None:
+            self.officials_off_roster = []
+
+    @property
+    def outcome_coverage(self) -> float:
+        if not self.council_items_in_minuted_meetings:
+            return 0.0
+        return self.council_items_with_outcome / self.council_items_in_minuted_meetings
 
     @property
     def completeness(self) -> float:
@@ -71,8 +89,23 @@ class QualityReport:
                     f"({self.items_with_chunks}/{self.items_total} items)"
                 ),
                 f"items missing title: {self.items_missing_title}",
+                (
+                    f"outcome coverage:    {self.outcome_coverage:.1%} "
+                    f"({self.council_items_with_outcome}/"
+                    f"{self.council_items_in_minuted_meetings} council items with minutes)"
+                ),
+                f"attendance recorded: {self.meetings_with_attendance} meetings",
+                f"recorded positions:  {self.recorded_votes}",
                 f"officials:           {self.officials_total}",
             ]
+            + (
+                [
+                    "officials not on the roster (review these):",
+                    *(f"  {name}" for name in self.officials_off_roster),
+                ]
+                if self.officials_off_roster
+                else []
+            )
             + (
                 [
                     "near-duplicate officials (review these):",
@@ -120,7 +153,34 @@ def build_report(conn, meetings_on_portal: int, since: date | None = None) -> Qu
         ),
         officials_total=scalar("select count(*) from officials"),
         official_near_duplicates=_near_duplicate_officials(conn),
+        officials_off_roster=[
+            r[0]
+            for r in conn.execute(
+                "select name from officials where role is null order by name"
+            ).fetchall()
+        ],
+        council_items_in_minuted_meetings=scalar(_MINUTED_COUNCIL_ITEMS),
+        council_items_with_outcome=scalar(
+            _MINUTED_COUNCIL_ITEMS + " and ai.vote_outcome <> 'unknown'"
+        ),
+        meetings_with_attendance=scalar(
+            "select count(distinct meeting_id) from meeting_attendance"
+        ),
+        recorded_votes=scalar("select count(*) from item_votes"),
     )
+
+
+# Council items in meetings whose minutes have been ingested. Orientation
+# items are excluded because their outcomes are deliberately not attached,
+# and meetings without minutes can't have outcomes yet.
+_MINUTED_COUNCIL_ITEMS = """
+    select count(*) from agenda_items ai
+    where ai.section = 'council'
+      and exists (
+          select 1 from documents d
+          where d.meeting_id = ai.meeting_id and d.doc_type = 'minutes'
+      )
+"""
 
 
 def _near_duplicate_officials(conn) -> list[tuple[str, str, float]]:

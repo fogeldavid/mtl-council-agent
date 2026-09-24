@@ -1,0 +1,183 @@
+Dossier # : 1267945005
+
+Unité administrative         Société de transport de Montréal , Direction
+responsable :
+
+Niveau décisionnel           Conseil d'agglomération
+proposé :
+
+
+
+Compétence                   Transport collectif des personnes
+d'agglomération :
+
+Projet :                     -
+
+Objet :                      Approuver le Règlement R-227 de la Société de transport de
+                             Montréal autorisant un emprunt de 6 968 923 $ pour financer le
+                             projet « Programme de gestion des risques technologiques et de
+                             sécurité - phase 4 (PGRTS4) » / Approuver la modification du
+                             livre Programme des immobilisations (PI) 2026-2035
+
+ Il est recommandé :
+
+    1. d’approuver le Règlement R-227 de la Société de transport de Montréal autorisant un
+       emprunt de 6 968 923 $, incluant les taxes nettes de ristournes et les frais
+       financiers, pour un terme de 5 ans pour financer le projet « Programme de gestion
+       des risques technologiques et de sécurité - phase 4 (PGRTS4) », le tout
+       conformément aux articles 123 et 135 de la Loi sur les sociétés de transport en
+       commun (RLRQ c. 30.01);
+    2. d’approuver la modification du livre Programme des immobilisations (PI) 2026-2035.
+
+
+
+Signé par      Claude CARETTE    Le 2026-08-05 12:25
+
+Signataire :                               Claude CARETTE
+                          _______________________________________________
+
+                                           Directeur général adjoint
+                   Direction générale , Direction générale adjointe - Urbanisme_mobilité et
+                                                 infrastructures
+
+
+
+
+                                                                                              1/41
+                         Système de gestion des décisions des
+                         instances
+                         SOMMAIRE DÉCISIONNEL
+
+IDENTIFICATION                                               Dossier # :1267945005
+
+Unité administrative     Société de transport de Montréal , Direction
+responsable :
+
+Niveau décisionnel       Conseil d'agglomération
+proposé :
+
+Compétence               Transport collectif des personnes
+d'agglomération :
+
+Projet :                 -
+
+Objet :                  Approuver le Règlement R-227 de la Société de transport de
+                         Montréal autorisant un emprunt de 6 968 923 $ pour financer le
+                         projet « Programme de gestion des risques technologiques et de
+                         sécurité - phase 4 (PGRTS4) » / Approuver la modification du
+                         livre Programme des immobilisations (PI) 2026-2035
+
+CONTENU
+
+CONTEXTE
+
+Voir pièces jointes
+
+DÉCISION(S) ANTÉRIEURE(S)
+
+
+DESCRIPTION
+
+
+JUSTIFICATION
+
+
+ASPECT(S) FINANCIER(S)
+
+
+MONTRÉAL 2030
+
+
+TEST CLIMAT
+
+
+ÉQUITÉ, INCLUSION ET LUTTE CONTRE LES DISCRIMINATIONS
+
+
+IMPACT(S) MAJEUR(S)
+
+
+OPÉRATION(S) DE COMMUNICATION
+
+
+
+
+                                                                                          2/41
+PARTIES PRENANTES - AGGLOMÉRATION
+
+
+CALENDRIER ET ÉTAPE(S) SUBSÉQUENTE(S)
+
+
+CONFORMITÉ AUX POLITIQUES, AUX RÈGLEMENTS ET AUX ENCADREMENTS
+ADMINISTRATIFS
+
+
+VALIDATION
+
+Intervenant et sens de l'intervention
+
+
+
+
+Autre intervenant et sens de l'intervention
+
+
+
+
+Parties prenantes
+
+
+
+Lecture :
+
+
+RESPONSABLE DU DOSSIER                        ENDOSSÉ PAR         Le : 2026-08-05
+
+
+Fara - Ext MÉRILAN                            Fara - Ext MÉRILAN
+Assistante - Secrétariat corporatif           Assistante - secrétaire
+
+Tél :        514-350-0800 poste 85214         Tél :               000-0000
+Télécop. :                                    Télécop. :          000-0000
+
+
+
+
+                                                                                    3/41
+                                       Sommaire décisionnel du règlement
+            Programme de gestion des risques technologiques et de sécurité –
+Titre                                                                                     Date              2 juillet 2026
+            phase 4 (PGRTS4)
+                                                                                        RE :            6 968 923 $
+Numéro R-227                                                            Montant :
+                                                                                        Coût complet : 11 141 840 $
+
+CONTEXTE
+La cybersécurité est désormais une exigence fondamentale pour le transport public, qui doit adopter une posture de
+cyberrésilience pour protéger la sécurité des passagers, assurer la continuité des services et maintenir la confiance
+publique. La confiance dans les systèmes de transport repose sur la sécurité et la fiabilité, lesquelles sont toutes
+dépendantes des infrastructures numériques.
+
+Le rapport Europol 2025 et l'analyse ENISA 2024 montrent une augmentation accélérée des cyberattaques, notamment
+des attaques par ransomware, DDoS et ciblant la chaîne d'approvisionnement. Le secteur des transports est le deuxième
+secteur le plus ciblé après l'administration publique, avec une montée des attaques motivées par le profit, la perturbation,
+l'espionnage et des facteurs idéologiques. Les cybercriminels professionnels et les acteurs étatiques exploitent ces
+vulnérabilités, rendant la menace plus sophistiquée.
+Contexte historique et évolution de la cybersécurité des dernières années :
+    •   Le 19 octobre 2020, la STM a été victime d’une attaque par rançongiciel affectant une grande portion de
+        l’environnement TI corporatif de l’organisation;
+    •   Plusieurs projets de renforcement de la sécurité ont été mis en place pour corriger les principales déficiences et
+        améliorer le niveau global de sécurité de l’organisation via les programmes de sécurité précédents;
+    •   Une analyse indépendante du niveau de maturité de la STM en matière de cybersécurité a été effectuée par EY
+        au printemps 2024. La maturité anticipée, à la fin du PGRTS3, a évolué comparativement aux précédentes
+        analyses mais reste en dessous de la moyenne des organisations comparables à la STM;
+    •   Plusieurs rapports d’audits internes et externes réitèrent la nécessité de renforcer les mesures de cybersécurité,
+        afin d’améliorer la résilience de la STM aux cybermenaces (ex. : Magenta, Plan d’actions (VI & BVG), mandat de
+        Mandiant (Bell et GoSecure)).
+
+Grâce aux investissements des dernières années, la STM a réussi à améliorer sa posture de sécurité. Cependant, elle
+reste toujours en deçà de l’industrie et du niveau de tolérance fixé par le CODIR de la STM. Avec l’augmentation
+significative et la persistance de la menace cybernétique dans les dernières années, il est impératif pour l’organisation de
+consolider ses acquis et de continuer d’investir dans les mesures de sécurité qui lui permettront de renforcer sa résilience
+et d’assurer une saine gestion des risques d’entrep

@@ -21,7 +21,7 @@ from datetime import date, datetime
 import httpx
 from bs4 import BeautifulSoup
 
-from mtl_council_agent.scraper.models import DocumentRef, MeetingRef
+from mtl_council_agent.scraper.models import DocumentRef, Fingerprint, MeetingRef
 
 BASE_URL = "https://ville.montreal.qc.ca"
 PORTAL_PATH = "/portal/page"
@@ -95,6 +95,23 @@ def parse_portal_page(html: str) -> list[MeetingRef]:
         )
 
     return meetings
+
+
+def head_document(client: httpx.Client, url: str) -> Fingerprint:
+    """The document's current fingerprint, without downloading it.
+
+    Cheap even for a 515MB bundle: a HEAD request returns headers only. The
+    server sends ETag and Last-Modified on every PDF (checked on all 2026
+    documents), which is what makes a same-URL revision detectable.
+    """
+    resp = client.head(url, follow_redirects=True, timeout=60)
+    resp.raise_for_status()
+    length = resp.headers.get("content-length")
+    return Fingerprint(
+        etag=resp.headers.get("etag"),
+        last_modified=resp.headers.get("last-modified"),
+        content_length=int(length) if length and length.isdigit() else None,
+    )
 
 
 def fetch_meetings_for_year(client: httpx.Client, year: int) -> list[MeetingRef]:

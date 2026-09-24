@@ -37,6 +37,18 @@ def init_db() -> None:
     click.echo("schema created")
 
 
+@main.command("load-roster")
+def load_roster_command() -> None:
+    """Load the City's roster of council members (role, borough, party)."""
+    from mtl_council_agent import roster
+
+    members = roster.parse_roster(roster.fetch_roster_csv())
+    with db.connect() as conn:
+        db.init_schema(conn)
+        loaded = roster.load_roster(conn, members)
+    click.echo(f"{loaded} council members loaded from the roster")
+
+
 @main.command()
 @click.option(
     "--since",
@@ -62,6 +74,12 @@ def ingest(since: datetime | None, reingest: bool) -> None:
         f"{result.meetings_ingested}/{result.meetings_seen} meetings ingested, "
         f"{result.items_loaded} items, {result.chunks_embedded} chunks"
     )
+    if result.unresolved_voters:
+        click.echo(
+            f"  {result.unresolved_voters} roll-call names matched no single official "
+            "(is the roster loaded?)",
+            err=True,
+        )
     for failure in result.failures:
         click.echo(f"  FAILED {failure}", err=True)
     if result.failures:
@@ -98,6 +116,11 @@ def quality_report(since: datetime | None, check: bool) -> None:
             failures.append(f"linkage {report.linkage:.1%} < 90%")
         if report.items_missing_title:
             failures.append(f"{report.items_missing_title} items missing a title")
+        if report.officials_off_roster:
+            failures.append(
+                f"{len(report.officials_off_roster)} officials not on the roster: "
+                + ", ".join(report.officials_off_roster)
+            )
         for failure in failures:
             click.echo(f"FAIL {failure}", err=True)
         if failures:

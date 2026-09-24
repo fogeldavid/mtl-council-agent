@@ -3,6 +3,7 @@
 from mtl_council_agent.names import (
     closest_match,
     display_name,
+    matches_roster_entry,
     near_miss,
     normalized_name,
 )
@@ -78,3 +79,27 @@ def test_ambiguous_names_are_flagged_rather_than_merged():
     # Plainly a different person (0.522): not merged, not flagged.
     assert closest_match(normalized_name("Aref Salem"), roster) is None
     assert near_miss(normalized_name("Aref Salem"), roster) is None
+
+
+def test_roster_entry_matches_a_shortened_given_name():
+    # The roster's "Alba Stella Zuniga Ramos" is "Alba Zuniga Ramos" in the
+    # minutes; the similarity score (0.83) is far below the merge threshold.
+    key = normalized_name("Alba Zuniga Ramos")
+    assert matches_roster_entry(key, "Alba Stella", "Zuniga Ramos")
+
+
+def test_roster_entry_matches_a_nickname():
+    assert matches_roster_entry(normalized_name("Jim Beis"), "Dimitrios (Jim)", "Beis")
+    assert matches_roster_entry(
+        normalized_name("M. Dimitrios (Jim) Beis"), "Dimitrios (Jim)", "Beis"
+    )
+
+
+def test_roster_entry_needs_both_surname_and_given_name():
+    # A shared first name or a surname that merely ends the same way is not
+    # the same person: Andrée Hénault is not Julien Hénault-Ratelle.
+    andree = normalized_name("Andrée Hénault")
+    julien = normalized_name("Julien Hénault-Ratelle")
+    assert not matches_roster_entry(andree, "Julien", "Hénault-Ratelle")
+    assert not matches_roster_entry(julien, "Andrée", "Hénault")
+    assert not matches_roster_entry(normalized_name("Alba Autre"), "Alba Stella", "Zuniga Ramos")

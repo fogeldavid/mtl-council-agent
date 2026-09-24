@@ -177,6 +177,23 @@ def test_refusal_stop_reason_is_handled():
     assert "declined" in answer.text
 
 
+def test_orientation_items_cite_their_full_number():
+    # 20.01 alone also names a council item at the same meeting.
+    item = ItemResult(
+        item_id=2,
+        meeting_date=date(2026, 6, 15),
+        item_number="20.01",
+        title="Entente-cadre",
+        dossier_number="1267026001",
+        motion_number=None,
+        vote_outcome="unknown",
+        mover=None,
+        seconder=None,
+        section="agglomeration_orientation",
+    )
+    assert item.citation() == "2026-06-15 item 80.01 (20.01) / dossier 1267026001"
+
+
 def test_cost_estimate_uses_model_rates():
     answer = loop.AgentAnswer(text="", input_tokens=1_000_000, output_tokens=1_000_000)
     assert answer.estimated_cost_usd("claude-opus-5") == pytest.approx(30.0)

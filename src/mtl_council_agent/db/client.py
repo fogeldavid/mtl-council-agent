@@ -2,7 +2,9 @@
 
 Everything is idempotent on the source URL / natural key so the weekly
 ingestion job can re-run over meetings it has already seen without creating
-duplicates -- re-running the whole backfill must be safe.
+duplicates -- re-running the whole backfill must be safe. A meeting that is
+re-ingested is replaced wholesale (see replace_meeting_contents), not
+patched row by row.
 """
 
 from __future__ import annotations
@@ -17,6 +19,7 @@ from pgvector import HalfVector
 from pgvector.psycopg import register_vector
 
 from mtl_council_agent import names
+from mtl_council_agent.scraper.models import Fingerprint
 
 SCHEMA_PATH = Path(__file__).parent / "schema.sql"
 
@@ -66,27 +69,53 @@ def upsert_meeting(
 
 
 def upsert_document(
-    conn: psycopg.Connection, meeting_id: int, doc_type: str, source_pdf_url: str
+    conn: psycopg.Connection,
+    meeting_id: int,
+    doc_type: str,
+    source_pdf_url: str,
+    fingerprint: Fingerprint | None = None,
 ) -> int:
+    fp = fingerprint or Fingerprint(None, None, None)
     row = conn.execute(
         """
-        insert into documents (meeting_id, doc_type, source_pdf_url)
-        values (%s, %s, %s)
-        on conflict (source_pdf_url) do update set ingested_at = now()
+        insert into documents
+            (meeting_id, doc_type, source_pdf_url, etag, last_modified, content_length)
+        values (%s, %s, %s, %s, %s, %s)
+        on conflict (source_pdf_url) do update set
+            meeting_id = excluded.meeting_id,
+            doc_type = excluded.doc_type,
+            etag = excluded.etag,
+            last_modified = excluded.last_modified,
+            content_length = excluded.content_length,
+            ingested_at = now()
         returning id
         """,
-        (meeting_id, doc_type, source_pdf_url),
+        (meeting_id, doc_type, source_pdf_url, fp.etag, fp.last_modified, fp.content_length),
     ).fetchone()
     return row[0]
+
+
+def replace_meeting_contents(conn: psycopg.Connection, meeting_id: int) -> None:
+    """Clear a meeting's items and attendance before loading its new version.
+
+    A revised agenda inserts and withdraws items mid-list. Upserting by
+    position would hand existing row ids to different items and leave the old
+    tail behind, so the meeting is emptied and reloaded instead. Chunks and
+    votes go with their items (on delete cascade). Runs inside the caller's
+    transaction, so a failed re-ingest leaves the previous version intact.
+    """
+    conn.execute("delete from agenda_items where meeting_id = %s", (meeting_id,))
+    conn.execute("delete from meeting_attendance where meeting_id = %s", (meeting_id,))
 
 
 def upsert_official(conn: psycopg.Connection, raw_name: str) -> int:
     """Resolve a name from the minutes to one official, creating it if new.
 
-    Looks up by normalized key first, then falls back to a near-identical
-    match so a misspelling in the source doesn't split someone's record.
-    Only genuinely new people are inserted, which also stops the id sequence
-    advancing on every mover and seconder the pipeline reads.
+    Looks up by normalized key first, then against the roster's own name
+    split, then falls back to a near-identical match so a misspelling in the
+    source doesn't split someone's record. Only genuinely new people are
+    inserted, which also stops the id sequence advancing on every mover and
+    seconder the pipeline reads.
     """
     key = names.normalized_name(raw_name)
 
@@ -96,6 +125,11 @@ def upsert_official(conn: psycopg.Connection, raw_name: str) -> int:
     if row:
         _record_alias(conn, row[0], raw_name, key, "normalized", None)
         return row[0]
+
+    roster_id = _roster_match(conn, key)
+    if roster_id is not None:
+        _record_alias(conn, roster_id, raw_name, key, "roster", None)
+        return roster_id
 
     existing = conn.execute("select normalized_name, id from officials").fetchall()
     match = names.closest_match(key, [n for n, _ in existing])
@@ -115,6 +149,97 @@ def upsert_official(conn: psycopg.Connection, raw_name: str) -> int:
     ).fetchone()
     _record_alias(conn, row[0], raw_name, key, "new", None)
     return row[0]
+
+
+def _roster_match(conn: psycopg.Connection, key: str) -> int | None:
+    """The roster member whose surname ends the name and whose given names
+    include its first word, if exactly one qualifies.
+
+    The roster records full given names that the minutes shorten: roster
+    "Alba Stella Zuniga Ramos" is "Alba Zuniga Ramos" in every roll call, and
+    "Dimitrios (Jim) Beis" moves items as "Jim Beis". Those score far below
+    the similarity threshold, so without this they'd each become a second,
+    phantom official.
+    """
+    rows = conn.execute(
+        "select id, first_name, last_name from officials where last_name is not null"
+    ).fetchall()
+    candidates = [
+        official_id
+        for official_id, first_name, last_name in rows
+        if names.matches_roster_entry(key, first_name, last_name)
+    ]
+    return candidates[0] if len(candidates) == 1 else None
+
+
+def resolve_surname(conn: psycopg.Connection, printed: str) -> int | None:
+    """The official a roll-call entry names, or None if it can't be pinned down.
+
+    Roll calls list members by surname ("Pinard", "V. Doyon", "Hénault" --
+    distinct from "Hénault-Ratelle"), except the mayor, who gets her full
+    name. A surname resolves only if exactly one roster member has it. This
+    never creates an official: a surname alone isn't enough to make one.
+    """
+    key = names.normalized_name(printed)
+    rows = conn.execute(
+        "select id from officials where normalized_name = %s", (key,)
+    ).fetchall()
+    if len(rows) == 1:
+        return rows[0][0]
+    rows = conn.execute(
+        "select id, last_name from officials where last_name is not null"
+    ).fetchall()
+    matches = [i for i, last in rows if names.normalized_name(last) == key]
+    if len(matches) == 1:
+        return matches[0]
+    return _roster_match(conn, key)
+
+
+def upsert_roster_official(
+    conn: psycopg.Connection,
+    first_name: str,
+    last_name: str,
+    role: str,
+    borough: str | None,
+    district: str | None,
+    party: str | None,
+) -> int:
+    """Load one roster member, merging into an official the minutes created.
+
+    Goes through the same resolution as a name from the minutes, so a
+    councillor already on file under a shortened name gets the roster's
+    details rather than a duplicate row.
+    """
+    full = f"{first_name} {last_name}"
+    key = names.normalized_name(full)
+    row = conn.execute("select id from officials where normalized_name = %s", (key,)).fetchone()
+    if row is None:
+        existing = conn.execute("select normalized_name, id from officials").fetchall()
+        match = names.closest_match(key, [n for n, _ in existing])
+        if match is None:
+            # A shortened name the minutes created before the roster loaded.
+            shortened = [
+                n for n, _ in existing if names.matches_roster_entry(n, first_name, last_name)
+            ]
+            match = (shortened[0], 1.0) if len(shortened) == 1 else None
+        row = (dict(existing)[match[0]],) if match else None
+    if row is None:
+        row = conn.execute(
+            "insert into officials (name, normalized_name) values (%s, %s) returning id",
+            (names.display_name(full), key),
+        ).fetchone()
+    official_id = row[0]
+    conn.execute(
+        """
+        update officials set
+            first_name = %s, last_name = %s, role = %s,
+            borough = %s, district = %s, party = %s
+        where id = %s
+        """,
+        (first_name, last_name, role, borough, district, party, official_id),
+    )
+    _record_alias(conn, official_id, full, key, "roster", None)
+    return official_id
 
 
 def _record_alias(
@@ -150,15 +275,17 @@ def upsert_agenda_item(
     seconder_id: int | None,
     vote_outcome: str,
     dossier_number: str | None,
+    section: str = "council",
+    sitting: int | None = None,
 ) -> int:
     row = conn.execute(
         """
         insert into agenda_items (
             meeting_id, position, item_number, title, department,
             decision_summary, motion_number, mover_id, seconder_id,
-            vote_outcome, dossier_number
+            vote_outcome, dossier_number, section, sitting
         )
-        values (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+        values (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
         on conflict (meeting_id, position) do update set
             item_number = excluded.item_number,
             title = excluded.title,
@@ -168,16 +295,46 @@ def upsert_agenda_item(
             mover_id = excluded.mover_id,
             seconder_id = excluded.seconder_id,
             vote_outcome = excluded.vote_outcome,
-            dossier_number = excluded.dossier_number
+            dossier_number = excluded.dossier_number,
+            section = excluded.section,
+            sitting = excluded.sitting
         returning id
         """,
         (
             meeting_id, position, item_number, title, department,
             decision_summary, motion_number, mover_id, seconder_id,
-            vote_outcome, dossier_number,
+            vote_outcome, dossier_number, section, sitting,
         ),
     ).fetchone()
     return row[0]
+
+
+def insert_attendance(
+    conn: psycopg.Connection, meeting_id: int, sitting: int, official_id: int, status: str
+) -> None:
+    conn.execute(
+        """
+        insert into meeting_attendance (meeting_id, sitting, official_id, status)
+        values (%s, %s, %s, %s)
+        on conflict (meeting_id, sitting, official_id) do update set status = excluded.status
+        """,
+        (meeting_id, sitting, official_id, status),
+    )
+
+
+def insert_item_vote(
+    conn: psycopg.Connection, agenda_item_id: int, official_id: int, position: str, source: str
+) -> None:
+    """Record one individual position. The first record for a person wins:
+    callers insert roll calls first, since they're the most complete source."""
+    conn.execute(
+        """
+        insert into item_votes (agenda_item_id, official_id, position, source)
+        values (%s, %s, %s, %s)
+        on conflict (agenda_item_id, official_id) do nothing
+        """,
+        (agenda_item_id, official_id, position, source),
+    )
 
 
 def replace_item_chunks(
@@ -199,18 +356,38 @@ def replace_item_chunks(
         )
 
 
-def missing_documents(conn: psycopg.Connection, urls: list[str]) -> list[str]:
-    """Which of the portal's current documents for a meeting we don't hold.
+def changed_documents(
+    conn: psycopg.Connection, current: dict[str, Fingerprint]
+) -> list[str]:
+    """Which of the portal's current documents for a meeting are new or revised.
 
-    Minutes are published weeks after the meeting they record, so a meeting
-    already ingested from its agenda is not finished with. Deciding to skip
-    on the agenda alone meant a meeting was visited once and never revisited,
-    and its votes stayed unknown forever.
+    Minutes are published weeks after the meeting they record, and agendas are
+    revised in place at the same URL, so neither "have we seen this meeting"
+    nor "have we seen this URL" is enough. A document counts as changed when
+    its URL is new, or when the server's ETag differs from the stored one.
+    Where the server sends no ETag, Last-Modified and length stand in.
     """
-    if not urls:
+    if not current:
         return []
     rows = conn.execute(
-        "select source_pdf_url from documents where source_pdf_url = any(%s)", (urls,)
+        """
+        select source_pdf_url, etag, last_modified, content_length
+        from documents where source_pdf_url = any(%s)
+        """,
+        (list(current),),
     ).fetchall()
-    held = {r[0] for r in rows}
-    return [u for u in urls if u not in held]
+    stored = {url: Fingerprint(etag, modified, length) for url, etag, modified, length in rows}
+
+    changed = []
+    for url, fp in current.items():
+        held = stored.get(url)
+        if held is None:
+            changed.append(url)
+        elif not fp.known:
+            continue  # nothing to compare against; the URL is known, keep it
+        elif fp.etag and held.etag:
+            if fp.etag != held.etag:
+                changed.append(url)
+        elif (fp.last_modified, fp.content_length) != (held.last_modified, held.content_length):
+            changed.append(url)
+    return changed

@@ -11,7 +11,7 @@ from __future__ import annotations
 import json
 import logging
 import os
-from dataclasses import dataclass, field
+from dataclasses import asdict, dataclass, field
 from datetime import datetime
 
 import anthropic
@@ -59,7 +59,8 @@ def _serialize_items(items: list[council_tools.ItemResult]) -> str:
                 "item_id": item.item_id,
                 "citation": item.citation(),
                 "meeting_date": item.meeting_date.isoformat(),
-                "item_number": item.item_number,
+                "item_number": item.display_number,
+                "section": item.section,
                 "title": item.title,
                 "vote_outcome": item.vote_outcome,
                 "mover": item.mover,
@@ -73,7 +74,9 @@ def _serialize_items(items: list[council_tools.ItemResult]) -> str:
     )
 
 
-def _serialize_listing(items: list[council_tools.ItemResult], empty: str) -> str:
+def _serialize_listing(
+    items: list[council_tools.ItemResult], empty: str, extra: dict | None = None
+) -> str:
     """Compact form for long listings: a whole agenda, or one official's record.
 
     A meeting runs to 249 items and a busy councillor's year to 289.
@@ -86,14 +89,17 @@ def _serialize_listing(items: list[council_tools.ItemResult], empty: str) -> str
         return empty
     return json.dumps(
         {
+            **(extra or {}),
             "item_count": len(items),
             "items": [
                 {
                     "item_id": item.item_id,
                     "meeting_date": item.meeting_date.isoformat(),
-                    "item_number": item.item_number,
+                    "item_number": item.display_number,
                     "title": item.title,
                     "vote_outcome": item.vote_outcome,
+                    **({"involvement": item.involvement} if item.involvement else {}),
+                    **({"recorded_votes": item.recorded_votes} if item.recorded_votes else {}),
                 }
                 for item in items
             ],
@@ -120,7 +126,12 @@ def _run_tool(conn, name: str, tool_input: dict) -> tuple[str, list[str]]:
         ]
     elif name == "get_official_record":
         items = council_tools.get_official_record(conn, tool_input["name"])
-        return _serialize_listing(items, "No elected official by that name."), [
+        profile = council_tools.get_official_profile(conn, tool_input["name"])
+        extra = {
+            "officials_matched": council_tools.match_officials(conn, tool_input["name"]),
+            "profile": asdict(profile) if profile else None,
+        }
+        return _serialize_listing(items, "No elected official by that name.", extra), [
             item.citation() for item in items
         ]
     elif name == "get_item_detail":
@@ -128,12 +139,15 @@ def _run_tool(conn, name: str, tool_input: dict) -> tuple[str, list[str]]:
         if detail is None:
             return "No item with that id.", []
         item, summary = detail
+        votes = council_tools.get_vote_detail(conn, item.item_id)
         payload = {
             "citation": item.citation(),
+            "section": item.section,
             "title": item.title,
             "vote_outcome": item.vote_outcome,
             "mover": item.mover,
             "seconder": item.seconder,
+            "votes": {k: v for k, v in asdict(votes).items() if v not in (None, [], "")},
             "decision_summary": summary or "(no decision summary on file)",
         }
         return json.dumps(payload, ensure_ascii=False, indent=2), [item.citation()]

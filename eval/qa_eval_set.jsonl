@@ -16,3 +16,7 @@
 {"question": "Who is the current mayor's spouse?", "should_refuse": true, "category": "out-of-scope-private"}
 {"question": "What did council decide about the Champlain Bridge?", "must_include": ["Champlain"], "category": "federal-adjacent"}
 {"question": "What did council decide about the Turcot Interchange demolition in 1998?", "should_refuse": true, "category": "out-of-scope-before-corpus"}
+{"question": "Who voted against terminating the Veille sur toi contract in March 2026?", "must_include": ["Alneus", "Plourde", "Norris"], "category": "recorded-dissent"}
+{"question": "How did the vote go on the Official Opposition's motion 65.02 at the March 23, 2026 council meeting?", "must_include": ["reject", "24", "38"], "category": "roll-call"}
+{"question": "Did Marie Plourde vote for or against the 2026 budget?", "must_include": ["against"], "category": "councillor-vote"}
+{"question": "Which councillor declared a conflict of interest at the April 20, 2026 meeting?", "must_include": ["McCray"], "category": "abstention"}

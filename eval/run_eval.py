@@ -33,7 +33,11 @@ from mtl_council_agent.agent.loop import ask  # noqa: E402
 from mtl_council_agent.db import client as db  # noqa: E402
 
 EVAL_SET = Path(__file__).parent / "qa_eval_set.jsonl"
-_CITATION_RE = re.compile(r"(\d{4}-\d{2}-\d{2}) item (\S+)")
+# Orientation items cite as "80.01 (20.01)": the inner number and the section
+# identify them, since a council item can share the inner number.
+_CITATION_RE = re.compile(
+    r"(\d{4}-\d{2}-\d{2}) item (?:80\.01 \((?P<inner>\d{2}\.\d{2})\)|(?P<plain>[\d.]+))"
+)
 _NON_DIGITS = re.compile(r"\D+")
 
 # The records are French but answers come back in the user's language, so the
@@ -116,14 +120,16 @@ def _check_citations(conn, citations: list[str]) -> tuple[bool, str]:
         match = _CITATION_RE.search(citation)
         if not match:
             return False, f"unparseable citation: {citation!r}"
-        meeting_date, item_number = match.groups()
+        meeting_date = match.group(1)
+        section = "agglomeration_orientation" if match.group("inner") else "council"
+        item_number = match.group("inner") or match.group("plain")
         row = conn.execute(
             """
             select 1 from agenda_items ai
             join meetings m on m.id = ai.meeting_id
-            where m.meeting_date = %s and ai.item_number = %s
+            where m.meeting_date = %s and ai.item_number = %s and ai.section = %s
             """,
-            (meeting_date, item_number),
+            (meeting_date, item_number, section),
         ).fetchone()
         if row is None:
             return False, f"citation not found in database: {citation}"

@@ -73,3 +73,28 @@ def near_miss(candidate: str, existing: list[str], floor: float = 0.80) -> tuple
         if floor <= score < SIMILARITY_THRESHOLD and (best is None or score > best[1]):
             best = (name, score)
     return best
+
+
+def _given_name_words(first_name: str) -> set[str]:
+    """Every word of the roster's given names, nicknames included.
+
+    "Dimitrios (Jim)" yields {"dimitrios", "jim"}; "Alba Stella" yields
+    {"alba", "stella"}.
+    """
+    return set(re.sub(r"[()]", " ", normalized_name(first_name)).split())
+
+
+def matches_roster_entry(key: str, first_name: str | None, last_name: str | None) -> bool:
+    """Whether a normalized name refers to this roster member.
+
+    The surname must end the name exactly and the name's first word must be
+    one of the member's given names. Surnames are unique across the 65
+    council members, and requiring a given name on top keeps a stray
+    surname match from merging two people.
+    """
+    if not first_name or not last_name:
+        return False
+    surname = normalized_name(last_name)
+    if not key.endswith(" " + surname):
+        return False
+    return key.split(" ", 1)[0] in _given_name_words(first_name)
