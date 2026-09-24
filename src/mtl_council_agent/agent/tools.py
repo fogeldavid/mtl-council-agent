@@ -223,11 +223,12 @@ def get_item_detail(conn, item_id: int) -> tuple[ItemResult, str | None] | None:
 def get_vote_detail(conn, item_id: int) -> VoteDetail:
     """The item's outcome and every individual position the records support."""
     item = conn.execute(
-        "select vote_outcome, meeting_id, sitting from agenda_items where id = %s", (item_id,)
+        "select vote_outcome, meeting_id, sitting, section from agenda_items where id = %s",
+        (item_id,),
     ).fetchone()
     if item is None:
         return VoteDetail(outcome=None)
-    outcome, meeting_id, sitting = item
+    outcome, meeting_id, sitting, section = item
 
     detail = VoteDetail(outcome=outcome)
     votes = conn.execute(
@@ -287,6 +288,12 @@ def get_vote_detail(conn, item_id: int) -> VoteDetail:
         )
     elif outcome in (None, "unknown"):
         detail.note = "No outcome on file (minutes not published yet, or not covered)."
+    if section == "agglomeration_orientation":
+        detail.note = (
+            "Orientation vote: this is the position the city council set for the "
+            "agglomeration council, not the final decision, which the agglomeration "
+            "council makes. " + detail.note
+        ).strip()
     return detail
 
 

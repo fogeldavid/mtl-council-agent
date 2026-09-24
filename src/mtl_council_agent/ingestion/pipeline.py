@@ -185,7 +185,7 @@ def ingest_meeting(
             position=position,
             item_number=item.item_number,
             title=item.title,
-            department=None,
+            department=item.department,
             decision_summary=item.decision_summary,
             motion_number=item.motion_number,
             mover_id=mover_id,

@@ -101,6 +101,8 @@ def parse_agenda(text: str) -> list[AgendaItem]:
             if dossier_match
             else header_tail
         )
+        # The layout pads the unit column, leaving "Service de l'eau , Direction".
+        department = re.sub(r"\s+,", ",", department)
 
         items.append(
             AgendaItem(

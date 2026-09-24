@@ -32,6 +32,7 @@ def test_agenda_parses_bridge_item():
     bridge = next(i for i in items if i.dossier_number == "1264139001")
     assert bridge.item_number == "20.01"
     assert "urbanisme" in bridge.department.lower()
+    assert " ," not in bridge.department
     assert "pont Guy-Lafleur" in bridge.title
 
 
@@ -325,6 +326,7 @@ def test_linker_joins_all_three_sources_for_bridge_item():
     bridge = next(i for i in linked if i.dossier_number == "1264139001")
     assert bridge.mover == "Julien Hénault-Ratelle"
     assert bridge.decision_summary is None
+    assert "urbanisme" in bridge.department.lower()
 
     other = next(i for i in linked if i.dossier_number == "1269902004")
     assert other.decision_summary is not None
@@ -380,12 +382,19 @@ def test_dossierless_items_join_on_section_and_number():
     ]
     motion, orientation = link_items(agenda, minutes, None)
     assert motion.motion_number == "CM26 0734"
-    # Orientation outcomes are parsed but not attached unless enabled.
+    assert orientation.motion_number == "CM26 0656"
+
+
+def test_orientation_votes_stay_off_when_disabled(monkeypatch):
+    monkeypatch.setattr(linker, "ATTACH_ORIENTATION_VOTES", False)
+    agenda = [_agenda("20.01", "1267026001", ORIENTATION)]
+    minutes = [_minutes("20.01", "1267026001", "CM26 0599", section=ORIENTATION)]
+    (orientation,) = link_items(agenda, minutes, None)
     assert orientation.motion_number is None
+    assert orientation.vote_outcome == "unknown"
 
 
-def test_orientation_votes_attach_when_enabled(monkeypatch):
-    monkeypatch.setattr(linker, "ATTACH_ORIENTATION_VOTES", True)
+def test_orientation_votes_attach_to_the_right_item():
     agenda = [_agenda("20.01", "1264139001"), _agenda("20.01", "1267026001", ORIENTATION)]
     minutes = [
         _minutes("20.01", "1267026001", "CM26 0599", section=ORIENTATION),

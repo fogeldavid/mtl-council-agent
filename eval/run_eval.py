@@ -85,6 +85,11 @@ _REFUSAL_PHRASES = (
     "don't have", "do not have", "dont have", "no record", "not find", "outside",
     "not in my database", "aren't in my database", "isn't in my database",
     "only have", "only cover", "beyond what", "can't tell you", "cannot tell you",
+    # Scope refusals for borough and agglomeration questions. The agent words
+    # them many ways ("I cover the central city council only"), and a run that
+    # declined correctly was scored as answering because none matched.
+    "don't cover", "do not cover", "city council only", "not the borough",
+    "not the 19 borough", "not in my database",
 )
 
 
@@ -179,6 +184,10 @@ def main() -> int:
                 print(f"[{status}] {case['question']}")
                 if results[-1].notes:
                     print(f"        {results[-1].notes}")
+                if status == "FAIL":
+                    # Without the answer, a failure can't be told apart from a
+                    # grader that doesn't recognize a correct phrasing.
+                    print("        answer: " + " ".join(answer.text.split())[:600])
 
     total = len(results)
     if not total:

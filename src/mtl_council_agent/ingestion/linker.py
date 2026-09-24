@@ -27,10 +27,11 @@ from mtl_council_agent.ingestion.bundle_parser import split_bundle_by_dossier
 from mtl_council_agent.ingestion.minutes_parser import MinutesItem, RollCall
 
 # The city council's orientation votes are its position on files going to the
-# agglomeration council: 49% of recorded votes in 2026. Whether they belong in
-# a city-council-only tool is an open decision, so they are parsed and tagged
-# but not attached. Flipping this and re-ingesting is all it takes to enable.
-ATTACH_ORIENTATION_VOTES = False
+# agglomeration council: 49% of recorded votes in 2026. They are real,
+# recorded votes by city councillors, so they are attached. They are not the
+# final decision, which the agglomeration council makes later; the section tag
+# lets the agent say so every time. False leaves them parsed but unattached.
+ATTACH_ORIENTATION_VOTES = True
 
 
 @dataclass
@@ -48,6 +49,7 @@ class LinkedItem:
     dissenters: list[str] = field(default_factory=list)
     abstainers: list[str] = field(default_factory=list)
     roll_call: RollCall | None = None
+    department: str | None = None
 
 
 def _find_minutes(
@@ -96,6 +98,7 @@ def link_items(
             LinkedItem(
                 item_number=agenda_item.item_number,
                 title=agenda_item.title,
+                department=agenda_item.department or None,
                 dossier_number=agenda_item.dossier_number,
                 decision_summary=decision_summary,
                 section=agenda_item.section,
