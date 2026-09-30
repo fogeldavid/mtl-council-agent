@@ -198,3 +198,23 @@ def test_cost_estimate_uses_model_rates():
     answer = loop.AgentAnswer(text="", input_tokens=1_000_000, output_tokens=1_000_000)
     assert answer.estimated_cost_usd("claude-opus-5") == pytest.approx(30.0)
     assert answer.estimated_cost_usd("claude-haiku-4-5") == pytest.approx(6.0)
+
+
+def test_history_is_sent_before_the_new_question():
+    client = FakeClient([FakeResponse([FakeBlock("text", text="Two.")], "end_turn")])
+    loop.ask(
+        conn=None, question="and who voted against?", client=client,
+        history=[("what was 20.06?", "A contract cancellation.")],
+    )
+    sent = client.messages.calls[0]["messages"]
+    assert [m["role"] for m in sent] == ["user", "assistant", "user"]
+    assert sent[0]["content"] == "what was 20.06?"
+    assert sent[2]["content"] == "and who voted against?"
+
+
+def test_tool_list_can_be_narrowed():
+    client = FakeClient([FakeResponse([FakeBlock("text", text="ok")], "end_turn")])
+    narrowed = [s for s in loop.TOOL_SCHEMAS if s["name"] != "semantic_search"]
+    loop.ask(conn=None, question="q", client=client, tools=narrowed)
+    names = [s["name"] for s in client.messages.calls[0]["tools"]]
+    assert "semantic_search" not in names and "full_text_search" in names

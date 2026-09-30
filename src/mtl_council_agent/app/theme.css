@@ -1,0 +1,24 @@
+@import url('https://fonts.googleapis.com/css2?family=Source+Serif+4:opsz,wght@8..60,600;8..60,700&family=IBM+Plex+Sans:wght@400;500;600&display=swap');
+html, body, .stMarkdown, p, li, label, input, textarea, button { font-family: 'IBM Plex Sans', sans-serif; }
+h1, h2, h3 { font-family: 'Source Serif 4', serif !important; letter-spacing: -0.3px; }
+header[data-testid="stHeader"] { background: #1C1B19; }
+header[data-testid="stHeader"] a, header[data-testid="stHeader"] span,
+header[data-testid="stHeader"] p { color: #F6F2EA !important; font-weight: 500; }
+.block-container { padding-top: 5.2rem !important; }
+[data-testid="stLogo"] { height: 2.1rem !important; max-width: none !important; }
+.banner { background: #1C1B19; color: #F6F2EA; font-size: 12.5px; padding: 7px 12px; border-radius: 3px; }
+.badge { display: inline-block; font-size: 11.5px; font-weight: 600; letter-spacing: .8px;
+         text-transform: uppercase; padding: 3px 8px; border-radius: 3px; color: #fff; }
+.b-u { background: #1F6B45; } .b-m { background: #1F4E79; } .b-r { background: #A8231A; }
+.b-w { background: #6B6559; } .b-n { background: #7A7266; }
+.card { background: #FFFDF8; border: 1px solid #D9D2C3; border-radius: 6px; padding: 14px 16px; margin-bottom: 10px; }
+.card .title { font-family: 'Source Serif 4', serif; font-weight: 600; font-size: 17px; }
+.meta { font-size: 13px; color: #5A5650; }
+.cite { font-family: monospace; font-size: 12.5px; background: #EDE5D6; padding: 3px 7px; border-radius: 3px; }
+.bar { display: flex; height: 16px; border-radius: 3px; overflow: hidden; margin: 6px 0; }
+.chip { display: inline-block; font-size: 12.5px; background: #FFFDF8; border: 1px solid #D9D2C3;
+        border-radius: 3px; padding: 3px 8px; margin: 0 5px 5px 0; }
+.note { font-size: 13.5px; background: #EDE5D6; border-radius: 4px; padding: 10px 12px; }
+.summary { font-family: 'Source Serif 4', serif; font-size: 16px; line-height: 1.6; white-space: pre-wrap;
+           background: #FFFDF8; border: 1px solid #D9D2C3; border-radius: 6px; padding: 16px 20px;
+           max-height: 520px; overflow-y: auto; }

@@ -26,7 +26,7 @@ dev = [
     "ruff>=0.15,<0.16",
 ]
 ui = [
-    "streamlit>=1.37",
+    "streamlit>=1.45",
 ]
 
 [project.scripts]

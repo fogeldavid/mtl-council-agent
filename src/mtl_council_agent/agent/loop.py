@@ -172,9 +172,23 @@ def ask(
     client: anthropic.Anthropic | None = None,
     model: str = DEFAULT_MODEL,
     max_turns: int = MAX_TURNS,
+    history: list[tuple[str, str]] | None = None,
+    tools: list[dict] | None = None,
 ) -> AgentAnswer:
+    """Answer one question.
+
+    `history` is earlier (question, answer) pairs from the same conversation,
+    passed as plain text so a follow-up like "and who voted against?" has its
+    referent. Only the final answers are carried, not the tool calls behind
+    them: the answers already cite what they used. `tools` narrows the tool
+    list, for hosts that can't load the embedding model behind semantic_search.
+    """
     client = client or _build_client()
-    messages: list[dict] = [{"role": "user", "content": question}]
+    messages: list[dict] = []
+    for earlier_question, earlier_answer in history or []:
+        messages.append({"role": "user", "content": earlier_question})
+        messages.append({"role": "assistant", "content": earlier_answer})
+    messages.append({"role": "user", "content": question})
     answer = AgentAnswer(text="")
     seen_citations: list[str] = []
 
@@ -189,7 +203,7 @@ def ask(
                     "cache_control": {"type": "ephemeral"},
                 }
             ],
-            tools=TOOL_SCHEMAS,
+            tools=TOOL_SCHEMAS if tools is None else tools,
             messages=messages,
         )
 
