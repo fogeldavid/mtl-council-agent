@@ -218,3 +218,15 @@ def test_tool_list_can_be_narrowed():
     loop.ask(conn=None, question="q", client=client, tools=narrowed)
     names = [s["name"] for s in client.messages.calls[0]["tools"]]
     assert "semantic_search" not in names and "full_text_search" in names
+
+
+def test_meeting_list_is_sent_after_the_cached_instructions(monkeypatch):
+    monkeypatch.setattr(
+        loop.council_tools, "list_meetings",
+        lambda conn: [(date(2026, 9, 21), "ordinaire", 122, False)],
+    )
+    client = FakeClient([FakeResponse([FakeBlock("text", text="ok")], "end_turn")])
+    loop.ask(conn=object(), question="latest meeting?", client=client)
+    system = client.messages.calls[0]["system"]
+    assert system[0]["text"] == loop.SYSTEM_PROMPT and "cache_control" in system[0]
+    assert "2026-09-21" in system[1]["text"] and "cache_control" not in system[1]

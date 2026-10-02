@@ -107,3 +107,15 @@ def test_item_knows_whether_its_meetings_minutes_are_in(conn):
     # minutes simply record no decision (a question period, an announcement).
     assert queries.item(conn, 10)["has_minutes"] is True
     assert queries.item(conn, 20)["has_minutes"] is False
+
+
+def test_meetings_note_lists_newest_first_and_flags_missing_minutes(conn):
+    from datetime import date
+
+    from mtl_council_agent.agent.loop import meetings_note
+
+    note = meetings_note(conn, today=date(2026, 9, 30))
+    assert note.startswith("Today's date is 2026-09-30.")
+    lines = note.splitlines()[1:]
+    assert lines[0].startswith("- 2026-09-21 (ordinaire, 1 items, minutes NOT yet published")
+    assert lines[1] == "- 2026-03-23 (ordinaire, 4 items, minutes published)"

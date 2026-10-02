@@ -158,6 +158,24 @@ def get_meeting_items(conn, meeting_date: date, limit: int = 300) -> list[ItemRe
     return items
 
 
+def list_meetings(conn) -> list[tuple[date, str, int, bool]]:
+    """Every meeting on file, newest first: (date, type, item count, has minutes).
+
+    Without this the model cannot know which meeting is the latest: its only
+    meeting tool takes a date, so "the most recent meeting" became whichever
+    date its searches happened to surface.
+    """
+    return conn.execute(
+        """
+        select m.meeting_date, m.meeting_type, count(ai.id),
+               exists (select 1 from documents d
+                       where d.meeting_id = m.id and d.doc_type = 'minutes')
+        from meetings m left join agenda_items ai on ai.meeting_id = m.id
+        group by m.id order by m.meeting_date desc
+        """
+    ).fetchall()
+
+
 def _recorded_vote_digests(conn, item_ids: list[int]) -> dict[int, str]:
     """A short note per item that has recorded individual votes.
 

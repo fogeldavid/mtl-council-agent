@@ -12,7 +12,7 @@ import json
 import logging
 import os
 from dataclasses import asdict, dataclass, field
-from datetime import datetime
+from datetime import date, datetime
 
 import anthropic
 
@@ -157,6 +157,22 @@ def _run_tool(conn, name: str, tool_input: dict) -> tuple[str, list[str]]:
     return _serialize_items(items), [item.citation() for item in items]
 
 
+def meetings_note(conn, today: date | None = None) -> str:
+    """Today's date and the meetings on file, sent with every question so
+    "the latest meeting" or "last month" resolves to a real date."""
+    lines = [
+        f"- {d.isoformat()} ({kind}, {items} items, "
+        + ("minutes published" if minutes else
+           "minutes NOT yet published: agenda only, no outcomes or votes")
+        + ")"
+        for d, kind, items, minutes in council_tools.list_meetings(conn)
+    ]
+    return (
+        f"Today's date is {(today or date.today()).isoformat()}. Council meetings in "
+        "the database, newest first:\n" + "\n".join(lines)
+    )
+
+
 def _build_client() -> anthropic.Anthropic:
     # An org-scoped key has to name the workspace to bill against; a
     # workspace-scoped key already carries it and needs no header.
@@ -192,17 +208,17 @@ def ask(
     answer = AgentAnswer(text="")
     seen_citations: list[str] = []
 
+    # The fixed instructions are cached; the meeting list changes weekly, so it
+    # goes after them, outside the cache marker.
+    system = [{"type": "text", "text": SYSTEM_PROMPT, "cache_control": {"type": "ephemeral"}}]
+    if conn is not None:
+        system.append({"type": "text", "text": meetings_note(conn)})
+
     for turn in range(max_turns):
         response = client.messages.create(
             model=model,
             max_tokens=MAX_TOKENS,
-            system=[
-                {
-                    "type": "text",
-                    "text": SYSTEM_PROMPT,
-                    "cache_control": {"type": "ephemeral"},
-                }
-            ],
+            system=system,
             tools=TOOL_SCHEMAS if tools is None else tools,
             messages=messages,
         )
