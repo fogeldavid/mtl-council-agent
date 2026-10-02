@@ -1,0 +1,17 @@
+# What the web app needs on Streamlit Community Cloud. The ingestion
+# pipeline and tests install from pyproject.toml instead.
+
+# CPU-only torch: the default Linux build adds gigabytes of GPU libraries
+# the app never uses.
+--extra-index-url https://download.pytorch.org/whl/cpu
+torch
+
+# Capped at the series the app and its tests were built on.
+streamlit>=1.45,<1.55
+pandas
+psycopg[binary]>=3.1
+pgvector>=0.2
+anthropic>=0.34
+python-dotenv>=1.0
+# Search by meaning. Set SEMANTIC_SEARCH=off if the model doesn't fit in memory.
+sentence-transformers>=3.0
