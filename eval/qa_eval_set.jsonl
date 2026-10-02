@@ -3,7 +3,7 @@
 {"question": "Who moved and who seconded the Guy-Lafleur bridge expenditure?", "must_include": ["Hénault-Ratelle", "DeSousa"], "category": "accountability"}
 {"question": "What is resolution CM26 0677 about?", "must_include": ["Guy-Lafleur"], "category": "resolution-lookup"}
 {"question": "Why did the Guy-Lafleur bridge contract need more money?", "must_include": ["plans"], "category": "reasoning"}
-{"question": "Is the city in any legal dispute over the Guy-Lafleur bridge work?", "must_include": ["AtkinsR"], "category": "reasoning"}
+{"question": "Is the city in any legal dispute over the Guy-Lafleur bridge work?", "must_include": ["Atkins"], "category": "reasoning"}
 {"question": "What did council approve regarding a lease with Hydro-Québec for a bike path?", "must_include": ["46 896", "Rivière-des-Prairies"], "category": "specific-decision"}
 {"question": "How long is the Hydro-Québec bike path lease?", "must_include": ["10"], "category": "specific-decision"}
 {"question": "What was on the agenda for the June 15, 2026 council meeting?", "must_include": ["161"], "category": "date-lookup"}
@@ -20,3 +20,4 @@
 {"question": "How did the vote go on the Official Opposition's motion 65.02 at the March 23, 2026 council meeting?", "must_include": ["reject", "24", "38"], "category": "roll-call"}
 {"question": "Did Marie Plourde vote for or against the 2026 budget?", "must_include": ["against"], "category": "councillor-vote"}
 {"question": "Which councillor declared a conflict of interest at the April 20, 2026 meeting?", "must_include": ["McCray"], "category": "abstention"}
+{"question": "Summarize the September 21, 2026 council meeting.", "must_include": ["122"], "must_not_include": ["adopted unanimously"], "meeting_date": "2026-09-21", "min_item_refs": 5, "category": "meeting-summary"}

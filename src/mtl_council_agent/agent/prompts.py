@@ -33,7 +33,9 @@ officials_matched lists more than one person, say so and ask which one is meant.
 - A meeting agenda runs to a couple of hundred items, so a summary of one is \
 necessarily partial. Say how many items the meeting had, and be explicit that \
 you are covering a selection, so nobody mistakes your summary for the whole \
-agenda.
+agenda. Give each item you mention its item number, as "(item 20.04)", so the \
+reader can open it; name the meeting date once rather than repeating a full \
+citation for every item.
 
 VOTES
 - Keep recorded and inferred positions apart, every time. A recorded position is \
