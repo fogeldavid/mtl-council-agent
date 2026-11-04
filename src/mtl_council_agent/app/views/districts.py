@@ -20,6 +20,7 @@ from mtl_council_agent.app.common import (
 from mtl_council_agent.app.i18n import t
 
 SELECTION_KEY = "district_code"
+SAVED_SELECTION_KEY = "district_code_saved"
 CHART_KEY = "district_polygons"
 
 
@@ -120,13 +121,17 @@ def render() -> None:
         properties[code]["NOM_ARR"], properties[code]["NOM_DISTRICT"],
     ))
     if st.session_state.get(SELECTION_KEY) not in properties:
-        st.session_state[SELECTION_KEY] = "111"  # Official Mile-End code, also in the roster.
+        # Streamlit drops a widget's value on leaving the page, so restore the plain
+        # copy. Otherwise start on the official Mile-End code, also in the roster.
+        saved = st.session_state.get(SAVED_SELECTION_KEY)
+        st.session_state[SELECTION_KEY] = saved if saved in properties else "111"
     selected = st.selectbox(
         t("districts.choose"), codes, key=SELECTION_KEY,
         format_func=lambda code: (
             f"{properties[code]['NOM_DISTRICT']} · {properties[code]['NOM_ARR']}"
         ),
     )
+    st.session_state[SAVED_SELECTION_KEY] = selected
     map_column, details = st.columns([1.65, 1], gap="large")
     with map_column:
         basemap = st.checkbox(t("districts.basemap"), value=True)
@@ -163,6 +168,8 @@ def render() -> None:
             st.markdown(f"### {member['name']}")
             st.write(member["party"] or "—")
             st.caption(t("role." + member["role"]))
+            if not member.get("district"):
+                st.caption(t("districts.borough_wide"))
             if connected:
                 st.metric(t("stat.votes"), member["recorded_votes"])
                 _votes(member)

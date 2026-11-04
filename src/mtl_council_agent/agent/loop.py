@@ -51,24 +51,6 @@ class AgentAnswer:
         ) / 1_000_000
 
 
-
-def with_source_documents(text: str, documents: list[dict]) -> str:
-    """Render database-owned links even when the model omits its source list.
-
-    These are meeting documents for retrieved records, not verified page-level
-    evidence. Keep this distinction visible; a source link alone cannot prove
-    that an individual claim is supported.
-    """
-    if not documents:
-        return text
-    lines = []
-    for document in documents:
-        label = f"{document['meeting_date']} — {document['doc_type']} (FR)"
-        # Angle brackets keep query strings and parentheses inside the URL.
-        lines.append(f"- [{label}](<{document['url']}>)")
-    return text + "\n\nSources · documents des séances (FR)\n\n" + "\n".join(lines)
-
-
 def _serialize_items(items: list[council_tools.ItemResult]) -> str:
     if not items:
         return "No matching records found."
@@ -259,7 +241,6 @@ def ask(
             )
             answer.citations = list(dict.fromkeys(seen_citations))
             answer.source_documents = source_documents
-            answer.text = with_source_documents(answer.text, source_documents)
             return answer
 
         # All tool results for one assistant turn go back in ONE user message.
@@ -270,18 +251,23 @@ def ask(
             try:
                 result_text, citations = _run_tool(conn, block.name, dict(block.input))
                 seen_citations.extend(citations)
-                if conn is not None and citations:
+                is_error = False
+            except Exception as exc:
+                logger.exception("tool %s failed", block.name)
+                result_text, citations, is_error = f"Tool error: {exc}", [], True
+            if conn is not None and citations:
+                # Links are extra: failing to load them must not cost the records.
+                try:
                     documents = council_tools.source_documents(conn, citations)
+                except Exception:
+                    logger.exception("source documents failed")
+                else:
                     for document in documents:
                         if document not in source_documents:
                             source_documents.append(document)
                     result_text += "\nSource documents (French originals): " + json.dumps(
                         documents, ensure_ascii=False
                     )
-                is_error = False
-            except Exception as exc:
-                logger.exception("tool %s failed", block.name)
-                result_text, is_error = f"Tool error: {exc}", True
 
             tool_results.append(
                 {

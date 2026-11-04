@@ -10,6 +10,7 @@ from pathlib import Path
 import psycopg
 import streamlit as st
 from dotenv import load_dotenv
+from pgvector.psycopg import register_vector
 
 from mtl_council_agent.app import translations
 from mtl_council_agent.app.i18n import lang, t
@@ -71,7 +72,10 @@ def database_view(render):
 
 @st.cache_resource
 def _connection():
-    return psycopg.connect(database_url(), autocommit=True)
+    conn = psycopg.connect(database_url(), autocommit=True)
+    # Without this the chat agent's semantic_search can't send its query vector.
+    register_vector(conn)
+    return conn
 
 
 def run(query, *args, **kwargs):

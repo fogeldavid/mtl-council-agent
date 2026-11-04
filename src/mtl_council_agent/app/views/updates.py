@@ -39,6 +39,8 @@ def render() -> None:
         t("nav.search"), value=saved.get("text", ""), placeholder=t("feed.search_hint"),
         key="_feed_text", on_change=_reset_page,
     )
+    if lang() == "en":
+        st.caption(t("feed.search_french"))
     filters, feed = st.columns([1, 3], gap="large")
     with filters:
         st.markdown(f"#### {t('feed.filters')}")

@@ -242,3 +242,20 @@ must be checked after configuring WEB_ANTHROPIC_API_KEY in deployment secrets.
 This is not a claim that the 80-question live model evaluation has passed.
 The translation workflow needs WEB_DATABASE_URL as a repository secret and manual
 copy/review of its output artifact for deployment. No push or merge performed.
+
+## Pre-merge fixes, November 4
+
+Search has a link again, next to Newsfeed under Council updates, because search by meaning
+and CSV export were otherwise reachable only by typing the URL. The newsfeed search reads
+French text only, and the page now tells English-mode visitors so.
+
+Districts now list members elected for the whole borough after the district councillor, so
+all 58 districts show someone. Address lookup now connects over HTTP/2, because the provider
+resets HTTP/1.1-only connections, and handles missing accents and common abbreviations.
+
+The chat agent's semantic search failed on every call on the app's database connection,
+which never registered the vector type. Keyword search hid the failure. The eval connects
+a different way and could not catch it, so earlier eval scores do not cover this path.
+
+The app now adds source links after the eval's grading point, so they can't affect a score.
+It lists them only for meetings the answer names. CI now installs the same Streamlit version as the deployment.

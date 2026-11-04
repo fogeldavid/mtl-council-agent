@@ -21,10 +21,10 @@ def test_roster_match_uses_both_district_and_borough():
         {"name": "Right member", "borough": "Le Plateau–Mont–Royal", "district": "Mile-End"},
         {"name": "Wrong borough", "borough": "Ville-Marie", "district": "Mile-End"},
         {"name": "Wrong district", "borough": "Le Plateau-Mont-Royal", "district": "Jeanne-Mance"},
-        {"name": "No district", "borough": "Le Plateau-Mont-Royal", "district": None},
+        {"name": "Whole borough", "borough": "Le Plateau-Mont-Royal", "district": None},
     ]
     matched = district_map.representatives(properties, members)
-    assert [m["name"] for m in matched] == ["Right member"]
+    assert [m["name"] for m in matched] == ["Right member", "Whole borough"]
 
 
 def test_selection_validates_code_and_layer():
@@ -60,12 +60,58 @@ def test_preview_renders_and_changes_district_without_a_database():
     assert not at.exception
     assert at.selectbox[0].value == "111"
     assert any("Map preview" in info.value for info in at.info)
-    at.selectbox[0].select("Tétreaultville · Mercier–Hochelaga-Maisonneuve").run()
+    at.selectbox[0].select("071").run()
     assert not at.exception
     assert at.selectbox[0].value == "071"
     assert any("Hénault-Ratelle" in m.value for m in at.markdown)
     at.checkbox[0].uncheck().run()
     assert not at.exception
+
+
+def _render_or_leave():
+    from unittest.mock import patch
+
+    import streamlit as st
+
+    from mtl_council_agent.app.views import districts
+
+    if st.session_state.get("away"):
+        st.write("Another page")
+    else:
+        with patch.object(districts, "database_configured", return_value=False):
+            districts.render()
+
+
+def test_chosen_district_survives_leaving_the_page():
+    from mtl_council_agent.app.views import districts
+
+    at = AppTest.from_function(_render_or_leave, default_timeout=30).run()
+    at.selectbox[0].select("071").run()
+    at.session_state["away"] = True
+    at.run()
+    assert districts.SELECTION_KEY not in at.session_state  # What Streamlit does on leaving.
+    at.session_state["away"] = False
+    at.run()
+    assert not at.exception
+    assert at.selectbox[0].value == "071"
+
+
+def test_every_district_has_a_representative():
+    members = district_map.roster_snapshot()["members"]
+    empty = [p["NOM_DISTRICT"] for p in district_map.district_properties().values()
+             if not district_map.representatives(p, members)]
+    assert empty == []
+
+
+def test_whole_borough_members_follow_the_district_councillor():
+    members = [
+        {"name": "Mayor", "borough": "Anjou", "district": None},
+        {"name": "Councillor", "borough": "Anjou", "district": "Est"},
+        {"name": "Other district", "borough": "Anjou", "district": "Ouest"},
+        {"name": "Other borough", "borough": "Lachine", "district": None},
+    ]
+    found = district_map.representatives({"NOM_ARR": "Anjou", "NOM_DISTRICT": "Est"}, members)
+    assert [m["name"] for m in found] == ["Councillor", "Mayor"]
 
 
 def test_map_callback_updates_the_dropdown_before_rerender(monkeypatch):

@@ -188,6 +188,35 @@ def test_ask_closes_after_allowance_without_requesting_visitor_keys(stub_agent):
     assert any("used up" in info.value for info in at.info)
 
 
+def test_the_app_connection_can_send_search_vectors():
+    # The agent's semantic_search sends one of these; the eval connects another
+    # way, so it can't catch this failing on the app's connection.
+    from pgvector import HalfVector
+
+    from mtl_council_agent.app import common
+
+    common._connection.clear()
+    try:
+        row = common._connection().execute(
+            "select %s::halfvec::text", (HalfVector([1.0, 2.0]),)
+        ).fetchone()
+    finally:
+        common._connection.clear()
+    assert row[0] == "[1,2]"
+
+
+def test_explain_without_questions_left_never_asks_for_a_key(monkeypatch):
+    from mtl_council_agent.app import chat
+
+    monkeypatch.setenv("WEB_ANTHROPIC_API_KEY", "pool-key")
+    monkeypatch.setattr(chat, "FREE_PER_DAY", 0)
+    at = _run("meetings", {"item": "10"})
+    assert not at.exception
+    captions = " ".join(c.value for c in at.caption)
+    assert "used up" in captions
+    assert "key" not in captions.lower()
+
+
 def test_explain_button_on_an_item(stub_agent):
     at = _run("meetings", {"item": "10"})
     button = next(b for b in at.button if b.label == "Explain this item in English")
@@ -200,7 +229,7 @@ def test_explain_button_on_an_item(stub_agent):
 
 def test_district_selector_shows_the_imported_representative():
     at = _run("districts")
-    at.selectbox[0].select("Mile-End · Le Plateau-Mont-Royal").run()
+    at.selectbox[0].select("111").run()
     assert not at.exception
     assert "Marie Plourde" in " ".join(markdown.value for markdown in at.markdown)
     assert "Soraya Martinez Ferrada" not in " ".join(m.value for m in at.markdown)

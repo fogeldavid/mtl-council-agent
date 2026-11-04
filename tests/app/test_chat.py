@@ -129,6 +129,26 @@ def test_no_pool_key_and_no_own_key_cannot_ask(setup):
     assert not chat.can_ask()
 
 
+DOCS = [
+    {"meeting_date": "2026-06-15", "doc_type": "minutes", "url": "https://x.test/pv.pdf?doc=1"},
+    {"meeting_date": "2026-03-23", "doc_type": "agenda", "url": "https://x.test/odj.pdf?doc=2"},
+]
+
+
+def test_sources_list_only_the_meetings_the_answer_names():
+    text = chat.with_sources("On June 15, 2026 (item 20.01) it passed.", DOCS)
+    assert text.startswith("On June 15, 2026 (item 20.01) it passed.")
+    assert "(<https://x.test/pv.pdf?doc=1>)" in text
+    assert "odj.pdf" not in text
+    assert "Sources" not in text and "Each covers a whole meeting" in text
+
+
+def test_an_answer_that_found_nothing_lists_no_sources():
+    assert chat.with_sources("I don't have a record of that.", DOCS) == (
+        "I don't have a record of that."
+    )
+
+
 def test_history_is_passed_through(setup):
     chat.answer("and who voted against?", [("what was 20.06?", "A cancellation.")])
     assert setup["history"] == [("what was 20.06?", "A cancellation.")]

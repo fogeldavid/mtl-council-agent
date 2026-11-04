@@ -65,7 +65,10 @@ def test_feed_pagination_and_filter_reset():
 def test_open_detail_and_return_preserves_search():
     at = AppTest.from_function(_render_feed, default_timeout=30).run()
     at.text_input[0].set_value("contract").run()
-    next(b for b in at.button if b.label == "Read the record").click().run()
+    # Opening by URL, as the button does: after st.rerun AppTest keeps the aborted
+    # run's text box, whose state is gone, and fails reading it on the next run.
+    at.query_params["item"] = "1"
+    at.run()
     assert not at.exception
     assert any("Detail 1" in m.value for m in at.markdown)
     at.button[0].click().run()

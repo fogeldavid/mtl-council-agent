@@ -97,6 +97,50 @@ def test_english_detail_shows_translated_title_context_and_french_original():
     assert any("Translated from the French original" in c.value for c in at.caption)
 
 
+def _render_untranslated_detail(saved):
+    from datetime import date
+    from unittest.mock import patch
+
+    from mtl_council_agent.app import queries, translations
+    from mtl_council_agent.app.views import meetings
+
+    item = {
+        "id": 1, "meeting_id": 1, "meeting_date": date(2026, 3, 23), "item_number": "20.01",
+        "section": "council", "title": "Approuver un contrat", "vote_outcome": "adopted",
+        "has_minutes": True, "dossier_number": None, "motion_number": None,
+        "department": None, "mover": None, "seconder": None,
+        "decision_summary": "CONTEXTE\nLe projet améliore le parc.\nDESCRIPTION\nOriginal.",
+    }
+
+    def query_result(query, *args):
+        return item if query is queries.item else {}
+
+    with patch.object(meetings, "run", side_effect=query_result), \
+         patch.object(meetings, "_votes"), patch.object(meetings, "_explain"), \
+         patch.object(translations, "english", side_effect=saved.get):
+        meetings._item_view(1, from_feed=True)
+
+
+def _captions(saved):
+    from streamlit.testing.v1 import AppTest
+
+    at = AppTest.from_function(_render_untranslated_detail, args=(saved,)).run()
+    assert not at.exception
+    return " ".join(c.value for c in at.caption)
+
+
+def test_nothing_translated_is_not_labelled_as_a_translation():
+    captions = _captions({})
+    assert "awaiting review" in captions
+    assert "Machine translation" not in captions
+
+
+def test_a_translated_context_under_a_french_title_is_labelled():
+    captions = _captions({"Le projet améliore le parc.": "The project improves the park."})
+    assert "awaiting review" in captions
+    assert "Machine translation" in captions
+
+
 def test_french_detail_keeps_the_original_title_and_summary():
     from streamlit.testing.v1 import AppTest
 

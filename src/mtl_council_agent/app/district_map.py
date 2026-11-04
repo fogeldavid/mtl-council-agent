@@ -37,13 +37,15 @@ def district_properties() -> dict[str, dict]:
 
 
 def representatives(properties: dict, members: list[dict]) -> list[dict]:
-    """Match both borough and district. Never use a fuzzy geographic match."""
+    """The district's councillor, then members elected for the whole borough:
+    borough mayors, and city councillors in boroughs without city districts.
+    Names must match exactly. Never use a fuzzy geographic match."""
     borough = _identity(properties["NOM_ARR"])
     district = _identity(properties["NOM_DISTRICT"])
+    in_borough = [m for m in members if _identity(m.get("borough")) == borough]
     return [
-        member for member in members
-        if _identity(member.get("borough")) == borough
-        and _identity(member.get("district")) == district
+        *(m for m in in_borough if _identity(m.get("district")) == district),
+        *(m for m in in_borough if not m.get("district")),
     ]
 
 

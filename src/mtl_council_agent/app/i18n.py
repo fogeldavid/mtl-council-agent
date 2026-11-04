@@ -86,6 +86,11 @@ STRINGS: dict[str, dict[str, str]] = {
         "en": "Search decisions, a company, or a resolution number…",
         "fr": "Rechercher une décision, une entreprise ou un numéro de résolution…",
     },
+    "feed.search_french": {
+        "en": "This box searches the French text. To search in English, "
+              "open Search and choose By meaning.",
+        "fr": "Cette recherche porte sur le texte français.",
+    },
     "feed.filters": {"en": "Filter decisions", "fr": "Filtrer les décisions"},
     "feed.count": {
         "en": "{start}–{end} of {total} decisions", "fr": "{start}–{end} sur {total} décisions",
@@ -173,6 +178,10 @@ STRINGS: dict[str, dict[str, str]] = {
               "Certains districts élisent des conseillers d’arrondissement dont les votes "
               "ne sont pas couverts ici.",
     },
+    "districts.borough_wide": {
+        "en": "Elected for the whole borough, not only this district.",
+        "fr": "Élu pour tout l’arrondissement, pas seulement ce district.",
+    },
     "districts.no_votes": {
         "en": "No explicit individual votes for this representative in the imported records.",
         "fr": "Aucun vote individuel explicite pour cet élu dans les documents importés.",
@@ -259,6 +268,15 @@ STRINGS: dict[str, dict[str, str]] = {
         "fr": "{n} questions gratuites sur {total} restantes aujourd'hui.",
     },
     "chat.clear": {"en": "New conversation", "fr": "Nouvelle conversation"},
+    "chat.sources": {
+        "en": "Documents for the meetings above, in French. "
+              "Each covers a whole meeting, not one claim.",
+        "fr": "Documents des séances ci-dessus, en français. "
+              "Chacun couvre toute une séance, pas une seule affirmation.",
+    },
+    "doc.agenda": {"en": "Agenda (FR)", "fr": "Ordre du jour"},
+    "doc.minutes": {"en": "Minutes (FR)", "fr": "Procès-verbal"},
+    "doc.bundle": {"en": "Decision documents (FR)", "fr": "Dossiers décisionnels"},
     "chat.unavailable": {
         "en": "Chat is temporarily unavailable. You can still browse decisions and source records.",
         "fr": "Le clavardage est indisponible. Les décisions et leurs sources restent accessibles.",
@@ -279,10 +297,6 @@ STRINGS: dict[str, dict[str, str]] = {
         "fr": "Expliquez en français simple le point {number} de la séance du {date} "
         "(item_id {item_id}, « {title} ») : ce qui a été décidé, pourquoi, ce que ça coûte et "
         "comment le conseil a voté.",
-    },
-    "explain.needs_key": {
-        "en": "No free questions left. Add your own key on the Ask page.",
-        "fr": "Plus de questions gratuites. Ajoutez votre clé à la page Questions.",
     },
     "stat.meetings": {"en": "Meetings", "fr": "Séances"},
     "stat.items": {"en": "Agenda items", "fr": "Points à l'ordre du jour"},

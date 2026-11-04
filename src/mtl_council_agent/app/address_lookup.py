@@ -12,6 +12,47 @@ from mtl_council_agent.app.district_map import boundaries
 ENDPOINT = ("https://servicescarto.mrnf.gouv.qc.ca/pes/rest/services/"
             "Territoire/AQ_ADRESSES_WMS/MapServer/0/query")
 SOURCE = ENDPOINT.removesuffix("/0/query")
+# One building can have hundreds of unit rows; this is the service's own maximum.
+MAX_ROWS = 1000
+_STREET_TYPES = {"RUE", "AVENUE", "AVE", "AV", "BOULEVARD", "BOUL", "BLVD", "BD", "CHEMIN", "CH"}
+_SAINTS = {"ST": "SAINT", "STE": "SAINTE"}
+# The service spells these out, and only after the street name.
+_DIRECTIONS = {
+    "E": "EST", "EAST": "EST", "O": "OUEST", "W": "OUEST", "WEST": "OUEST",
+    "N": "NORD", "NORTH": "NORD", "S": "SUD", "SOUTH": "SUD",
+}
+
+
+def _fold(text: str) -> str:
+    """Uppercase ASCII, so a typed "Cote" and a stored "Côte" compare equal."""
+    text = unicodedata.normalize("NFKD", text).replace("œ", "oe").replace("Œ", "OE")
+    return "".join(c for c in text if not unicodedata.combining(c)).upper()
+
+
+def _street_words(street: str) -> list[str]:
+    """The words of a typed street, with its abbreviations spelled as the service does."""
+    words = re.findall(r"[^\W_]+", _fold(street), re.UNICODE)
+    words = [w for w in words if w not in _STREET_TYPES]
+    # A last "ST" is English for street ("Main St"), not the start of a saint's name.
+    if len(words) > 1 and words[-1] == "ST":
+        words.pop()
+    if len(words) > 1:
+        words[-1] = _DIRECTIONS.get(words[-1], words[-1])
+    return [_SAINTS.get(w, w) for w in words]
+
+
+def _like_word(word: str) -> str:
+    """The service's LIKE is accent-sensitive, so any letter that can carry an
+    accent matches one character. lookup() then compares the results exactly."""
+    return re.sub(r"[AEIOUYC]", "_", word)
+
+
+def _fetch(params: dict) -> httpx.Response:
+    # The service resets connections offering only HTTP/1.1, httpx's default.
+    with httpx.Client(http2=True, timeout=15) as client:
+        return client.get(
+            ENDPOINT, params=params, headers={"User-Agent": "MTLCouncilDistrictFinder/1.0"},
+        )
 
 
 def valid_address(text: str) -> bool:
@@ -54,27 +95,23 @@ def lookup(address: str) -> list[dict]:
     """No address logging, persistent storage, autocomplete, or shared caching."""
     if not valid_address(address):
         raise ValueError("Enter a full street address")
-    match = re.fullmatch(r"\s*(\d{1,6})\s+(.{2,150})\s*", address)
+    match = re.fullmatch(r"\s*(\d{1,6})[\s,]+(.{2,150})\s*", address)
     if not match:
         raise ValueError("Enter civic number followed by street name")
     number, street = match.groups()
     # Restrict generated SQL to letters/digits and fixed operators; never insert raw input.
-    street = unicodedata.normalize("NFC", street).upper()
-    words = re.findall(r"[^\W_]+", street, re.UNICODE)
-    words = [w for w in words if w not in {"RUE", "AVENUE", "BOULEVARD", "AV", "BOUL"}]
-    if not words or any(not w.isalnum() for w in words):
+    words = _street_words(street)
+    if not words or any(not w.isascii() or not w.isalnum() for w in words):
         raise ValueError("Enter a street name")
-    pattern = "%" + "%".join(words) + "%"
-    response = httpx.get(
-        ENDPOINT, params={
-            "f": "json",
-            "where": f"NoCivq = {int(number)} AND UPPER(AdresseFormatee) LIKE '{pattern}'",
-            "outFields": "AdresseFormatee,NoCivq", "outSR": "4326",
-            "geometry": "-73.99,45.40,-73.47,45.72", "geometryType": "esriGeometryEnvelope",
-            "inSR": "4326", "spatialRel": "esriSpatialRelIntersects",
-            "returnGeometry": "true", "resultRecordCount": "100",
-        }, timeout=15, headers={"User-Agent": "MTLCouncilDistrictFinder/1.0"},
-    )
+    pattern = "%" + "%".join(_like_word(w) for w in words) + "%"
+    response = _fetch({
+        "f": "json",
+        "where": f"NoCivq = {int(number)} AND UPPER(AdresseFormatee) LIKE '{pattern}'",
+        "outFields": "AdresseFormatee,NoCivq", "outSR": "4326",
+        "geometry": "-73.99,45.40,-73.47,45.72", "geometryType": "esriGeometryEnvelope",
+        "inSR": "4326", "spatialRel": "esriSpatialRelIntersects",
+        "returnGeometry": "true", "resultRecordCount": str(MAX_ROWS),
+    })
     response.raise_for_status()
     payload = response.json()
     if not isinstance(payload, dict) or "error" in payload or "features" not in payload:
@@ -93,7 +130,7 @@ def lookup(address: str) -> list[dict]:
         start = re.search(rf"(?<!\d){int(number)}\s", title)
         if start:
             title = title[start.start():]
-        title_words = re.findall(r"[^\W_]+", unicodedata.normalize("NFC", title).upper())
+        title_words = re.findall(r"[^\W_]+", _fold(title))
         if not all(word in title_words for word in words):
             continue
         if code and title and (title, code) not in seen:

@@ -147,14 +147,15 @@ def _item_view(item_id: int, from_feed: bool = False) -> None:
     left, right = st.columns([1.6, 1], gap="large")
     with left:
         if lang() == "en":
-            if not translations.english(it["title"]):
-                st.caption(t("translation.pending"))
-            st.caption(t("translation.label"))
+            english_title = translations.english(it["title"])
+            st.caption(t("translation.label" if english_title else "translation.pending"))
             st.markdown(f"#### {t('translation.context')}")
             excerpt = translations.context_excerpt(it["decision_summary"])
             english_context = translations.english(excerpt)
             if english_context:
                 st.write(md_text(english_context))
+                if not english_title:
+                    st.caption(t("translation.label"))
             elif not it["decision_summary"]:
                 st.caption(t("item.no_summary"))
             else:
@@ -200,8 +201,7 @@ def _explain(it: dict, number: str) -> None:
         st.caption(t("chat.notice"))
         return
     if not chat.can_ask():
-        st.caption(t("explain.needs_key"))
-        st.page_link(PAGES["ask"], label=f"{t('nav.ask')} →")
+        st.caption(t("chat.pool_out") if chat.pool_key() else t("chat.unavailable"))
         return
     if st.button(t("explain.button")):
         question = t(

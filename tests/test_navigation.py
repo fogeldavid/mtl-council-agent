@@ -32,7 +32,8 @@ def _render_navigation(page):
 
 @pytest.mark.parametrize(("page", "secondary"), [
     ("ask", []),
-    ("updates", []),
+    ("updates", ["Search"]),
+    ("search", ["Search"]),
     ("councillors", ["Map", "Councillors"]),
     ("meetings", ["Meetings", "About"]),
     ("about", ["Meetings", "About"]),
@@ -57,6 +58,6 @@ def test_real_entrypoint_renders_without_a_sidebar(monkeypatch):
     assert any(b.label == "Council updates" for b in at.button)
     labels = [element.proto.label for element in at.get("page_link")]
     assert labels == [
-        "Ask the council", "District explorer", "Records & about",
+        "Ask the council", "District explorer", "Records & about", "Search",
         "Preview the district map",
     ]

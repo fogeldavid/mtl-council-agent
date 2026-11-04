@@ -16,9 +16,10 @@ from datetime import date, datetime, timedelta
 import anthropic
 import streamlit as st
 
+from mtl_council_agent.agent.dates import dates_in
 from mtl_council_agent.agent.loop import ask
 from mtl_council_agent.agent.prompts import TOOL_SCHEMAS
-from mtl_council_agent.app.common import run
+from mtl_council_agent.app.common import fmt_date, run
 from mtl_council_agent.app.i18n import t
 
 FREE_PER_DAY = 5
@@ -112,6 +113,19 @@ def _pool_turn(today: date, now: datetime) -> bool:
     return bool(pool_key()) and book.pool_up(now) and book.remaining(visitor_id(), today) > 0
 
 
+def with_sources(text: str, documents: list[dict]) -> str:
+    """Add database-owned links for the meetings the answer names, so an answer
+    that found nothing doesn't list everything its searches touched. These cover
+    a whole meeting, not one claim, and the heading says so."""
+    named = dates_in(text)
+    lines = [
+        f"- [{fmt_date(date.fromisoformat(d['meeting_date']))} · {t('doc.' + d['doc_type'])}]"
+        f"(<{d['url']}>)"  # Angle brackets keep query strings inside the URL.
+        for d in documents if d["meeting_date"] in named
+    ]
+    return f"{text}\n\n{t('chat.sources')}\n\n" + "\n".join(lines) if lines else text
+
+
 def answer(question: str, history: list[tuple[str, str]] | None = None) -> str:
     """Ask with the server's shared key; never fall back to visitor credentials."""
     today, now = date.today(), datetime.now()
@@ -137,7 +151,7 @@ def answer(question: str, history: list[tuple[str, str]] | None = None) -> str:
         ledger().mark_pool_down(now)
         raise PoolUnavailable from exc
     ledger().record(visitor_id(), today)
-    return result.text
+    return with_sources(result.text, result.source_documents)
 
 
 def error_message(exc: Exception) -> str:
