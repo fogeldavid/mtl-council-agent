@@ -16,6 +16,7 @@ from mtl_council_agent.app.common import (
     html_text,
     masthead,
     outcome_label,
+    record_title,
     run,
 )
 from mtl_council_agent.app.i18n import t
@@ -104,7 +105,8 @@ def _result_card(row: dict) -> None:
     st.markdown(
         f'<div class="card">{badge(row["vote_outcome"], row["has_minutes"])}'
         f' <span class="meta">&nbsp;{fmt_date(row["meeting_date"])} · {number}</span>'
-        f'<div class="title" style="margin:6px 0 4px">{html_text(row["title"][:260])}</div>'
+        '<div class="title" style="margin:6px 0 4px">'
+        f'{html_text(record_title(row["title"])[:260])}</div>'
         f'<div class="meta">{html_text(row["department"] or "")}</div>'
         f'<div style="font-size:14px;margin-top:6px">{_marked(row["snippet"])}</div></div>',
         unsafe_allow_html=True,

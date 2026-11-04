@@ -1,0 +1,526 @@
+{
+  "source_url": "https://donnees.montreal.ca/dataset/381d74ca-dadd-459f-95c9-db255b5f4480/resource/211f6903-1440-438a-9f6c-9718ecf2d3ee/download/liste_elus_montreal.csv",
+  "retrieved_on": "2026-10-30",
+  "members": [
+    {
+      "first_name": "Maude",
+      "last_name": "Théroux-Séguin",
+      "role": "borough_mayor",
+      "borough": "Ahuntsic-Cartierville",
+      "district": null,
+      "party": "Ensemble Montréal"
+    },
+    {
+      "first_name": "Nathalie",
+      "last_name": "Goulet",
+      "role": "city_councillor",
+      "borough": "Ahuntsic-Cartierville",
+      "district": "Ahuntsic",
+      "party": "Projet Montréal"
+    },
+    {
+      "first_name": "Carla",
+      "last_name": "Beauvais",
+      "role": "city_councillor",
+      "borough": "Ahuntsic-Cartierville",
+      "district": "Sault-au-Récollet",
+      "party": "Projet Montréal"
+    },
+    {
+      "first_name": "Victor",
+      "last_name": "Esposito",
+      "role": "city_councillor",
+      "borough": "Ahuntsic-Cartierville",
+      "district": "Saint-Sulpice",
+      "party": "Ensemble Montréal"
+    },
+    {
+      "first_name": "Effie",
+      "last_name": "Giannou",
+      "role": "city_councillor",
+      "borough": "Ahuntsic-Cartierville",
+      "district": "Bordeaux-Cartierville",
+      "party": "Ensemble Montréal"
+    },
+    {
+      "first_name": "Luis",
+      "last_name": "Miranda",
+      "role": "borough_mayor",
+      "borough": "Anjou",
+      "district": null,
+      "party": "Équipe Anjou"
+    },
+    {
+      "first_name": "Andrée",
+      "last_name": "Hénault",
+      "role": "city_councillor",
+      "borough": "Anjou",
+      "district": null,
+      "party": "Équipe Anjou"
+    },
+    {
+      "first_name": "Stephanie",
+      "last_name": "Valenzuela",
+      "role": "borough_mayor",
+      "borough": "Côte-des-Neiges–Notre-Dame-de-Grâce",
+      "district": null,
+      "party": "Ensemble Montréal"
+    },
+    {
+      "first_name": "Peter",
+      "last_name": "McQueen",
+      "role": "city_councillor",
+      "borough": "Côte-des-Neiges–Notre-Dame-de-Grâce",
+      "district": "Notre-Dame-de-Grâce",
+      "party": "Projet Montréal"
+    },
+    {
+      "first_name": "Sonny",
+      "last_name": "Moroz",
+      "role": "city_councillor",
+      "borough": "Côte-des-Neiges–Notre-Dame-de-Grâce",
+      "district": "Snowdon",
+      "party": "Ensemble Montréal"
+    },
+    {
+      "first_name": "Émilie",
+      "last_name": "Brière",
+      "role": "city_councillor",
+      "borough": "Côte-des-Neiges–Notre-Dame-de-Grâce",
+      "district": "Côte-des-Neiges",
+      "party": "Projet Montréal"
+    },
+    {
+      "first_name": "Alexandre",
+      "last_name": "Teodoresco",
+      "role": "city_councillor",
+      "borough": "Côte-des-Neiges–Notre-Dame-de-Grâce",
+      "district": "Loyola",
+      "party": "Ensemble Montréal"
+    },
+    {
+      "first_name": "Milany",
+      "last_name": "Thiagarajah",
+      "role": "city_councillor",
+      "borough": "Côte-des-Neiges–Notre-Dame-de-Grâce",
+      "district": "Darlington",
+      "party": "Ensemble Montréal"
+    },
+    {
+      "first_name": "Danielle",
+      "last_name": "Myrand",
+      "role": "borough_mayor",
+      "borough": "L'Île-Bizard–Sainte-Geneviève",
+      "district": null,
+      "party": "Projet Montréal"
+    },
+    {
+      "first_name": "Julie-Pascale",
+      "last_name": "Provost",
+      "role": "borough_mayor",
+      "borough": "Lachine",
+      "district": null,
+      "party": "Ensemble Montréal"
+    },
+    {
+      "first_name": "Dominic",
+      "last_name": "Roussel",
+      "role": "city_councillor",
+      "borough": "Lachine",
+      "district": null,
+      "party": "Ensemble Montréal"
+    },
+    {
+      "first_name": "Nancy",
+      "last_name": "Blanchet",
+      "role": "borough_mayor",
+      "borough": "LaSalle",
+      "district": null,
+      "party": "Équipe LaSalle"
+    },
+    {
+      "first_name": "Richard",
+      "last_name": "Deschamps",
+      "role": "city_councillor",
+      "borough": "LaSalle",
+      "district": "Sault-Saint-Louis",
+      "party": "Équipe LaSalle"
+    },
+    {
+      "first_name": "Laura",
+      "last_name": "Palestini",
+      "role": "city_councillor",
+      "borough": "LaSalle",
+      "district": "Cecil-P.-Newman",
+      "party": "Équipe LaSalle"
+    },
+    {
+      "first_name": "Cathy",
+      "last_name": "Wong",
+      "role": "borough_mayor",
+      "borough": "Le Plateau-Mont-Royal",
+      "district": null,
+      "party": "Projet Montréal"
+    },
+    {
+      "first_name": "Alex",
+      "last_name": "Norris",
+      "role": "city_councillor",
+      "borough": "Le Plateau-Mont-Royal",
+      "district": "Jeanne-Mance",
+      "party": "Projet Montréal"
+    },
+    {
+      "first_name": "Maeva",
+      "last_name": "Vilain",
+      "role": "city_councillor",
+      "borough": "Le Plateau-Mont-Royal",
+      "district": "De Lorimier",
+      "party": "Projet Montréal"
+    },
+    {
+      "first_name": "Marie",
+      "last_name": "Plourde",
+      "role": "city_councillor",
+      "borough": "Le Plateau-Mont-Royal",
+      "district": "Mile-End",
+      "party": "Projet Montréal"
+    },
+    {
+      "first_name": "Véronique",
+      "last_name": "Fournier",
+      "role": "borough_mayor",
+      "borough": "Le Sud-Ouest",
+      "district": null,
+      "party": "Projet Montréal"
+    },
+    {
+      "first_name": "Catherine",
+      "last_name": "Houbart",
+      "role": "city_councillor",
+      "borough": "Le Sud-Ouest",
+      "district": "Saint-Henri-Est–Petite-\nBourgogne–Pointe-Saint-\nCharles–Griffintown",
+      "party": "Projet Montréal"
+    },
+    {
+      "first_name": "Élise",
+      "last_name": "Tanguay",
+      "role": "city_councillor",
+      "borough": "Le Sud-Ouest",
+      "district": "Saint-Paul–Émard–\nSaint-Henri-Ouest",
+      "party": "Projet Montréal"
+    },
+    {
+      "first_name": "Chantal",
+      "last_name": "Gagnon",
+      "role": "borough_mayor",
+      "borough": "Mercier–Hochelaga-Maisonneuve",
+      "district": null,
+      "party": "Ensemble Montréal"
+    },
+    {
+      "first_name": "Alexandre",
+      "last_name": "Devaux-Guizani",
+      "role": "city_councillor",
+      "borough": "Mercier–Hochelaga-Maisonneuve",
+      "district": "Maisonneuve–Longue-Pointe",
+      "party": "Ensemble Montréal"
+    },
+    {
+      "first_name": "Julien",
+      "last_name": "Hénault-Ratelle",
+      "role": "city_councillor",
+      "borough": "Mercier–Hochelaga-Maisonneuve",
+      "district": "Tétreaultville",
+      "party": "Ensemble Montréal"
+    },
+    {
+      "first_name": "Sarah",
+      "last_name": "V. Doyon",
+      "role": "city_councillor",
+      "borough": "Mercier–Hochelaga-Maisonneuve",
+      "district": "Hochelaga",
+      "party": "Projet Montréal"
+    },
+    {
+      "first_name": "Alba Stella",
+      "last_name": "Zuniga Ramos",
+      "role": "city_councillor",
+      "borough": "Mercier–Hochelaga-Maisonneuve",
+      "district": "Louis-Riel",
+      "party": "Ensemble Montréal"
+    },
+    {
+      "first_name": "Christine",
+      "last_name": "Black",
+      "role": "borough_mayor",
+      "borough": "Montréal-Nord",
+      "district": null,
+      "party": "Ensemble Montréal"
+    },
+    {
+      "first_name": "Youssef",
+      "last_name": "Hariri",
+      "role": "city_councillor",
+      "borough": "Montréal-Nord",
+      "district": "Marie-Clarac",
+      "party": "Ensemble Montréal"
+    },
+    {
+      "first_name": "Chantal",
+      "last_name": "Rossi",
+      "role": "city_councillor",
+      "borough": "Montréal-Nord",
+      "district": "Ovide-Clermont",
+      "party": "Ensemble Montréal"
+    },
+    {
+      "first_name": "Caroline",
+      "last_name": "Braun",
+      "role": "borough_mayor",
+      "borough": "Outremont",
+      "district": null,
+      "party": "Ensemble Montréal"
+    },
+    {
+      "first_name": "Dimitrios (Jim)",
+      "last_name": "Beis",
+      "role": "borough_mayor",
+      "borough": "Pierrefonds-Roxboro",
+      "district": null,
+      "party": "Ensemble Montréal"
+    },
+    {
+      "first_name": "Benoit",
+      "last_name": "Langevin",
+      "role": "city_councillor",
+      "borough": "Pierrefonds-Roxboro",
+      "district": "Bois-de-Liesse",
+      "party": "Ensemble Montréal"
+    },
+    {
+      "first_name": "Sophie",
+      "last_name": "Mohsen",
+      "role": "city_councillor",
+      "borough": "Pierrefonds-Roxboro",
+      "district": "Cap-Saint-Jacques",
+      "party": "Ensemble Montréal"
+    },
+    {
+      "first_name": "Denis",
+      "last_name": "Pelletier",
+      "role": "borough_mayor",
+      "borough": "Rivière-des-Prairies–Pointe-aux-Trembles",
+      "district": null,
+      "party": "Ensemble Montréal"
+    },
+    {
+      "first_name": "Diana",
+      "last_name": "Varela",
+      "role": "city_councillor",
+      "borough": "Rivière-des-Prairies–Pointe-aux-Trembles",
+      "district": "La Pointe-aux-Prairies",
+      "party": "Ensemble Montréal"
+    },
+    {
+      "first_name": "Gabrielle",
+      "last_name": "Rousseau-Bélanger",
+      "role": "city_councillor",
+      "borough": "Rivière-des-Prairies–Pointe-aux-Trembles",
+      "district": "Pointe-aux-Trembles",
+      "party": "Ensemble Montréal"
+    },
+    {
+      "first_name": "Giovanni",
+      "last_name": "Rapanà",
+      "role": "city_councillor",
+      "borough": "Rivière-des-Prairies–Pointe-aux-Trembles",
+      "district": "Rivière-des-Prairies",
+      "party": "Ensemble Montréal"
+    },
+    {
+      "first_name": "François",
+      "last_name": "Limoges",
+      "role": "borough_mayor",
+      "borough": "Rosemont–La Petite-Patrie",
+      "district": null,
+      "party": "Projet Montréal"
+    },
+    {
+      "first_name": "Ericka",
+      "last_name": "Alneus",
+      "role": "city_councillor",
+      "borough": "Rosemont–La Petite-Patrie",
+      "district": "Étienne-Desmarteau",
+      "party": "Projet Montréal"
+    },
+    {
+      "first_name": "Josefina",
+      "last_name": "Blanco",
+      "role": "city_councillor",
+      "borough": "Rosemont–La Petite-Patrie",
+      "district": "Saint-Édouard",
+      "party": "Projet Montréal"
+    },
+    {
+      "first_name": "Olivier",
+      "last_name": "Demers-Dubé",
+      "role": "city_councillor",
+      "borough": "Rosemont–La Petite-Patrie",
+      "district": "Vieux-Rosemont",
+      "party": "Projet Montréal"
+    },
+    {
+      "first_name": "Jocelyn",
+      "last_name": "Pauzé",
+      "role": "city_councillor",
+      "borough": "Rosemont–La Petite-Patrie",
+      "district": "Marie-Victorin",
+      "party": "Projet Montréal"
+    },
+    {
+      "first_name": "Alan",
+      "last_name": "DeSousa",
+      "role": "borough_mayor",
+      "borough": "Saint-Laurent",
+      "district": null,
+      "party": "Ensemble Montréal"
+    },
+    {
+      "first_name": "Vana",
+      "last_name": "Nazarian",
+      "role": "city_councillor",
+      "borough": "Saint-Laurent",
+      "district": "Côte-de-Liesse",
+      "party": "Ensemble Montréal"
+    },
+    {
+      "first_name": "Aref",
+      "last_name": "Salem",
+      "role": "city_councillor",
+      "borough": "Saint-Laurent",
+      "district": "Norman-McLaren",
+      "party": "Ensemble Montréal"
+    },
+    {
+      "first_name": "Dominic",
+      "last_name": "Perri",
+      "role": "borough_mayor",
+      "borough": "Saint-Léonard",
+      "district": null,
+      "party": "Ensemble Montréal"
+    },
+    {
+      "first_name": "Mauro",
+      "last_name": "Barone",
+      "role": "city_councillor",
+      "borough": "Saint-Léonard",
+      "district": "Saint-Léonard Ouest",
+      "party": "Équipe St-Léonard"
+    },
+    {
+      "first_name": "Arij",
+      "last_name": "El Korbi",
+      "role": "city_councillor",
+      "borough": "Saint-Léonard",
+      "district": "Saint-Léonard Est",
+      "party": "Ensemble Montréal"
+    },
+    {
+      "first_name": "Céline-Audrey",
+      "last_name": "Beauregard",
+      "role": "borough_mayor",
+      "borough": "Verdun",
+      "district": null,
+      "party": "Projet Montréal"
+    },
+    {
+      "first_name": "Andréanne",
+      "last_name": "Moreau",
+      "role": "city_councillor",
+      "borough": "Verdun",
+      "district": "Champlain–L'Île-des-Soeurs",
+      "party": "Ensemble Montréal"
+    },
+    {
+      "first_name": "Sterling",
+      "last_name": "Downey",
+      "role": "city_councillor",
+      "borough": "Verdun",
+      "district": "Desmarchais-Crawford",
+      "party": "Projet Montréal"
+    },
+    {
+      "first_name": "Soraya",
+      "last_name": "Martinez Ferrada",
+      "role": "mayor",
+      "borough": "Ville de Montréal",
+      "district": null,
+      "party": "Ensemble Montréal"
+    },
+    {
+      "first_name": "Claude",
+      "last_name": "Pinard",
+      "role": "city_councillor",
+      "borough": "Ville-Marie",
+      "district": "Saint-Jacques",
+      "party": "Ensemble Montréal"
+    },
+    {
+      "first_name": "Christopher",
+      "last_name": "McCray",
+      "role": "city_councillor",
+      "borough": "Ville-Marie",
+      "district": "Sainte-Marie",
+      "party": "Projet Montréal"
+    },
+    {
+      "first_name": "Leslie",
+      "last_name": "Roberts",
+      "role": "city_councillor",
+      "borough": "Ville-Marie",
+      "district": "Peter-McGill",
+      "party": "Ensemble Montréal"
+    },
+    {
+      "first_name": "Jean François",
+      "last_name": "Lalonde",
+      "role": "borough_mayor",
+      "borough": "Villeray–Saint-Michel–Parc-Extension",
+      "district": null,
+      "party": "Projet Montréal"
+    },
+    {
+      "first_name": "Elvira",
+      "last_name": "Carhuallanqui",
+      "role": "city_councillor",
+      "borough": "Villeray–Saint-Michel–Parc-Extension",
+      "district": "Parc-Extension",
+      "party": "Projet Montréal"
+    },
+    {
+      "first_name": "Josué",
+      "last_name": "Corvil",
+      "role": "city_councillor",
+      "borough": "Villeray–Saint-Michel–Parc-Extension",
+      "district": "Saint-Michel",
+      "party": "Ensemble Montréal"
+    },
+    {
+      "first_name": "Martine",
+      "last_name": "Musau Muele",
+      "role": "city_councillor",
+      "borough": "Villeray–Saint-Michel–Parc-Extension",
+      "district": "Villeray",
+      "party": "Projet Montréal"
+    },
+    {
+      "first_name": "Sylvain",
+      "last_name": "Ouellet",
+      "role": "city_councillor",
+      "borough": "Villeray–Saint-Michel–Parc-Extension",
+      "district": "François-Perrault",
+      "party": "Projet Montréal"
+    }
+  ]
+}

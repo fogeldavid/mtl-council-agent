@@ -1,0 +1,19 @@
+# Local development database. Start with: docker compose up -d db
+services:
+  db:
+    image: pgvector/pgvector:pg16
+    environment:
+      POSTGRES_DB: council
+      POSTGRES_USER: council
+      POSTGRES_PASSWORD: ${LOCAL_POSTGRES_PASSWORD:?Set LOCAL_POSTGRES_PASSWORD in .env}
+    ports:
+      - "127.0.0.1:55432:5432"
+    volumes:
+      - council_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U council -d council"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+volumes:
+  council_data:

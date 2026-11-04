@@ -38,7 +38,6 @@ def setup(monkeypatch):
 
     monkeypatch.setattr(chat, "ledger", lambda: book)
     monkeypatch.setattr(chat, "visitor_id", lambda: "1.2.3.4")
-    monkeypatch.setattr(chat, "own_key", lambda: state["own_key"])
     monkeypatch.setattr(chat, "pool_key", lambda: state["pool_key"])
     monkeypatch.setattr(chat, "ask", fake_ask)
     conn = type("Conn", (), {"execute": lambda self, sql: None})()
@@ -74,19 +73,14 @@ def test_pool_pays_for_the_first_five_then_stops(setup):
         chat.answer("q")
 
 
-def test_own_key_takes_over_after_the_free_questions(setup):
+def test_stale_visitor_key_cannot_bypass_shared_allowance(setup, monkeypatch):
+    monkeypatch.setitem(chat.st.session_state, "own_key", "visitor-key")
     for _ in range(chat.FREE_PER_DAY):
         chat.answer("q")
-    setup["own_key"] = "visitor-key"
-    assert chat.can_ask()
-    chat.answer("q")
-    assert setup["keys_used"][-1] == "visitor-key"
-
-
-def test_free_questions_are_used_before_the_visitors_key(setup):
-    setup["own_key"] = "visitor-key"
-    chat.answer("q")
-    assert setup["keys_used"] == ["pool-key"]
+    assert not chat.can_ask()
+    with pytest.raises(chat.PoolUnavailable):
+        chat.answer("q")
+    assert set(setup["keys_used"]) == {"pool-key"}
 
 
 def test_spend_limit_marks_the_pool_down_for_everyone(setup):
@@ -109,12 +103,11 @@ def test_pool_is_retried_after_an_hour():
     assert book.pool_up(NOW + chat.POOL_RETRY_AFTER)
 
 
-def test_a_bad_own_key_is_reported_as_such(setup):
-    setup["pool_key"] = None
-    setup["own_key"] = "bad-key"
+def test_invalid_team_key_disables_shared_chat(setup):
     setup["raise"] = _api_error(anthropic.AuthenticationError, 401, "invalid x-api-key")
-    with pytest.raises(chat.KeyRejected):
+    with pytest.raises(chat.PoolUnavailable):
         chat.answer("q")
+    assert not chat.can_ask()
 
 
 def test_rate_limit_is_busy_not_a_refusal(setup):

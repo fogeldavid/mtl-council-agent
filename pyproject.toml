@@ -25,8 +25,15 @@ dev = [
     # release schedule.
     "ruff>=0.15,<0.16",
 ]
+translation = [
+    "ctranslate2>=4.0,<5",
+    "transformers>=4.40,<6",
+    "sentencepiece>=0.2",
+    "sacremoses>=0.1",
+]
 ui = [
     "streamlit>=1.45",
+    "pydeck>=0.9",
 ]
 
 [project.scripts]
@@ -47,3 +54,6 @@ select = ["E", "F", "W", "I", "UP", "B", "C4", "ISC"]
 # DTZ (timezone-aware datetimes) is deliberately off. Council meeting dates
 # are calendar dates in civic local time, not instants; attaching a timezone
 # to them would imply a precision the source documents don't have.
+
+[tool.setuptools.package-data]
+mtl_council_agent = ["app/*.css", "app/*.svg", "app/data/*", "db/*.sql"]

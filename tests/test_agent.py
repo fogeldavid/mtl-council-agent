@@ -230,3 +230,53 @@ def test_meeting_list_is_sent_after_the_cached_instructions(monkeypatch):
     system = client.messages.calls[0]["system"]
     assert system[0]["text"] == loop.SYSTEM_PROMPT and "cache_control" in system[0]
     assert "2026-09-21" in system[1]["text"] and "cache_control" not in system[1]
+
+
+def test_source_documents_are_loaded_from_database_urls():
+    from mtl_council_agent.agent.tools import source_documents
+
+    class Connection:
+        def execute(self, sql, params):
+            assert params == (["2026-06-15"],)
+            assert "source_pdf_url" in sql
+            return self
+
+        def fetchall(self):
+            return [
+                (date(2026, 6, 15), "minutes", "https://example.test/minutes.pdf"),
+                (date(2026, 6, 15), "bundle", "javascript:alert(1)"),
+            ]
+
+    sources = source_documents(Connection(), ["2026-06-15 item 20.01"])
+    assert sources == [{
+        "meeting_date": "2026-06-15", "doc_type": "minutes",
+        "url": "https://example.test/minutes.pdf",
+    }]
+
+
+def test_answer_includes_database_source_links_even_when_model_omits_them(
+    stub_search, monkeypatch
+):
+    documents = [{
+        "meeting_date": "2026-06-15", "doc_type": "minutes",
+        "url": "https://example.test/pv.pdf?doc=1",
+    }]
+    monkeypatch.setattr(loop, "meetings_note", lambda conn: "June 15, 2026")
+    monkeypatch.setattr(loop.council_tools, "source_documents", lambda conn, refs: documents)
+    client = FakeClient([
+        FakeResponse([
+            FakeBlock("tool_use", name="full_text_search", id="a", input={"query": "pont"}),
+            FakeBlock("tool_use", name="semantic_search", id="b", input={"query": "pont"}),
+        ], "tool_use"),
+        FakeResponse([FakeBlock("text", text="The expenditure was adopted.")], "end_turn"),
+    ])
+    answer = loop.ask(conn=object(), question="bridge?", client=client)
+    assert answer.source_documents == documents
+    assert answer.text.count("https://example.test/pv.pdf?doc=1") == 1
+    assert "(FR)" in answer.text
+    results = client.messages.calls[1]["messages"][-1]["content"]
+    assert all("https://example.test/pv.pdf?doc=1" in result["content"] for result in results)
+
+
+def test_no_source_link_or_page_is_invented_without_documents():
+    assert loop.with_source_documents("No matching records.", []) == "No matching records."

@@ -11,6 +11,7 @@ import psycopg
 import streamlit as st
 from dotenv import load_dotenv
 
+from mtl_council_agent.app import translations
 from mtl_council_agent.app.i18n import lang, t
 
 load_dotenv()
@@ -47,6 +48,27 @@ def database_url() -> str:
     return url
 
 
+def database_configured() -> bool:
+    try:
+        return bool(database_url())
+    except RuntimeError:
+        return False
+
+
+def database_view(render):
+    """Keep first-run previews useful when council data is not connected."""
+    def guarded():
+        if database_configured():
+            render()
+            return
+        masthead()
+        st.subheader(t("database.title"))
+        st.info(t("database.missing"))
+        st.code("WEB_DATABASE_URL=postgresql://READ_ONLY_USER:PASSWORD@HOST:PORT/DATABASE")
+        st.page_link(PAGES["districts"], label=t("database.preview"))
+    return guarded
+
+
 @st.cache_resource
 def _connection():
     return psycopg.connect(database_url(), autocommit=True)
@@ -78,6 +100,11 @@ def setup_page() -> None:
 def masthead() -> None:
     left, right = st.columns([6, 1], vertical_alignment="center")
     left.markdown(f'<div class="banner">{t("banner")}</div>', unsafe_allow_html=True)
+    st.markdown(
+        '<div class="publication"><div class="publication-name">The Montréal Record.</div>'
+        f'<div class="publication-tagline">{t("publication.tagline")}</div></div>',
+        unsafe_allow_html=True,
+    )
     right.segmented_control(
         "Language", ["EN", "FR"], default="EN", label_visibility="collapsed", key="lang"
     )
@@ -134,3 +161,10 @@ def go(**params) -> None:
     for key, value in params.items():
         st.query_params[key] = str(value)
     st.rerun()
+
+
+def record_title(original: str) -> str:
+    """English mode uses only saved translations, never an on-view model call."""
+    if lang() == "en":
+        return translations.english(original) or original
+    return original

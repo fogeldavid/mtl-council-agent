@@ -26,7 +26,13 @@ The app is a Streamlit site over the same database, with the interface in Englis
 
 <img src="images/app-councillor.png" width="800" alt="Councillor page for Marie Plourde, with 15 of 15 sittings attended, 9 items moved, and her roll-call votes beside her party's majority">
 
-**What visitors' questions cost.** The chat runs Claude Haiku through the same agent loop as the command line, at about $0.03 a question. A separate Anthropic workspace pays for them. It holds $5 of prepaid credit with auto-reload off, so the public app can never spend more than $5. Each visitor gets 5 free questions a day, which the app counts in memory by IP address. After that, or once the credit runs out, the question box asks for the visitor's own Anthropic key. The key stays in their browser session, and the app never stores or logs it. The app saves no question text, only the daily counts. Search and the browse pages need no key.
+**What visitors' questions cost.** Chat uses the team's server-side
+`WEB_ANTHROPIC_API_KEY`. Visitors receive five shared questions a day, counted in
+memory by IP address. Missing credentials, exhausted allowances or rejected shared
+credit disable chat with a message; visitors are never asked for API keys. These
+in-memory counts reset on restart and are not a hard financial cap. Configure and
+verify spending controls in the team's Anthropic account before public launch.
+Browsing and translations do not require an Anthropic key.
 
 **What the app can touch.** It connects as `web_reader`, a Postgres role that can only read, so a bug in the app can't change the data. The weekly ingestion job keeps the database current, and the app reads it live, so there is no rebuild step.
 
@@ -172,7 +178,7 @@ Or run the web app locally:
 ```bash
 pip install -r requirements.txt
 export WEB_DATABASE_URL="postgresql://web_reader:..."   # a read-only login
-export WEB_ANTHROPIC_API_KEY="sk-ant-..."               # optional free pool; without it, Ask asks for a key
+export WEB_ANTHROPIC_API_KEY="sk-ant-..."               # shared chat; without it, chat is disabled
 streamlit run streamlit_app.py
 ```
 
@@ -222,3 +228,104 @@ tests/              parser tests on real fixtures; tests/app for the web app
 .github/workflows/  weekly ingestion and CI
 images/             screenshots of the live app
 ```
+
+
+### District map preview (no database required)
+
+```bash
+.venv/bin/python -m streamlit run streamlit_app.py --server.address 127.0.0.1 --server.port 8501
+```
+
+Open http://127.0.0.1:8501/districts. The map uses all 58 official 2025 district
+boundaries and a saved public city council roster. Click a polygon or choose a
+district from the dropdown. For the source URLs and data license, see
+`src/mtl_council_agent/app/data/README.md`.
+
+Add `WEB_DATABASE_URL` for your populated read-only database to `.env` or Streamlit
+secrets to see recorded votes and original French minutes links. The preview
+never invents voting data. A representative's vote does not establish which
+district a decision affects. The street background fetches external tiles; turn
+it off to view locally bundled polygons without a basemap.
+
+### English record titles and context
+
+English mode reads saved translations from
+`src/mtl_council_agent/app/data/english-translations.json`. It shows a translated
+title and a short translated excerpt from the source's CONTEXTE section, labelled
+“Translated from the French original.” The full French title/summary remains in
+“Read the French original,” alongside the original PDF links. French mode retains
+the original content. Viewing records does not run a model or call a translation API.
+
+The optional local preparation workflow is:
+
+```bash
+uv pip install --python .venv/bin/python -e '.[translation]'
+HF_HOME=scratch/huggingface .venv/bin/ct2-transformers-converter \
+  --model Helsinki-NLP/opus-mt-fr-en --output_dir scratch/translation-fr-en --quantization int8
+HF_HOME=scratch/huggingface .venv/bin/python - <<'PY'
+from transformers import MarianTokenizer
+MarianTokenizer.from_pretrained('Helsinki-NLP/opus-mt-fr-en').save_pretrained('scratch/translation-tokenizer')
+PY
+.venv/bin/python scripts/translate_records.py \
+  --model-dir scratch/translation-fr-en --tokenizer-dir scratch/translation-tokenizer --protect-numbers
+```
+
+The model download requires internet once. Subsequent inference runs locally on the
+CPU. The script reads the team database in a read-only transaction, does not change
+its schema/data, and saves translations incrementally. Unchanged source texts are
+skipped on later runs; changed text gets a new SHA-256 key. Deploy the generated JSON
+with the app; the web host does not need the model or its optional dependencies.
+
+This is machine translation, not an official English edition. Amount/reference
+checks flag suspicious outputs for review in `scratch/translation-review.json`.
+Fields awaiting review remain clearly labelled French originals. Source fidelity
+checks are useful safeguards, not a guarantee of semantic translation accuracy.
+
+Model: https://huggingface.co/Helsinki-NLP/opus-mt-fr-en (Apache 2.0).
+Local runtime: https://opennmt.net/CTranslate2/guides/transformers.html.
+Translated content is derived from the same Ville de Montréal public records and
+retains their original source attribution.
+
+### Find my district
+
+Below the district map, enter a civic number and French street name (for example,
+`275 rue Notre-Dame Est`), then confirm the matching address. The app queries the
+Québec MRNF official AQ Adresses service and checks the returned coordinates
+against the locally bundled 2025 electoral boundaries. Only an unambiguous point
+inside one district can update the map and councillor selection. Postal-code-only
+search is deliberately unsupported; it cannot reliably identify a municipal district.
+
+No AI or paid API key is required. An explicit search sends the civic number and
+street to Québec's service. Search text/results exist only in the browser session;
+they are not written to the database, cached globally, or intentionally logged by
+this app. The form clears after submission. Address search needs internet and
+provider availability. It does not support apartment numbers, fuzzy spelling, or
+English translations of official French street names. An unavailable, ambiguous,
+or missing address leaves the existing map selection unchanged.
+
+Address source and service documentation:
+https://servicescarto.mrnf.gouv.qc.ca/pes/rest/services/Territoire/AQ_ADRESSES_WMS/MapServer
+
+### Refresh English content in one command
+
+After the team imports new minutes, run from the project folder:
+
+```bash
+.venv/bin/python scripts/refresh_translations.py
+```
+
+This prepares the local model/tokenizer automatically if missing, prioritizes
+English titles, retries failed numeric fields with protected numbers, then updates
+short context translations. Existing source hashes are skipped. No translation API
+is used. The database connection is read-only; new meeting ingestion remains the
+team's separate process. Run it again after that process finishes. The command
+prints title coverage and the latest meeting date currently in the database.
+
+A prepared GitHub workflow, `Prepare English translations`, can run manually or
+after successful weekly ingestion once this branch is deployed. It needs the
+repository secret `WEB_DATABASE_URL`. It downloads the model once into a runner
+cache and performs CPU translation there. The output is an `english-translations`
+artifact: copy its `english-translations.json` into
+`src/mtl_council_agent/app/data/` on the deployment branch after review. This
+workflow does not commit or deploy automatically. Until then, the local command
+is the simplest update path; the local preview picks up the changed JSON directly.

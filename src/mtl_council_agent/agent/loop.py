@@ -34,6 +34,7 @@ MAX_TOKENS = 16000
 class AgentAnswer:
     text: str
     citations: list[str] = field(default_factory=list)
+    source_documents: list[dict] = field(default_factory=list)
     turns: int = 0
     input_tokens: int = 0
     output_tokens: int = 0
@@ -48,6 +49,24 @@ class AgentAnswer:
         return (
             self.input_tokens * input_rate + self.output_tokens * output_rate
         ) / 1_000_000
+
+
+
+def with_source_documents(text: str, documents: list[dict]) -> str:
+    """Render database-owned links even when the model omits its source list.
+
+    These are meeting documents for retrieved records, not verified page-level
+    evidence. Keep this distinction visible; a source link alone cannot prove
+    that an individual claim is supported.
+    """
+    if not documents:
+        return text
+    lines = []
+    for document in documents:
+        label = f"{document['meeting_date']} — {document['doc_type']} (FR)"
+        # Angle brackets keep query strings and parentheses inside the URL.
+        lines.append(f"- [{label}](<{document['url']}>)")
+    return text + "\n\nSources · documents des séances (FR)\n\n" + "\n".join(lines)
 
 
 def _serialize_items(items: list[council_tools.ItemResult]) -> str:
@@ -207,6 +226,7 @@ def ask(
     messages.append({"role": "user", "content": question})
     answer = AgentAnswer(text="")
     seen_citations: list[str] = []
+    source_documents: list[dict] = []
 
     # The fixed instructions are cached; the meeting list changes weekly, so it
     # goes after them, outside the cache marker.
@@ -238,6 +258,8 @@ def ask(
                 block.text for block in response.content if block.type == "text"
             )
             answer.citations = list(dict.fromkeys(seen_citations))
+            answer.source_documents = source_documents
+            answer.text = with_source_documents(answer.text, source_documents)
             return answer
 
         # All tool results for one assistant turn go back in ONE user message.
@@ -248,6 +270,14 @@ def ask(
             try:
                 result_text, citations = _run_tool(conn, block.name, dict(block.input))
                 seen_citations.extend(citations)
+                if conn is not None and citations:
+                    documents = council_tools.source_documents(conn, citations)
+                    for document in documents:
+                        if document not in source_documents:
+                            source_documents.append(document)
+                    result_text += "\nSource documents (French originals): " + json.dumps(
+                        documents, ensure_ascii=False
+                    )
                 is_error = False
             except Exception as exc:
                 logger.exception("tool %s failed", block.name)

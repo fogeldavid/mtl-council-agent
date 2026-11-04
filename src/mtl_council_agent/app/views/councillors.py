@@ -17,6 +17,7 @@ from mtl_council_agent.app.common import (
     go,
     masthead,
     outcome_label,
+    record_title,
     run,
 )
 from mtl_council_agent.app.i18n import t
@@ -63,7 +64,7 @@ def _item_table(rows: list[dict], columns: dict[str, callable], key: str) -> Non
     )
     picked = event.selection.rows if event and event.selection else []
     if picked:
-        st.switch_page(PAGES["meetings"], query_params={"item": rows[picked[0]]["id"]})
+        st.switch_page(PAGES["updates"], query_params={"item": rows[picked[0]]["id"]})
 
 
 def _profile(official_id: int) -> None:
@@ -90,7 +91,7 @@ def _profile(official_id: int) -> None:
     common = {
         t("col.date"): lambda r: fmt_date(r["meeting_date"]),
         t("col.item"): lambda r: display_number(r["item_number"], r["section"]),
-        t("col.title"): lambda r: r["title"],
+        t("col.title"): lambda r: record_title(r["title"]),
     }
 
     st.markdown(f"### {t('profile.roll_calls')}")

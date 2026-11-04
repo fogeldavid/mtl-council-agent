@@ -1,0 +1,45 @@
+name: Prepare English translations
+
+on:
+  workflow_dispatch:
+  workflow_run:
+    workflows: [Weekly ingestion]
+    types: [completed]
+
+permissions:
+  contents: read
+
+jobs:
+  translate:
+    # workflow_run checks out only the trusted default branch; never a PR head.
+    if: github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success'
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.12'
+          cache: pip
+      - uses: actions/cache@v4
+        with:
+          path: |
+            scratch/huggingface
+            scratch/translation-fr-en
+            scratch/translation-tokenizer
+          key: local-marian-fr-en-int8-v1
+      - name: Install local translation dependencies
+        run: pip install -e '.[translation]'
+      - name: Refresh saved English titles and context
+        env:
+          WEB_DATABASE_URL: ${{ secrets.WEB_DATABASE_URL }}
+        run: python scripts/refresh_translations.py
+      # No automatic commits or deployment. Maintainer reviews/copies the JSON
+      # into the deployment branch so the website can serve it without inference.
+      - uses: actions/upload-artifact@v4
+        with:
+          name: english-translations
+          path: |
+            src/mtl_council_agent/app/data/english-translations.json
+            scratch/translation-review.json
+          retention-days: 30

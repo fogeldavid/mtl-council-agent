@@ -15,3 +15,6 @@ build/
 # Downloaded source PDFs — re-fetchable from the portal, far too large to track
 *.pdf
 scratch/
+
+# Local Streamlit credentials
+.streamlit/secrets.toml

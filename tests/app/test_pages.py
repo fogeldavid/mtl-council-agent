@@ -27,13 +27,23 @@ def _render(view: str, params: dict[str, str]) -> None:
     import streamlit as st
 
     from mtl_council_agent.app.common import PAGES
-    from mtl_council_agent.app.views import about, councillors, home, meetings, search
+    from mtl_council_agent.app.views import (
+        about,
+        councillors,
+        districts,
+        home,
+        meetings,
+        search,
+        updates,
+    )
 
     views = {
         "home": home, "search": search, "meetings": meetings,
         "councillors": councillors, "about": about,
+        "updates": updates, "districts": districts,
     }
     PAGES.update(
+        updates=st.Page(updates.render, title="Newsfeed", url_path="updates"),
         ask=st.Page(home.render, title="Ask", url_path="ask", default=True),
         search=st.Page(search.render, title="Search", url_path="search"),
         meetings=st.Page(meetings.render, title="Meetings", url_path="meetings"),
@@ -58,6 +68,8 @@ def _web_database(db_url, monkeypatch):
     ("view", "params"),
     [
         ("home", {}),
+        ("updates", {}),
+        ("districts", {}),
         ("search", {}),
         ("meetings", {}),
         ("meetings", {"meeting": "1"}),
@@ -77,12 +89,10 @@ def test_view_renders_without_error(view, params):
     assert not at.exception, at.exception[0].value
 
 
-def test_home_shows_the_record_numbers():
+def test_home_only_shows_chat_without_record_statistics():
     at = _run("home")
-    shown = {m.label: m.value for m in at.metric}
-    assert shown == {
-        "Meetings": "2", "Agenda items": "5", "Recorded votes": "7", "Council members": "5",
-    }
+    assert not at.metric
+    assert "The record" not in " ".join(m.value for m in at.markdown)
 
 
 def test_item_page_labels_inferred_votes():
@@ -144,12 +154,13 @@ def stub_agent(monkeypatch):
     return asked
 
 
-def test_ask_without_any_key_offers_the_own_key_box(monkeypatch):
+def test_ask_without_team_key_never_requests_a_visitor_key(monkeypatch):
     monkeypatch.delenv("WEB_ANTHROPIC_API_KEY", raising=False)
     at = _run("home")
     assert not at.exception
     assert at.chat_input[0].disabled
-    assert [ti.label for ti in at.text_input] == ["Your Anthropic API key"]
+    assert not at.text_input
+    assert any("temporarily unavailable" in info.value for info in at.info)
 
 
 def test_ask_answers_and_keeps_follow_up_context(stub_agent):
@@ -168,14 +179,13 @@ def test_ask_answers_and_keeps_follow_up_context(stub_agent):
     )
 
 
-def test_ask_switches_to_own_key_after_the_free_questions(stub_agent):
+def test_ask_closes_after_allowance_without_requesting_visitor_keys(stub_agent):
     at = _run("home")
     for n in range(5):
         at.chat_input[0].set_value(f"q{n}").run()
     assert at.chat_input[0].disabled
-    at.text_input[0].input("visitor-key").run()
-    assert not at.chat_input[0].disabled
-    assert "Using your own Anthropic key." in " ".join(c.value for c in at.caption)
+    assert not at.text_input
+    assert any("used up" in info.value for info in at.info)
 
 
 def test_explain_button_on_an_item(stub_agent):
@@ -186,3 +196,18 @@ def test_explain_button_on_an_item(stub_agent):
     assert "adopted it by majority" in " ".join(m.value for m in at.markdown)
     question = stub_agent[0][0]
     assert "item_id 10" in question and "20.06" in question
+
+
+def test_district_selector_shows_the_imported_representative():
+    at = _run("districts")
+    at.selectbox[0].select("Mile-End · Le Plateau-Mont-Royal").run()
+    assert not at.exception
+    assert "Marie Plourde" in " ".join(markdown.value for markdown in at.markdown)
+    assert "Soraya Martinez Ferrada" not in " ".join(m.value for m in at.markdown)
+
+
+def test_updates_search_has_an_empty_state():
+    at = _run("updates")
+    at.text_input[0].set_value("zzzxxyynonexistent").run()
+    assert not at.exception
+    assert any("No records match" in info.value for info in at.info)
