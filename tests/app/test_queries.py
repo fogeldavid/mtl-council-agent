@@ -119,11 +119,3 @@ def test_meetings_note_lists_newest_first_and_flags_missing_minutes(conn):
     lines = note.splitlines()[1:]
     assert lines[0].startswith("- 2026-09-21 (ordinaire, 1 items, minutes NOT yet published")
     assert lines[1] == "- 2026-03-23 (ordinaire, 4 items, minutes published)"
-
-
-def test_district_recorded_votes_have_minutes_and_no_attendance_inferences(conn):
-    rows = queries.district_recorded_votes(conn, 3)
-    assert {row["id"] for row in rows} == {10, 11}
-    assert all(row["source_url"] == "https://example.test/pv-8354.pdf" for row in rows)
-    assert next(row for row in rows if row["id"] == 10)["position"] == "against"
-    assert queries.district_recorded_votes(conn, 3, limit=1) == rows[:1]

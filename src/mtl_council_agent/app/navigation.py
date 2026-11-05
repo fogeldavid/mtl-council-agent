@@ -46,7 +46,8 @@ def render(page: str) -> None:
         with st.container(key="section-navigation"):
             columns = st.columns(len(children))
             for column, child in zip(columns, children, strict=True):
-                with column:
+                suffix = "-active" if child == page else ""
+                with column, st.container(key=f"subnav-{child}{suffix}"):
                     label = {"updates": "nav.feed", "districts": "nav.map"}.get(
                         child, "nav." + child,
                     )
