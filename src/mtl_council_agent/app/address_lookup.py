@@ -159,12 +159,12 @@ def lookup(address: str) -> list[dict]:
     results = []
     seen = set()
     found_address = False
+    districts: dict[tuple, str | None] = {}
     for item in payload["features"]:
         geometry = item.get("geometry") or {}
         coordinates = [geometry.get("x"), geometry.get("y")]
         if not all(isinstance(v, (int, float)) and math.isfinite(v) for v in coordinates):
             continue
-        code = district_at(*coordinates)
         title = str((item.get("attributes") or {}).get("AdresseFormatee") or "")
         start = re.search(rf"(?<!\d){int(number)}\s", title)
         if start:
@@ -173,6 +173,12 @@ def lookup(address: str) -> list[dict]:
         if not all(word in title_words for word in words):
             continue
         found_address = True
+        # Testing a point against every boundary is slow, and a building's units
+        # share one point, so each distinct point is only tested once.
+        point = tuple(coordinates)
+        if point not in districts:
+            districts[point] = district_at(*point)
+        code = districts[point]
         # One building can span many postal codes; list it once.
         place = (_POSTAL_CODE.sub("", title).strip(), code)
         if code and title and place not in seen:
