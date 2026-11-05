@@ -32,8 +32,9 @@ def _render_navigation(page):
 
 @pytest.mark.parametrize(("page", "secondary"), [
     ("ask", []),
-    ("updates", ["Search"]),
-    ("search", ["Search"]),
+    ("updates", ["Newsfeed", "Search"]),
+    ("search", ["Newsfeed", "Search"]),
+    ("landing", []),
     ("councillors", ["Districts", "Councillors"]),
     ("meetings", ["Meetings", "About"]),
     ("about", ["Meetings", "About"]),
@@ -41,23 +42,54 @@ def _render_navigation(page):
 def test_only_four_primary_links_and_contextual_secondary_links(page, secondary):
     at = AppTest.from_function(_render_navigation, args=(page,)).run()
     assert not at.exception
-    assert any(b.label == "Council updates" for b in at.button)
     labels = [element.proto.label for element in at.get("page_link")]
     assert labels == [
-        "Ask the council", "District explorer", "Records & about", *secondary,
+        "Ask the council", "District explorer", "Council updates", "Records & about", *secondary,
     ]
 
 
-def test_real_entrypoint_renders_without_a_sidebar(monkeypatch):
+def _entrypoint(monkeypatch):
     # Local development credentials must never make this offline test query a real database.
     monkeypatch.setattr("mtl_council_agent.app.common.database_configured", lambda: False)
     app = Path(__file__).parents[1] / "streamlit_app.py"
-    at = AppTest.from_file(str(app), default_timeout=30).run()
+    return AppTest.from_file(str(app), default_timeout=30).run()
+
+
+def test_the_landing_page_opens_first_and_offers_the_four_boxes(monkeypatch):
+    at = _entrypoint(monkeypatch)
     assert not at.exception
     assert not at.sidebar.children
-    assert any(b.label == "Council updates" for b in at.button)
     labels = [element.proto.label for element in at.get("page_link")]
     assert labels == [
-        "Ask the council", "District explorer", "Records & about", "Search",
-        "Preview the district map",
+        "The Montréal Record.",
+        "Ask the council", "District explorer", "Council updates", "Records & about",
+        "Find your district and councillors →", "Search the records →",
+        "Ask our AI about council decisions →", "Recent meetings →",
     ]
+
+
+def _render_about():
+    from mtl_council_agent.app.views import about
+
+    about.render()
+
+
+def test_the_landing_photo_is_bundled_and_credited_on_the_about_page():
+    from mtl_council_agent.app.views import landing
+
+    assert landing.PHOTO.stat().st_size < 400_000
+    at = AppTest.from_function(_render_about).run()
+    assert not at.exception
+    credit = " ".join(m.value for m in at.markdown)
+    assert "Concierge.2C" in credit and "CC BY-SA 3.0" in credit
+
+
+def test_each_landing_box_goes_to_its_page(monkeypatch):
+    from mtl_council_agent.app.views import landing
+
+    assert [box[0] for box in landing.BOXES] == ["districts", "search", "ask", "updates"]
+    at = _entrypoint(monkeypatch)
+    links = {element.proto.label: element.proto.page for element in at.get("page_link")}
+    assert links["Recent meetings →"] == links["Council updates"]
+    assert links["Find your district and councillors →"] == links["District explorer"]
+    assert links["Ask our AI about council decisions →"] == links["Ask the council"]

@@ -17,6 +17,7 @@ from mtl_council_agent.app import navigation  # noqa: E402
 from mtl_council_agent.app.common import (  # noqa: E402
     PAGES,
     database_view,
+    masthead,
     setup_page,
 )
 from mtl_council_agent.app.i18n import t  # noqa: E402
@@ -25,6 +26,7 @@ from mtl_council_agent.app.views import (  # noqa: E402
     councillors,
     districts,
     home,
+    landing,
     meetings,
     search,
     updates,
@@ -34,7 +36,8 @@ st.set_page_config(page_title="The Montréal Record", layout="wide")
 setup_page()
 
 PAGES.update(
-    updates=st.Page(database_view(updates.render), title=t("nav.updates"), default=True),
+    landing=st.Page(landing.render, title="The Montréal Record", default=True),
+    updates=st.Page(database_view(updates.render), title=t("nav.updates"), url_path="updates"),
     districts=st.Page(districts.render, title=t("nav.districts"), url_path="districts"),
     ask=st.Page(database_view(home.render), title=t("nav.ask"), url_path="ask"),
     search=st.Page(database_view(search.render), title=t("nav.search"), url_path="search"),
@@ -46,5 +49,6 @@ PAGES.update(
 )
 page = st.navigation(list(PAGES.values()), position="hidden")
 page_key = next(key for key, candidate in PAGES.items() if candidate.url_path == page.url_path)
+masthead()
 navigation.render(page_key)
 page.run()

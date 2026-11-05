@@ -62,7 +62,6 @@ def database_view(render):
         if database_configured():
             render()
             return
-        masthead()
         st.subheader(t("database.title"))
         st.info(t("database.missing"))
         st.code("WEB_DATABASE_URL=postgresql://READ_ONLY_USER:PASSWORD@HOST:PORT/DATABASE")
@@ -104,11 +103,9 @@ def setup_page() -> None:
 def masthead() -> None:
     with st.container(key="masthead"):
         left, right = st.columns([6, 1], vertical_alignment="center")
-        left.markdown(
-            '<div class="publication-name">The Montréal Record.</div>'
-            f'<div class="banner">{t("banner")}</div>',
-            unsafe_allow_html=True,
-        )
+        with left:
+            st.page_link(PAGES["landing"], label="The Montréal Record.")
+            st.markdown(f'<div class="banner">{t("banner")}</div>', unsafe_allow_html=True)
         right.segmented_control(
             "Language", ["EN", "FR"], default="EN", label_visibility="collapsed", key="lang"
         )

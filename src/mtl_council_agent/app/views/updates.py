@@ -11,7 +11,6 @@ from mtl_council_agent.app.common import (
     fmt_date,
     go,
     html_text,
-    masthead,
     record_title,
     run,
 )
@@ -26,18 +25,18 @@ def _reset_page() -> None:
 
 
 def render() -> None:
-    masthead()
     if "item" in st.query_params:
         meetings._item_view(int(st.query_params["item"]), from_feed=True)
         return
     st.title(t("updates.title"))
-    st.caption(t("feed.minutes_only"))
-    if lang() == "en":
-        st.caption(t("translation.label"))
+    st.caption(
+        f"{t('feed.minutes_only')} {t('translation.label')}." if lang() == "en"
+        else t("feed.minutes_only")
+    )
     saved = st.session_state.get("feed_filters", {})
     text = st.text_input(
         t("nav.search"), value=saved.get("text", ""), placeholder=t("feed.search_hint"),
-        key="_feed_text", on_change=_reset_page,
+        key="_feed_text", on_change=_reset_page, label_visibility="collapsed",
     )
     if lang() == "en":
         st.caption(t("feed.search_french"))

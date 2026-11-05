@@ -23,6 +23,11 @@ Downloaded on October 30, 2026, from Ville de Montréal open data.
 
 Boundaries are served from this package, without a city API call on page load. The optional Carto street basemap fetches external map tiles. Turn off the street background to render district polygons without basemap tile requests. Streamlit still needs to serve the app and its frontend assets.
 
+## City Hall photo
+
+- `city-hall.jpg`: "Montréal - Hôtel de Ville" by Concierge.2C, from Wikimedia Commons: https://commons.wikimedia.org/wiki/File:Montr%C3%A9al_-_H%C3%B4tel_de_Ville.jpg
+- License: CC BY-SA 3.0, https://creativecommons.org/licenses/by-sa/3.0/. The bundled copy is resized, and the landing page crops it for display. The credit is on the About page.
+
 ## Saved English translations
 
 `english-translations.json` contains English derivatives of the original Ville de

@@ -5,12 +5,11 @@ from __future__ import annotations
 import streamlit as st
 
 from mtl_council_agent.app import chat
-from mtl_council_agent.app.common import masthead, md_text
+from mtl_council_agent.app.common import md_text
 from mtl_council_agent.app.i18n import t
 
 
 def render() -> None:
-    masthead()
     st.markdown(f"## {t('home.title')}")
     _chat()
 
