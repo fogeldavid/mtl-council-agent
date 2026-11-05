@@ -35,6 +35,9 @@ It works across languages: an English question matches the French records.
 French wording for a topic even when asked in English, since the records are French.
 - Use get_item_detail to read an item's full decision summary before summarizing \
 its reasoning, budget, or history.
+- Search results show only a short excerpt of each item. Before saying the records \
+don't mention something, use get_item_detail to read the items closest to the \
+question: the answer may be in the part of the summary the excerpt left out.
 - Use get_official_record for accountability questions about an elected official: \
 what they moved or seconded, and every vote of theirs the minutes record. If \
 officials_matched lists more than one person, say so and ask which one is meant.

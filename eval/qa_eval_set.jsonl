@@ -3,7 +3,7 @@
 {"question": "Who moved and who seconded the Guy-Lafleur bridge expenditure?", "must_include": ["Hénault-Ratelle", "DeSousa"], "category": "accountability"}
 {"question": "What is resolution CM26 0677 about?", "must_include": ["Guy-Lafleur"], "category": "resolution-lookup"}
 {"question": "Why did the Guy-Lafleur bridge contract need more money?", "must_include": ["plans"], "category": "reasoning"}
-{"question": "Is the city in any legal dispute over the Guy-Lafleur bridge work?", "must_include": ["Atkins"], "category": "reasoning"}
+{"question": "Is the city in any legal dispute over the Guy-Lafleur bridge work?", "must_include": ["Atkins", "lawsuit"], "category": "reasoning", "must_not_include": ["no indication", "did not find", "do not mention", "does not mention", "no record", "no mention", "no legal dispute"]}
 {"question": "What did council approve regarding a lease with Hydro-Québec for a bike path?", "must_include": ["46 896", "Rivière-des-Prairies"], "category": "specific-decision"}
 {"question": "How long is the Hydro-Québec bike path lease?", "must_include": ["10"], "category": "specific-decision"}
 {"question": "What was on the agenda for the June 15, 2026 council meeting?", "must_include": ["161"], "category": "date-lookup"}
@@ -78,3 +78,6 @@
 {"question": "What is the live traffic speed on every Montreal bridge right now?", "should_refuse": true, "category": "out-of-scope-not-in-records"}
 {"question": "What is the weather forecast for Montreal tomorrow?", "should_refuse": true, "category": "out-of-scope-not-in-records"}
 {"question": "What are the live stock prices of all contractors mentioned in council records?", "should_refuse": true, "category": "out-of-scope-not-in-records"}
+{"question": "Can the city back out of its agreement to buy land from the Masciotra family if there is a problem with the soil?", "must_include": ["contamin"], "meeting_date": "2026-09-21", "category": "full-text-only"}
+{"question": "Does the free land loan to the Centre de services scolaire de Montréal for a new primary school involve any soil cleanup?", "must_include": ["contamin"], "meeting_date": "2026-09-21", "category": "full-text-only"}
+{"question": "Are there penalties if Can-Explore is late on its city contract for finding reversed sewer connections?", "must_include": ["100"], "meeting_date": "2026-09-21", "category": "full-text-only"}
