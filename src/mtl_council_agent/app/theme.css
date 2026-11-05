@@ -45,7 +45,17 @@ a { color: #345D50; }
 .record-story .meta { margin: 12px 0; }
 .card, .summary { background: #FEFEFC; border-color: #DADCD4; border-radius: 0; }
 .note, .cite { background: #F0F0EC; }
-[data-testid="stChatMessage"] { border: 1px solid #DADCD4; background: #FEFEFC; border-radius: 4px; }
+/* Chat reads as a conversation: questions on the right, answers on the left, no avatars. */
+[data-testid="stChatMessage"] {
+  border: 0; background: transparent; padding: 4px 0; max-width: min(760px, 92%); gap: 0;
+}
+[data-testid="stChatMessageAvatarUser"], [data-testid="stChatMessageAvatarAssistant"] {
+  display: none;
+}
+[data-testid="stChatMessage"]:has([data-testid="stChatMessageAvatarUser"]) {
+  margin-left: auto; width: fit-content; max-width: min(620px, 80%);
+  padding: 10px 16px; background: #EFEFEA; border-radius: 16px 16px 4px 16px;
+}
 [data-testid="stChatInput"] { border-color: #345D50; }
 button:focus-visible, a:focus-visible { outline: 2px solid #345D50; outline-offset: 3px; }
 @media (max-width: 640px) {
@@ -83,6 +93,15 @@ button:focus-visible, a:focus-visible { outline: 2px solid #345D50; outline-offs
 /* Compact shell keeps each page's content visible without scrolling. */
 header[data-testid="stHeader"] { display: none; }
 .block-container { padding-top: .5rem !important; }
+.st-key-item-people { gap: 6px; margin-top: 6px; }
+.st-key-item-people [data-testid="stPageLink"] a {
+  width: fit-content; padding: 3px 12px; background: transparent;
+  border: 1px solid #C9CCC4; border-radius: 4px;
+}
+.st-key-item-people [data-testid="stPageLink"] a:hover { background: #F0F0EC; }
+.st-key-item-people [data-testid="stPageLink"] p {
+  color: #264539 !important; font-size: 13px; font-weight: 600;
+}
 [class*="st-key-feed_open_"] button {
   width: auto; min-height: 0; padding: 3px 12px; background: transparent;
   border: 1px solid #C9CCC4; border-radius: 4px;

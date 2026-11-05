@@ -188,6 +188,44 @@ def test_ask_closes_after_allowance_without_requesting_visitor_keys(stub_agent):
     assert any("used up" in info.value for info in at.info)
 
 
+def _render_vote_panel(outcome, inferred):
+    from unittest.mock import patch
+
+    import streamlit as st
+
+    from mtl_council_agent.agent.tools import VoteDetail
+    from mtl_council_agent.app.common import PAGES
+    from mtl_council_agent.app.views import meetings
+
+    PAGES["councillors"] = st.Page(lambda: None, title="c", url_path="councillors", default=True)
+    item = {
+        "id": 1, "vote_outcome": outcome, "section": "council",
+        "mover": "Soraya Martinez Ferrada", "mover_id": 57,
+        "seconder": "Josué Corvil", "seconder_id": 63,
+    }
+    detail = VoteDetail(outcome=outcome, inferred_for=inferred)
+    with patch.object(meetings, "run", return_value=detail):
+        meetings._votes(item)
+
+
+def test_a_unanimous_item_without_attendance_says_so_and_labels_the_mover():
+    at = AppTest.from_function(_render_vote_panel, args=("adopted_unanimous", None)).run()
+    assert not at.exception
+    text = " ".join(m.value for m in at.markdown)
+    assert "Adopted unanimously. The minutes don" in text
+    assert "No individual votes" not in text
+    assert [link.proto.label for link in at.get("page_link")] == [
+        "Moved by Soraya Martinez Ferrada →", "Seconded by Josué Corvil →",
+    ]
+
+
+def test_only_unanimous_items_are_described_as_unanimous():
+    at = AppTest.from_function(_render_vote_panel, args=("rejected", None)).run()
+    assert not at.exception
+    text = " ".join(m.value for m in at.markdown)
+    assert "No individual votes" in text and "unanimously" not in text
+
+
 def test_the_app_connection_can_send_search_vectors():
     # The agent's semantic_search sends one of these; the eval connects another
     # way, so it can't catch this failing on the app's connection.

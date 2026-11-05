@@ -134,13 +134,8 @@ def _item_view(item_id: int, from_feed: bool = False) -> None:
     st.markdown(" ".join(tags), unsafe_allow_html=True)
     st.markdown(f"### {md_text(record_title(it['title']))}")
 
-    byline = []
     if it["department"]:
-        byline.append(it["department"])
-    if it["mover"]:
-        byline.append(t("item.moved_by", mover=it["mover"], seconder=it["seconder"] or "—"))
-    if byline:
-        st.caption(md_text(" · ".join(byline)))
+        st.caption(md_text(it["department"]))
 
     left, right = st.columns([1.6, 1], gap="large")
     with left:
@@ -243,6 +238,8 @@ def _votes(it: dict) -> None:
         note = t("item.note.roll_call")
     elif it["vote_outcome"] == "adopted_unanimous" and detail.inferred_for is not None:
         note = t("item.note.unanimous")
+    elif it["vote_outcome"] == "adopted_unanimous":
+        note = t("item.note.unanimous_unnamed")
     elif it["vote_outcome"] == "adopted_majority":
         note = t("item.note.majority_named" if n_against else "item.note.majority_unnamed")
     else:
@@ -261,6 +258,11 @@ def _votes(it: dict) -> None:
         st.markdown(f"**{t('item.abstained')}**")
         st.markdown(_names(detail.recorded_abstained), unsafe_allow_html=True)
 
-    if it["mover_id"]:
-        st.page_link(PAGES["councillors"], label=f"{it['mover']} →",
-                     query_params={"id": it["mover_id"]})
+    with st.container(key="item-people"):
+        for label, name, official_id in (
+            ("item.moved_by", it["mover"], it["mover_id"]),
+            ("item.seconded_by", it["seconder"], it["seconder_id"]),
+        ):
+            if official_id:
+                st.page_link(PAGES["councillors"], label=t(label, name=name),
+                             query_params={"id": official_id})

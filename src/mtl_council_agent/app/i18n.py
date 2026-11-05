@@ -379,10 +379,8 @@ STRINGS: dict[str, dict[str, str]] = {
     "back.meetings": {"en": "All meetings", "fr": "Toutes les séances"},
     "back.meeting": {"en": "Back to the meeting", "fr": "Retour à la séance"},
     "back.councillors": {"en": "All councillors", "fr": "Tous les élus"},
-    "item.moved_by": {
-        "en": "Moved by {mover}, seconded by {seconder}",
-        "fr": "Proposé par {mover}, appuyé par {seconder}",
-    },
+    "item.moved_by": {"en": "Moved by {name} →", "fr": "Proposé par {name} →"},
+    "item.seconded_by": {"en": "Seconded by {name} →", "fr": "Appuyé par {name} →"},
     "item.pdf_bundle": {
         "en": "Original decision documents (French PDF)",
         "fr": "Dossiers décisionnels originaux (PDF français)",
@@ -417,6 +415,10 @@ STRINGS: dict[str, dict[str, str]] = {
         "member recorded present at that sitting, minus declared abstentions.",
         "fr": "Adopté à l'unanimité. Le procès-verbal ne nomme pas les votes; « pour » désigne les "
         "membres présents à cette séance, moins les abstentions déclarées.",
+    },
+    "item.note.unanimous_unnamed": {
+        "en": "Adopted unanimously. The minutes don't name how each member voted.",
+        "fr": "Adopté à l'unanimité. Le procès-verbal ne précise pas le vote de chaque membre.",
     },
     "item.note.majority_named": {
         "en": "Adopted by majority. The minutes name the dissenters; \"for\" is everyone present "
