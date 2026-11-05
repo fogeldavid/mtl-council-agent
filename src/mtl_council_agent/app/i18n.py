@@ -149,6 +149,53 @@ STRINGS: dict[str, dict[str, str]] = {
         "fr": "Qui vous représente au conseil municipal",
     },
     "districts.open": {"en": "{name}: see votes →", "fr": "{name} : voir les votes →"},
+    "about.credits": {"en": "Credits", "fr": "Crédits"},
+    "about.photo": {
+        "en": "Home page photo: [Montréal City Hall]({source}) by Concierge.2C, "
+              "[CC BY-SA 3.0]({license}), cropped.",
+        "fr": "Photo de la page d’accueil : [Hôtel de ville de Montréal]({source}), par "
+              "Concierge.2C, [CC BY-SA 3.0]({license}), recadrée.",
+    },
+    "landing.title": {
+        "en": "See what Montreal city council decided and how your councillor voted.",
+        "fr": "Voyez ce que le conseil municipal de Montréal a décidé et comment vos "
+              "élus ont voté.",
+    },
+    "landing.intro": {
+        "en": "This site makes the council's public records easier to read, search and "
+              "question, with links back to the city's original documents.",
+        "fr": "Ce site rend les documents publics du conseil plus faciles à lire et à "
+              "consulter, avec des liens vers les documents originaux de la Ville.",
+    },
+    "landing.districts": {
+        "en": "Find your district and councillors →",
+        "fr": "Trouvez votre district et vos élus →",
+    },
+    "landing.districts_help": {
+        "en": "Enter your address or pick your district on the map to see who "
+              "represents you and how they voted.",
+        "fr": "Entrez votre adresse ou choisissez votre district sur la carte pour voir "
+              "qui vous représente et comment ces personnes ont voté.",
+    },
+    "landing.search": {"en": "Search the records →", "fr": "Cherchez dans le registre →"},
+    "landing.search_help": {
+        "en": "Look up decisions by topic, company or resolution number, in English or French.",
+        "fr": "Cherchez des décisions par sujet, entreprise ou numéro de résolution, "
+              "en français ou en anglais.",
+    },
+    "landing.ask": {
+        "en": "Ask our AI about council decisions →",
+        "fr": "Questionnez notre IA sur les décisions du conseil →",
+    },
+    "landing.ask_help": {
+        "en": "Get answers that cite the record. Five free questions a day.",
+        "fr": "Obtenez des réponses qui citent le registre. Cinq questions gratuites par jour.",
+    },
+    "landing.recent": {"en": "Recent meetings →", "fr": "Séances récentes →"},
+    "landing.recent_help": {
+        "en": "Read the latest decisions from meetings with published minutes.",
+        "fr": "Lisez les dernières décisions des séances dont le procès-verbal est publié.",
+    },
     "districts.title": {
         "en": 'District and councillor',
         "fr": 'District et élus',

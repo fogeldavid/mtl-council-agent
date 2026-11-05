@@ -20,7 +20,6 @@ from mtl_council_agent.app.common import (
     fmt_date,
     go,
     html_text,
-    masthead,
     md_text,
     outcome_label,
     record_title,
@@ -30,7 +29,6 @@ from mtl_council_agent.app.i18n import lang, t
 
 
 def render() -> None:
-    masthead()
     params = st.query_params
     if "item" in params:
         _item_view(int(params["item"]))

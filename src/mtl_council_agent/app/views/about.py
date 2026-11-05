@@ -4,8 +4,10 @@ from __future__ import annotations
 
 import streamlit as st
 
-from mtl_council_agent.app.common import masthead
-from mtl_council_agent.app.i18n import lang
+from mtl_council_agent.app.i18n import lang, t
+
+PHOTO_SOURCE = "https://commons.wikimedia.org/wiki/File:Montr%C3%A9al_-_H%C3%B4tel_de_Ville.jpg"
+PHOTO_LICENSE = "https://creativecommons.org/licenses/by-sa/3.0/"
 
 ABOUT = {
     "en": """
@@ -82,5 +84,6 @@ conseil d'agglomération ne sont pas inclus.
 
 
 def render() -> None:
-    masthead()
     st.markdown(ABOUT[lang()])
+    st.markdown(f"### {t('about.credits')}")
+    st.markdown(t("about.photo", source=PHOTO_SOURCE, license=PHOTO_LICENSE))

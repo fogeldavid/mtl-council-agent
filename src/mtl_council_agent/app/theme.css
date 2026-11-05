@@ -95,48 +95,80 @@ header[data-testid="stHeader"] { display: none; }
 .st-key-primary-navigation [data-testid="stColumn"] [data-testid="stVerticalBlock"],
 .st-key-primary-navigation [data-testid="stElementContainer"],
 .st-key-primary-navigation [data-testid="stPageLink"],
-.st-key-primary-navigation [data-testid="stPageLink"] > div,
-.st-key-primary-navigation [data-testid="stButton"] { width: 100% !important; }
-.st-key-primary-navigation [data-testid="stPageLink"] a,
-.st-key-primary-navigation [data-testid="stButton"] button {
+.st-key-primary-navigation [data-testid="stPageLink"] > div{ width: 100% !important; }
+.st-key-primary-navigation [data-testid="stPageLink"] a{
   width: 100%; min-height: 0; padding: 7px 4px; border: 0; border-radius: 0;
   justify-content: center; background: transparent;
 }
-.st-key-primary-navigation [data-testid="stPageLink"] a:hover,
-.st-key-primary-navigation [data-testid="stButton"] button:hover { background: #F0F0EC; }
-.st-key-primary-navigation [data-testid="stPageLink"] p,
-.st-key-primary-navigation [data-testid="stButton"] p {
+.st-key-primary-navigation [data-testid="stPageLink"] a:hover{ background: #F0F0EC; }
+.st-key-primary-navigation [data-testid="stPageLink"] p{
   color: #20221F !important; font-size: 14px; font-weight: 600; width: 100%; text-align: center;
 }
-.st-key-primary-navigation [class*="-active"] [data-testid="stPageLink"] a,
-.st-key-primary-navigation [class*="-active"] [data-testid="stButton"] button {
+.st-key-primary-navigation [class*="-active"] [data-testid="stPageLink"] a{
   background: transparent; box-shadow: inset 0 -3px 0 #345D50;
 }
 /* Section navigation: thin outlines, with the current page lightly tinted. */
 .st-key-section-navigation { margin-bottom: 0; }
 .st-key-section-navigation [data-testid="stHorizontalBlock"] { gap: 6px; }
 .st-key-section-navigation [data-testid="stColumn"] { flex: 0 0 auto; width: auto !important; }
-.st-key-section-navigation [data-testid="stPageLink"] a,
-.st-key-section-navigation [data-testid="stButton"] button {
+.st-key-section-navigation [data-testid="stPageLink"] a{
   width: auto; min-height: 0; padding: 3px 12px; background: transparent;
   border: 1px solid #C9CCC4; border-radius: 4px;
 }
-.st-key-section-navigation [data-testid="stPageLink"] a:hover,
-.st-key-section-navigation [data-testid="stButton"] button:hover { background: #F0F0EC; }
-.st-key-section-navigation [data-testid="stPageLink"] p,
-.st-key-section-navigation [data-testid="stButton"] p {
+.st-key-section-navigation [data-testid="stPageLink"] a:hover{ background: #F0F0EC; }
+.st-key-section-navigation [data-testid="stPageLink"] p{
   color: #3B3F39 !important; font-size: 13px; font-weight: 500;
 }
-.st-key-section-navigation [class*="-active"] [data-testid="stPageLink"] a,
-.st-key-section-navigation [class*="-active"] [data-testid="stButton"] button {
+.st-key-section-navigation [class*="-active"] [data-testid="stPageLink"] a{
   background: #E9EEEB; border-color: #8FA79D;
 }
-.st-key-section-navigation [class*="-active"] [data-testid="stPageLink"] p,
-.st-key-section-navigation [class*="-active"] [data-testid="stButton"] p {
+.st-key-section-navigation [class*="-active"] [data-testid="stPageLink"] p{
   color: #264539 !important; font-weight: 600;
 }
 .st-key-masthead { border-bottom: 1px solid #B6B8B0; padding-bottom: 6px; }
-.publication-name { font-size: 22px; line-height: 1.2; letter-spacing: -.4px; }
+.st-key-masthead [data-testid="stPageLink"] a { padding: 0; background: transparent; }
+.st-key-masthead [data-testid="stPageLink"] p {
+  font-family: 'Source Serif 4', Georgia, serif; font-size: 22px; font-weight: 700;
+  line-height: 1.2; letter-spacing: -.4px; color: #20221F;
+}
+.st-key-landing-words h1 {
+  font-size: clamp(26px, 3vw, 40px) !important; line-height: 1.2 !important; margin-bottom: 8px;
+}
+.st-key-landing-words p { font-size: 17px; line-height: 1.5; }
+.st-key-landing-photo { gap: 2px; }
+/* Taller windows get a bigger photo, so the page fills them without hollow boxes. */
+.st-key-landing-photo img {
+  height: clamp(240px, calc(100vh - 450px), 440px);
+  object-fit: cover; object-position: center 35%; border-radius: 6px;
+}
+/* The whole box is the link, through a layer over it. */
+[class*="st-key-landing-box-"] {
+  position: relative; padding: 18px 20px; gap: 4px; background: #FEFEFC; min-height: 104px;
+  border: 1px solid #C9CCC4; border-radius: 6px;
+}
+[class*="st-key-landing-box-"]:hover { background: #F0F0EC; border-color: #8FA79D; }
+[class*="st-key-landing-box-"] [data-testid="stPageLink"] a {
+  padding: 0; background: transparent;
+}
+/* Nothing between the link and the box may be positioned, or the layer stops there. */
+[class*="st-key-landing-box-"] *:has(a),
+[class*="st-key-landing-box-"] [data-testid="stPageLink"] a { position: static !important; }
+[class*="st-key-landing-box-"] [data-testid="stPageLink"] a::after {
+  content: ""; position: absolute; inset: 0; z-index: 1;
+}
+[class*="st-key-landing-box-"] [data-testid="stPageLink"] span[data-testid="stIconMaterial"] {
+  color: #345D50; font-size: 22px;
+}
+[class*="st-key-landing-box-"] [data-testid="stPageLink"] p {
+  font-family: 'Source Serif 4', Georgia, serif; font-size: 19px; font-weight: 600; color: #264539;
+}
+[class*="st-key-landing-box-"] [data-testid="stPageLink"] a,
+[class*="st-key-landing-box-"] [data-testid="stPageLink"] a * {
+  max-width: 100%; overflow: visible; white-space: normal; text-overflow: clip;
+}
+/* The map's clear and full-screen buttons sat over the address box; keep them on the map. */
+[data-testid="stElementContainer"]:has([data-testid="stDeckGlJsonChart"])
+  [data-testid="stElementToolbar"] { top: .5rem !important; right: 3.5rem !important; }
 .banner { font-size: 11px; line-height: 1.3; padding-bottom: 12px; }
 h1 { font-size: clamp(22px, 2.4vw, 28px) !important; padding: 0 !important; }
 h2 { font-size: clamp(21px, 2.2vw, 26px) !important; padding: 0 !important; }

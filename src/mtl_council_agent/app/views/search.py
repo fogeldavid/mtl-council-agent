@@ -14,7 +14,6 @@ from mtl_council_agent.app.common import (
     display_number,
     fmt_date,
     html_text,
-    masthead,
     outcome_label,
     record_title,
     run,
@@ -117,7 +116,6 @@ def _result_card(row: dict) -> None:
 
 
 def render() -> None:
-    masthead()
     st.markdown(f"## {t('search.title')}")
     left, right = st.columns([1, 2.6], gap="large")
 

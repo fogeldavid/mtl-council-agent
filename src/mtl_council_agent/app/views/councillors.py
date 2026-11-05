@@ -15,7 +15,6 @@ from mtl_council_agent.app.common import (
     display_number,
     fmt_date,
     go,
-    masthead,
     outcome_label,
     record_title,
     run,
@@ -24,7 +23,6 @@ from mtl_council_agent.app.i18n import t
 
 
 def render() -> None:
-    masthead()
     if "id" in st.query_params:
         _profile(int(st.query_params["id"]))
     else:

@@ -7,7 +7,7 @@ import pydeck as pdk
 import streamlit as st
 
 from mtl_council_agent.app import address_lookup, district_map, queries
-from mtl_council_agent.app.common import PAGES, database_configured, masthead, run
+from mtl_council_agent.app.common import PAGES, database_configured, run
 from mtl_council_agent.app.i18n import t
 
 SELECTION_KEY = "district_code"
@@ -111,7 +111,6 @@ def _representatives(district: dict, members: list[dict], connected: bool) -> No
 
 
 def render() -> None:
-    masthead()
     st.title(t("districts.title"))
     connected = database_configured()
     snapshot = district_map.roster_snapshot()
