@@ -28,12 +28,24 @@ def boundaries() -> dict:
 
 
 @lru_cache(maxsize=1)
+def display_boundaries() -> dict:
+    """Outlines accurate to about 6 metres, for drawing only. The official file
+    is 19 MB once pydeck sends it to the browser; address lookup still uses it.
+    Built by scripts/simplify_boundaries.py."""
+    with gzip.open(DATA_DIR / "districts-2025-display.geojson.gz", "rt", encoding="utf-8") as f:
+        return json.load(f)
+
+
+@lru_cache(maxsize=1)
 def roster_snapshot() -> dict:
     return json.loads((DATA_DIR / "roster-snapshot.json").read_text(encoding="utf-8"))
 
 
 def district_properties() -> dict[str, dict]:
-    return {f["properties"]["CODE_DISTRICT"]: f["properties"] for f in boundaries()["features"]}
+    return {
+        f["properties"]["CODE_DISTRICT"]: f["properties"]
+        for f in display_boundaries()["features"]
+    }
 
 
 def representatives(properties: dict, members: list[dict]) -> list[dict]:
@@ -52,7 +64,7 @@ def representatives(properties: dict, members: list[dict]) -> list[dict]:
 def map_geojson(selected: str) -> dict:
     """Attach display colours to copies, without mutating the cached source."""
     features = []
-    for feature in boundaries()["features"]:
+    for feature in display_boundaries()["features"]:
         properties = feature["properties"]
         features.append({
             **feature,

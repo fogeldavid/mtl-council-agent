@@ -205,9 +205,11 @@ STRINGS: dict[str, dict[str, str]] = {
     },
     "districts.attribution": {
         "en": "2025 electoral boundaries · Ville de Montréal · CC BY 4.0. "
-              "Source geometry preserved; JSON compressed for storage.",
+              "Map outlines are simplified to about 6 metres. "
+              "Address lookup uses the official boundaries.",
         "fr": "Limites électorales de 2025 · Ville de Montréal · CC BY 4.0. "
-              "Géométrie source conservée; JSON compressé pour le stockage.",
+              "Les contours de la carte sont simplifiés à environ 6 mètres. "
+              "La recherche d’adresse utilise les limites officielles.",
     },
     "districts.roster_source": {
         "en": "Official representative roster", "fr": "Répertoire officiel des élus",

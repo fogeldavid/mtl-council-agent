@@ -10,6 +10,7 @@ Downloaded on October 30, 2026, from Ville de Montréal open data.
 - License: Creative Commons Attribution 4.0 International, as reported by the dataset metadata: https://creativecommons.org/licenses/by/4.0/
 - 58 electoral districts for the 2025 election; WGS84 longitude/latitude coordinates.
 - Local file: `districts-2025.geojson.gz`. JSON whitespace was removed and gzip compression applied; coordinates and feature properties were not simplified or changed.
+- Map copy: `districts-2025-display.geojson.gz`, built from the official file by `scripts/simplify_boundaries.py`. Outlines are accurate to about 6 metres and it is for drawing only. Address lookup uses the official file.
 - District selection is by the official `CODE_DISTRICT`. Representative matching requires both district and borough, normalizing only accents and punctuation.
 
 ## Roster

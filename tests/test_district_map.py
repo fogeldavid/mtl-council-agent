@@ -2,6 +2,9 @@
 
 from __future__ import annotations
 
+import json
+
+import pytest
 from streamlit.testing.v1 import AppTest
 
 from mtl_council_agent.app import district_map
@@ -43,7 +46,42 @@ def test_highlight_does_not_mutate_the_official_boundaries():
     for data, code in [(first, "111"), (second, "071")]:
         selected = [f for f in data["features"] if f["properties"]["fill"][-1] == 185]
         assert [f["properties"]["CODE_DISTRICT"] for f in selected] == [code]
-    assert all("fill" not in f["properties"] for f in district_map.boundaries()["features"])
+    assert all("fill" not in f["properties"]
+               for f in district_map.display_boundaries()["features"])
+
+
+def _rings(feature):
+    geometry = feature["geometry"]
+    polygons = (geometry["coordinates"] if geometry["type"] == "MultiPolygon"
+                else [geometry["coordinates"]])
+    return [polygon[0] for polygon in polygons]
+
+
+def _area(feature):
+    return sum(
+        abs(sum(a[0] * b[1] - b[0] * a[1] for a, b in zip(ring, ring[1:], strict=False))) / 2
+        for ring in _rings(feature)
+    )
+
+
+def test_map_outlines_stay_close_to_the_official_boundaries():
+    official = {f["properties"]["CODE_DISTRICT"]: f for f in district_map.boundaries()["features"]}
+    drawn = {f["properties"]["CODE_DISTRICT"]: f
+             for f in district_map.display_boundaries()["features"]}
+    assert drawn.keys() == official.keys()
+    for code, feature in drawn.items():
+        assert _area(feature) == pytest.approx(_area(official[code]), rel=0.01), code
+        assert feature["properties"]["NOM_DISTRICT"] == official[code]["properties"]["NOM_DISTRICT"]
+
+
+def test_map_data_stays_small_enough_to_resend():
+    # st.pydeck_chart sends all of this each time the map changes.
+    assert len(json.dumps(district_map.map_geojson("111"))) < 400_000
+
+
+def test_address_lookup_still_uses_the_official_boundaries():
+    points = sum(len(ring) for f in district_map.boundaries()["features"] for ring in _rings(f))
+    assert points > 100_000
 
 
 def _render_preview():
