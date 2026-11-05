@@ -113,6 +113,16 @@ def test_a_building_with_many_postal_codes_is_listed_once():
         assert len(lookup.lookup("1 Place Ville Marie")) == 1
 
 
+def test_each_point_is_tested_against_the_boundaries_once():
+    rows = [_feature(f"{i}-1 rue Exemple, Montréal H3B1A1") for i in range(50)]
+    other = _feature("1 rue Autre, Montréal H3B1A1")
+    other["geometry"] = {"x": -73.6, "y": 45.5}
+    with patch.object(lookup, "_fetch", return_value=_response([*rows, other])), \
+         patch.object(lookup, "district_at", return_value="182") as district_at:
+        assert len(lookup.lookup("1 rue Exemple")) == 1
+    assert district_at.call_count == 1
+
+
 def test_a_street_without_that_number_says_so():
     street = _response([_feature("726 avenue Davaar, Montréal H2V3B2")])
     with patch.object(lookup, "_fetch", side_effect=[_response([]), street]):
