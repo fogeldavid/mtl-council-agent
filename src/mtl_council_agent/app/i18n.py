@@ -9,52 +9,45 @@ from __future__ import annotations
 import streamlit as st
 
 STRINGS: dict[str, dict[str, str]] = {
-    'find.title': {
-        "en": ('Find my district'),
-        "fr": ('Trouver mon district'),
+    "find.title": {
+        "en": "Don't know your district? Enter your address.",
+        "fr": 'Vous ne connaissez pas votre district? Entrez votre adresse.',
     },
     'find.address': {
         "en": ('Civic number and street name'),
         "fr": ('Numéro civique et nom de rue'),
     },
-    'find.hint': {
-        "en": ('Example: 275 rue Notre-Dame Est. No apartment number or postal code '
-               'needed.'),
-        "fr": ('Exemple : 275 rue Notre-Dame Est. Sans appartement ni code postal.'),
+    "find.hint": {
+        "en": 'Example: 275 Notre-Dame Est',
+        "fr": 'Exemple : 275 Notre-Dame Est',
     },
-    'find.french': {
-        'en': 'Use the French street name, including Est/Ouest where applicable.',
-        'fr': 'Utilisez le nom de rue en français, avec Est/Ouest au besoin.',
+    "find.privacy": {
+        "en": "Search sends your street number and name to Québec's official address "
+              "service. This app doesn't save them.",
+        "fr": "La recherche transmet votre numéro et votre rue au service officiel "
+              "d’adresses du Québec. Cette application ne les conserve pas.",
     },
-    'find.privacy': {
-        "en": ('Search sends your civic number and street to Québec’s official address '
-               'service. This app does not save searches.'),
-        "fr": ('La recherche transmet le numéro et la rue au service officiel '
-               'd’adresses du Québec. Cette application ne conserve pas les '
-               'recherches.'),
+    "find.submit": {
+        "en": 'Find',
+        "fr": 'Rechercher',
     },
-    'find.submit': {
-        "en": ('Find address'),
-        "fr": ('Rechercher l’adresse'),
+    "find.invalid": {
+        "en": "Enter a civic number and a street name, like 275 Notre-Dame Est. A postal "
+              "code alone can't identify a district.",
+        "fr": "Entrez un numéro civique et un nom de rue, comme 275 Notre-Dame Est. Un code"
+              " postal seul ne permet pas d’identifier un district.",
     },
-    'find.invalid': {
-        "en": ('Enter a civic number followed by a street name. A postal code alone '
-               'cannot identify your district reliably.'),
-        "fr": ('Saisissez un numéro civique suivi du nom de rue. Un code postal seul '
-               'ne suffit pas à identifier le district.'),
+    "find.none": {
+        "en": "No address found in Montréal's electoral districts. Check the spelling, or "
+              "select your district on the map.",
+        "fr": "Aucune adresse trouvée dans les districts de Montréal. Vérifiez "
+              "l’orthographe ou sélectionnez votre district sur la carte.",
     },
-    'find.none': {
-        "en": ('No confirmed address found within Montréal’s electoral districts. '
-               'Check the French street name and direction (Est/Ouest), or select your '
-               'district on the map.'),
-        "fr": ('Aucune adresse confirmée dans les districts de Montréal. Vérifiez le '
-               'nom de rue et la direction (Est/Ouest), ou choisissez sur la carte.'),
-    },
-    'find.error': {
-        "en": ('Address lookup is unavailable or the search is too broad. Try the full '
-               'French street name, or select on the map.'),
-        "fr": ('Le service est indisponible ou la recherche trop large. Essayez le nom '
-               'complet en français, ou choisissez sur la carte.'),
+    "find.error": {
+        "en": "The address service is unavailable, or that search matched too many "
+              "addresses. Try again, or select your district on the map.",
+        "fr": "Le service d’adresses est indisponible, ou la recherche donne trop de "
+              "résultats. Réessayez ou sélectionnez votre district sur la carte.",
     },
     'find.confirm': {
         "en": ('Choose your matching address'),
@@ -64,11 +57,9 @@ STRINGS: dict[str, dict[str, str]] = {
         "en": ('Show this district'),
         "fr": ('Afficher ce district'),
     },
-    'find.success': {
-        "en": ('District selected: {district}. The map and councillors above have '
-               'updated.'),
-        "fr": ('District sélectionné : {district}. La carte et les élus ci-dessus ont '
-               'été actualisés.'),
+    "find.success": {
+        "en": 'Your district: {district}.',
+        "fr": 'Votre district : {district}.',
     },
     'find.source': {
         "en": ('Address source: Québec · Ministère des Ressources naturelles et des '
@@ -117,7 +108,10 @@ STRINGS: dict[str, dict[str, str]] = {
     },
     "nav.records": {"en": "Records & about", "fr": "Archives et à propos"},
     "nav.feed": {"en": "Newsfeed", "fr": "Fil d’actualités"},
-    "nav.map": {"en": "Map", "fr": "Carte"},
+    "nav.map": {
+        "en": 'Districts',
+        "fr": 'Districts',
+    },
     "nav.ask": {"en": "Ask the council", "fr": "Questions au conseil"},
     "nav.updates": {"en": "Council updates", "fr": "Actualités du conseil"},
     "nav.districts": {"en": "District explorer", "fr": "Explorer les districts"},
@@ -143,27 +137,25 @@ STRINGS: dict[str, dict[str, str]] = {
         "en": "Showing up to 24 records. Search the full archive for more.",
         "fr": "Jusqu’à 24 documents affichés. Consultez les archives pour en voir davantage.",
     },
-    "districts.title": {
-        "en": "Where decisions meet daily life.",
-        "fr": "Là où les décisions rejoignent le quotidien.",
+    "find.searching": {"en": "Searching for your address…", "fr": "Recherche de votre adresse…"},
+    "find.no_number": {
+        "en": "We found that street, but not that civic number. Check the number, "
+              "or select your district on the map.",
+        "fr": "Nous avons trouvé cette rue, mais pas ce numéro civique. Vérifiez le "
+              "numéro ou sélectionnez votre district sur la carte.",
     },
-    "districts.subtitle": {
-        "en": "Find your representative and explore their recorded council votes.",
-        "fr": "Trouvez votre élu et explorez ses votes consignés au conseil municipal.",
+    "districts.representatives": {
+        "en": "Who represents you at city council. Select a name to see their votes.",
+        "fr": "Qui vous représente au conseil municipal. Sélectionnez un nom pour voir ses votes.",
+    },
+    "districts.title": {
+        "en": 'District and councillor',
+        "fr": 'District et élus',
     },
     "districts.choose": {"en": "Find your district", "fr": "Trouvez votre district"},
     "districts.empty": {
         "en": "No districts are available in the imported roster.",
         "fr": "Aucun district dans le répertoire importé.",
-    },
-    "districts.profile": {"en": "View recorded votes", "fr": "Voir les votes consignés"},
-    "districts.map_note": {
-        "en": "These are representatives’ recorded city council votes. A vote does not "
-              "establish that the decision affects this district. Geographic links to "
-              "decisions have not been imported.",
-        "fr": "Il s’agit des votes consignés au conseil municipal. Un vote ne prouve pas "
-              "que la décision concerne ce district. Les liens géographiques avec les "
-              "décisions ne sont pas encore importés.",
     },
     "districts.preview": {
         "en": "Map preview: official boundaries and a saved public roster. Connect the "
@@ -181,19 +173,6 @@ STRINGS: dict[str, dict[str, str]] = {
     "districts.borough_wide": {
         "en": "Elected for the whole borough, not only this district.",
         "fr": "Élu pour tout l’arrondissement, pas seulement ce district.",
-    },
-    "districts.no_votes": {
-        "en": "No explicit individual votes for this representative in the imported records.",
-        "fr": "Aucun vote individuel explicite pour cet élu dans les documents importés.",
-    },
-    "districts.vote_note": {
-        "en": "Up to 20 most recent recorded positions. No votes inferred from attendance.",
-        "fr": "Jusqu’à 20 positions consignées récentes. Aucun vote déduit de la présence.",
-    },
-    "districts.minutes": {"en": "Original minutes (FR)", "fr": "Procès-verbal original (FR)"},
-    "districts.no_source": {
-        "en": "The original minutes link is unavailable in the database.",
-        "fr": "Le lien du procès-verbal original est absent de la base de données.",
     },
     "districts.basemap": {
         "en": "Show street background (loads external map tiles)",

@@ -72,6 +72,14 @@ button:focus-visible, a:focus-visible { outline: 2px solid #345D50; outline-offs
 }
 .st-key-section-navigation { margin-bottom: 12px; }
 .st-key-section-navigation [data-testid="stPageLink"] p { font-size: 12px; }
+[class*="st-key-subnav-"][class*="-active"] [data-testid="stPageLink"] a {
+  background: #E4E6DF; border-radius: 4px;
+}
+[class*="st-key-subnav-"][class*="-active"] [data-testid="stPageLink"] p { font-weight: 600; }
+[class*="st-key-district-people-"] [data-testid="stPageLink"] a { padding: 0; }
+[class*="st-key-district-people-"] [data-testid="stPageLink"] p {
+  color: #345D50; font-size: 18px; font-weight: 600; text-decoration: underline;
+}
 @media (max-width: 640px) {
   .st-key-primary-navigation [data-testid="stPageLink"] p { font-size: 12px; }
 }

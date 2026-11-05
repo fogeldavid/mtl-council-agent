@@ -120,6 +120,23 @@ def _render_or_leave():
             districts.render()
 
 
+def test_dropdown_reads_borough_first():
+    at = AppTest.from_function(_render_preview, default_timeout=30).run()
+    options = at.selectbox[0].options
+    assert "Anjou: Est" in options and "Le Plateau-Mont-Royal: Mile-End" in options
+    assert options == sorted(options)
+
+
+def test_district_heading_names_the_borough_and_whole_borough_members():
+    at = AppTest.from_function(_render_preview, default_timeout=30).run()
+    code = next(c for c, p in district_map.district_properties().items()
+                if p["NOM_DISTRICT"] == "Claude-Ryan")
+    at.selectbox[0].select(code).run()
+    assert not at.exception
+    assert at.subheader[-1].value == "Claude-Ryan, Outremont"
+    assert any("whole borough" in c.value for c in at.caption)
+
+
 def test_chosen_district_survives_leaving_the_page():
     from mtl_council_agent.app.views import districts
 

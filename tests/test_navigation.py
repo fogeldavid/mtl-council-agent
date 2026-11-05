@@ -34,7 +34,7 @@ def _render_navigation(page):
     ("ask", []),
     ("updates", ["Search"]),
     ("search", ["Search"]),
-    ("councillors", ["Map", "Councillors"]),
+    ("councillors", ["Districts", "Councillors"]),
     ("meetings", ["Meetings", "About"]),
     ("about", ["Meetings", "About"]),
 ])

@@ -76,6 +76,15 @@ def _feature(title):
     ("5000 ave Sherbrooke E", "5000 rue Sherbrooke Est, Montréal H1V1A1"),
     ("275 Notre-Dame West", "275 rue Notre-Dame Ouest, Montréal H2Y1T8"),
     ("12 rue O'Brien", "12 rue O'Brien, Montréal H4N1Y1"),
+    ("275 Notre Dame East, Montreal, QC H2Y 1C6", "275 rue Notre-Dame Est, Montréal H2Y1C6"),
+    ("275 Notre Dame Est Montreal Quebec Canada", "275 rue Notre-Dame Est, Montréal H2Y1C6"),
+    ("4800 Cote des Neiges, Montréal, QC", "4800 chemin de la Côte-des-Neiges, Montréal H3V1G2"),
+    ("4800 Cote-des-Neiges H3V", "4800 chemin de la Côte-des-Neiges, Montréal H3V1G2"),
+    ("275A Notre-Dame Est", "275 rue Notre-Dame Est, Montréal H2Y1C6"),
+    ("Apt 3, 275 Notre-Dame Est", "275 rue Notre-Dame Est, Montréal H2Y1C6"),
+    ("275 Notre-Dame Est, app. 3", "275 rue Notre-Dame Est, Montréal H2Y1C6"),
+    ("275 Notre-Dame Est #3", "275 rue Notre-Dame Est, Montréal H2Y1C6"),
+    ("3-275 Notre-Dame Est", "275 rue Notre-Dame Est, Montréal H2Y1C6"),
 ])
 def test_common_spellings_find_the_stored_address(typed, stored):
     with patch.object(lookup, "_fetch", return_value=_response([_feature(stored)])) as fetch:
@@ -95,7 +104,39 @@ def test_the_loose_service_match_is_checked_exactly_afterwards():
 def test_a_large_building_is_not_called_too_broad():
     with patch.object(lookup, "_fetch", return_value=_response([])) as fetch:
         lookup.lookup("1 chemin de la Côte-Sainte-Catherine")
-    assert fetch.call_args.args[0]["resultRecordCount"] == "1000"
+    assert fetch.call_args_list[0].args[0]["resultRecordCount"] == "1000"
+
+
+def test_a_building_with_many_postal_codes_is_listed_once():
+    rows = [_feature(f"1 Place Ville-Marie, Montréal H3B{i}Y{i}") for i in range(1, 5)]
+    with patch.object(lookup, "_fetch", return_value=_response(rows)):
+        assert len(lookup.lookup("1 Place Ville Marie")) == 1
+
+
+def test_a_street_without_that_number_says_so():
+    street = _response([_feature("726 avenue Davaar, Montréal H2V3B2")])
+    with patch.object(lookup, "_fetch", side_effect=[_response([]), street]):
+        with pytest.raises(lookup.NumberNotFound):
+            lookup.lookup("530 Davaar")
+
+
+def test_an_unknown_street_is_not_reported_as_a_missing_number():
+    with patch.object(lookup, "_fetch", side_effect=[_response([]), _response([])]):
+        assert lookup.lookup("530 Nulle-Part") == []
+
+
+def test_a_failed_street_check_falls_back_to_the_general_message():
+    failure = httpx.ConnectError("down")
+    with patch.object(lookup, "_fetch", side_effect=[_response([]), failure]):
+        assert lookup.lookup("530 Davaar") == []
+
+
+def test_an_address_outside_the_districts_is_not_a_missing_number():
+    outside = {"attributes": {"AdresseFormatee": "1 rue Exemple, Westmount H3Z1A1"},
+               "geometry": {"x": -71.2, "y": 46.8}}
+    with patch.object(lookup, "_fetch", return_value=_response([outside])) as fetch:
+        assert lookup.lookup("1 rue Exemple") == []
+    assert fetch.call_count == 1
 
 
 def test_the_provider_is_called_over_http2():
@@ -105,25 +146,68 @@ def test_the_provider_is_called_over_http2():
     assert client.call_args.kwargs["http2"] is True
 
 
-def _preview():
+def _preview(results):
     from unittest.mock import patch
 
     from mtl_council_agent.app import address_lookup as lookup
     from mtl_council_agent.app.views import districts
     with patch.object(districts, "database_configured", return_value=False), \
-         patch.object(lookup, "lookup", return_value=[
-             {"title": "275 rue Notre-Dame Est, Montréal", "code": "182"},
-         ]):
+         patch.object(lookup, "lookup", return_value=results):
         districts.render()
 
 
-def test_address_confirmation_updates_district_without_requery():
-    at = AppTest.from_function(_preview, default_timeout=30).run()
+def _search(results, typed="275 rue Notre-Dame Est"):
+    at = AppTest.from_function(_preview, args=(results,), default_timeout=30).run()
     assert not at.exception
-    at.text_input[0].set_value("275 rue Notre-Dame Est")
-    next(b for b in at.button if b.label == "Find address").click().run()
+    at.text_input[0].set_value(typed)
+    next(b for b in at.button if b.label == "Find").click().run()
     assert not at.exception
+    return at
+
+
+def test_one_match_selects_the_district_without_another_click():
+    at = _search([{"title": "275 rue Notre-Dame Est, Montréal", "code": "182"}])
+    assert at.session_state["district_code"] == "182"
+    assert not any(b.label == "Show this district" for b in at.button)
+    assert at.success
+    assert at.text_input[0].value == "275 rue Notre-Dame Est"  # Kept, to fix a typo.
+
+
+def test_matches_in_one_district_need_no_choice():
+    at = _search([{"title": "275 rue Notre-Dame Est, Montréal", "code": "182"},
+                  {"title": "275 rue Notre-Dame Ouest, Montréal", "code": "182"}])
+    assert at.session_state["district_code"] == "182"
+    assert not any(b.label == "Show this district" for b in at.button)
+
+
+def test_matches_in_different_districts_ask_which_one():
+    at = _search([{"title": "1800 boulevard Saint-Joseph, Lachine", "code": "182"},
+                  {"title": "1800 boulevard Saint-Joseph Est, Montréal", "code": "111"}])
     next(b for b in at.button if b.label == "Show this district").click().run()
     assert not at.exception
     assert at.session_state["district_code"] == "182"
     assert at.success
+
+
+def _preview_raising(error):
+    from unittest.mock import patch
+
+    import httpx
+
+    from mtl_council_agent.app import address_lookup as lookup
+    from mtl_council_agent.app.views import districts
+    exception = {"number": lookup.NumberNotFound, "down": httpx.ConnectError}[error]
+    with patch.object(districts, "database_configured", return_value=False), \
+         patch.object(lookup, "lookup", side_effect=exception("x")):
+        districts.render()
+
+
+@pytest.mark.parametrize(("error", "message"), [
+    ("number", "not that civic number"), ("down", "unavailable"),
+])
+def test_each_failure_gets_its_own_message(error, message):
+    at = AppTest.from_function(_preview_raising, args=(error,), default_timeout=30).run()
+    at.text_input[0].set_value("530 Davaar")
+    next(b for b in at.button if b.label == "Find").click().run()
+    assert not at.exception
+    assert any(message in w.value for w in at.warning)

@@ -231,8 +231,11 @@ def test_district_selector_shows_the_imported_representative():
     at = _run("districts")
     at.selectbox[0].select("111").run()
     assert not at.exception
-    assert "Marie Plourde" in " ".join(markdown.value for markdown in at.markdown)
-    assert "Soraya Martinez Ferrada" not in " ".join(m.value for m in at.markdown)
+    links = [element.proto.label for element in at.get("page_link")]
+    assert "Marie Plourde" in links
+    assert "Soraya Martinez Ferrada" not in links
+    # Meetings and votes live on the councillor's own page now.
+    assert "Original minutes" not in " ".join(b.proto.label for b in at.get("link_button"))
 
 
 def test_updates_search_has_an_empty_state():

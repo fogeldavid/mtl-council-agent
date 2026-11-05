@@ -1,4 +1,4 @@
-"""Clickable official district boundaries with attributed council voting records."""
+"""Find your district by name, address or map, and who represents it."""
 
 from __future__ import annotations
 
@@ -7,20 +7,14 @@ import pydeck as pdk
 import streamlit as st
 
 from mtl_council_agent.app import address_lookup, district_map, queries
-from mtl_council_agent.app.common import (
-    PAGES,
-    database_configured,
-    display_number,
-    fmt_date,
-    masthead,
-    md_text,
-    record_title,
-    run,
-)
+from mtl_council_agent.app.common import PAGES, database_configured, masthead, run
 from mtl_council_agent.app.i18n import t
 
 SELECTION_KEY = "district_code"
 SAVED_SELECTION_KEY = "district_code_saved"
+# Set by an address search, which runs after the dropdown is drawn; Streamlit only
+# lets a widget's value change before then, so it's applied on the next run.
+PENDING_SELECTION_KEY = "district_code_pending"
 CHART_KEY = "district_polygons"
 
 
@@ -30,6 +24,7 @@ def _on_map_select() -> None:
     )
     if code:
         st.session_state[SELECTION_KEY] = code
+        st.session_state.pop("district_address_selected", None)
 
 
 def _choose_address() -> None:
@@ -42,28 +37,49 @@ def _choose_address() -> None:
         st.session_state.pop("district_address_results", None)
 
 
+def _heading(properties: dict) -> str:
+    return f"{properties['NOM_DISTRICT']}, {properties['NOM_ARR']}"
+
+
+def _search_address(address: str) -> None:
+    for key in ("district_address_results", "district_address_selected",
+                "district_address_choice"):
+        st.session_state.pop(key, None)
+    if not address_lookup.valid_address(address):
+        st.warning(t("find.invalid"))
+        return
+    try:
+        with st.spinner(t("find.searching")):
+            results = address_lookup.lookup(address)
+    except address_lookup.NumberNotFound:
+        st.warning(t("find.no_number"))
+        return
+    except (ValueError, httpx.HTTPError):
+        st.warning(t("find.error"))
+        return
+    if not results:
+        st.info(t("find.none"))
+    elif len({result["code"] for result in results}) == 1:
+        # Every match is in one district, so there's nothing left to ask.
+        code = results[0]["code"]
+        st.session_state[PENDING_SELECTION_KEY] = code
+        st.session_state["district_address_selected"] = code
+        st.rerun()
+    else:
+        st.session_state["district_address_results"] = results
+
+
 def _find_district() -> None:
-    st.subheader(t("find.title"))
-    st.caption(t("find.french"))
-    st.caption(t("find.privacy"))
-    with st.form("find_district", clear_on_submit=True):
-        address = st.text_input(t("find.address"), max_chars=200, help=t("find.hint"))
-        submitted = st.form_submit_button(t("find.submit"))
+    st.markdown(f"**{t('find.title')}**")
+    with st.form("find_district", border=False):
+        box, button = st.columns([4, 1], vertical_alignment="bottom")
+        address = box.text_input(
+            t("find.address"), max_chars=200, placeholder=t("find.hint"),
+            label_visibility="collapsed", key="district_address_text",
+        )
+        submitted = button.form_submit_button(t("find.submit"), width="stretch")
     if submitted:
-        st.session_state.pop("district_address_results", None)
-        st.session_state.pop("district_address_selected", None)
-        st.session_state.pop("district_address_choice", None)
-        if not address_lookup.valid_address(address):
-            st.warning(t("find.invalid"))
-        else:
-            try:
-                results = address_lookup.lookup(address)
-            except (ValueError, httpx.HTTPError):
-                st.warning(t("find.error"))
-            else:
-                st.session_state["district_address_results"] = results
-                if not results:
-                    st.info(t("find.none"))
+        _search_address(address)
     results = st.session_state.get("district_address_results", [])
     if results:
         st.selectbox(t("find.confirm"), range(len(results)), key="district_address_choice",
@@ -71,41 +87,34 @@ def _find_district() -> None:
         st.button(t("find.select"), on_click=_choose_address)
     code = st.session_state.get("district_address_selected")
     if code and code == st.session_state.get(SELECTION_KEY):
-        name = district_map.district_properties()[code]["NOM_DISTRICT"]
-        st.success(t("find.success", district=name))
-    st.markdown(f"[{t('find.source')}]({address_lookup.SOURCE})")
+        st.success(t("find.success", district=_heading(district_map.district_properties()[code])))
+    st.caption(f"{t('find.privacy')} [{t('find.source')}]({address_lookup.SOURCE})")
 
 
-def _votes(member: dict) -> None:
-    rows = run(queries.district_recorded_votes, member["id"])
-    if not rows:
-        st.caption(t("districts.no_votes"))
+def _representatives(district: dict, members: list[dict], connected: bool) -> None:
+    st.subheader(_heading(district))
+    matched = district_map.representatives(district, members)
+    if not matched:
+        st.info(t("districts.no_representative"))
         return
-    st.caption(t("districts.vote_note"))
-    for row in rows:
-        st.markdown(f"**{t('pos.' + row['position'])}** · {fmt_date(row['meeting_date'])}")
-        st.write(md_text(record_title(row["title"])))
-        number = display_number(row["item_number"], row["section"])
-        if row["section"] == "agglomeration_orientation":
-            st.caption(t("orientation"))
-        if st.button(t("search.open", number=number),
-                     key=f"district_item_{member['id']}_{row['id']}", type="tertiary"):
-            st.switch_page(PAGES["updates"], query_params={"item": row["id"]})
-        if row["source_url"]:
-            st.link_button(t("districts.minutes"), row["source_url"])
+    st.caption(t("districts.representatives"))
+    for member in matched:
+        if connected:
+            with st.container(key=f"district-people-{member['id']}"):
+                st.page_link(
+                    PAGES["councillors"], label=member["name"],
+                    query_params={"id": member["id"]},
+                )
         else:
-            st.caption(t("districts.no_source"))
-        st.divider()
-    st.page_link(
-        PAGES["councillors"], label=t("districts.profile"),
-        query_params={"id": member["id"]},
-    )
+            st.markdown(f"**{member['name']}**")
+        st.caption(f"{t('role.' + member['role'])} · {member['party'] or '—'}")
+        if not member.get("district"):
+            st.caption(t("districts.borough_wide"))
 
 
 def render() -> None:
     masthead()
     st.title(t("districts.title"))
-    st.write(t("districts.subtitle"))
     connected = database_configured()
     snapshot = district_map.roster_snapshot()
     if connected:
@@ -120,7 +129,10 @@ def render() -> None:
     codes = sorted(properties, key=lambda code: (
         properties[code]["NOM_ARR"], properties[code]["NOM_DISTRICT"],
     ))
-    if st.session_state.get(SELECTION_KEY) not in properties:
+    pending = st.session_state.pop(PENDING_SELECTION_KEY, None)
+    if pending in properties:
+        st.session_state[SELECTION_KEY] = pending
+    elif st.session_state.get(SELECTION_KEY) not in properties:
         # Streamlit drops a widget's value on leaving the page, so restore the plain
         # copy. Otherwise start on the official Mile-End code, also in the roster.
         saved = st.session_state.get(SAVED_SELECTION_KEY)
@@ -128,12 +140,14 @@ def render() -> None:
     selected = st.selectbox(
         t("districts.choose"), codes, key=SELECTION_KEY,
         format_func=lambda code: (
-            f"{properties[code]['NOM_DISTRICT']} · {properties[code]['NOM_ARR']}"
+            f"{properties[code]['NOM_ARR']}: {properties[code]['NOM_DISTRICT']}"
         ),
     )
     st.session_state[SAVED_SELECTION_KEY] = selected
+    _find_district()
     map_column, details = st.columns([1.65, 1], gap="large")
     with map_column:
+        chart = st.container()
         basemap = st.checkbox(t("districts.basemap"), value=True)
         deck = pdk.Deck(
             layers=[pdk.Layer(
@@ -149,31 +163,16 @@ def render() -> None:
             map_provider="carto" if basemap else None,
             tooltip={"text": "{NOM_DISTRICT}\n{NOM_ARR}"},
         )
-        st.pydeck_chart(
-            deck, height=600, key=CHART_KEY, on_select=_on_map_select,
+        chart.pydeck_chart(
+            deck, height=520, key=CHART_KEY, on_select=_on_map_select,
             selection_mode="single-object",
         )
-        _find_district()
-        st.caption(t("districts.map_help"))
-        st.caption(t("districts.attribution"))
-        st.link_button(t("districts.boundaries"), district_map.BOUNDARY_SOURCE)
+        st.caption(
+            f"{t('districts.map_help')} {t('districts.attribution')} "
+            f"[{t('districts.boundaries')}]({district_map.BOUNDARY_SOURCE})"
+        )
     with details:
-        district = properties[selected]
-        st.subheader(district["NOM_DISTRICT"])
-        st.caption(district["NOM_ARR"])
-        matched = district_map.representatives(district, members)
-        if not matched:
-            st.info(t("districts.no_representative"))
-        for member in matched:
-            st.markdown(f"### {member['name']}")
-            st.write(member["party"] or "—")
-            st.caption(t("role." + member["role"]))
-            if not member.get("district"):
-                st.caption(t("districts.borough_wide"))
-            if connected:
-                st.metric(t("stat.votes"), member["recorded_votes"])
-                _votes(member)
-        st.link_button(t("districts.roster_source"), snapshot["source_url"])
+        _representatives(properties[selected], members, connected)
+        st.caption(f"[{t('districts.roster_source')}]({snapshot['source_url']})")
         if not connected:
             st.caption(t("districts.roster_date", date=snapshot["retrieved_on"]))
-    st.info(t("districts.map_note"))

@@ -405,29 +405,6 @@ def search(
     return _rows(conn, sql, params)
 
 
-def district_recorded_votes(conn, official_id: int, limit: int = 20) -> list[dict]:
-    """Recent explicit positions, with the actual meeting's original minutes."""
-    return _rows(
-        conn,
-        """
-        select ai.id, ai.title, ai.item_number, ai.section, m.meeting_date,
-               v.position, v.source, pdf.source_pdf_url as source_url
-        from item_votes v
-        join agenda_items ai on ai.id = v.agenda_item_id
-        join meetings m on m.id = ai.meeting_id
-        left join lateral (
-            select d.source_pdf_url from documents d
-            where d.meeting_id = m.id and d.doc_type = 'minutes'
-            order by d.ingested_at desc, d.id desc limit 1
-        ) pdf on true
-        where v.official_id = %s
-        order by m.meeting_date desc, m.meeting_time desc, ai.position
-        limit %s
-        """,
-        (official_id, limit),
-    )
-
-
 VOTED_OUTCOMES = ("adopted_unanimous", "adopted_majority", "adopted", "rejected")
 
 
