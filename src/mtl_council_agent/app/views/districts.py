@@ -70,12 +70,11 @@ def _search_address(address: str) -> None:
 
 
 def _find_district() -> None:
-    st.markdown(f"**{t('find.title')}**")
     with st.form("find_district", border=False):
         box, button = st.columns([4, 1], vertical_alignment="bottom")
         address = box.text_input(
-            t("find.address"), max_chars=200, placeholder=t("find.hint"),
-            label_visibility="collapsed", key="district_address_text",
+            t("find.title"), placeholder=t("find.hint"), help=t("find.privacy"),
+            key="district_address_text",
         )
         submitted = button.form_submit_button(t("find.submit"), width="stretch")
     if submitted:
@@ -88,7 +87,6 @@ def _find_district() -> None:
     code = st.session_state.get("district_address_selected")
     if code and code == st.session_state.get(SELECTION_KEY):
         st.success(t("find.success", district=_heading(district_map.district_properties()[code])))
-    st.caption(f"{t('find.privacy')} [{t('find.source')}]({address_lookup.SOURCE})")
 
 
 def _representatives(district: dict, members: list[dict], connected: bool) -> None:
@@ -102,7 +100,7 @@ def _representatives(district: dict, members: list[dict], connected: bool) -> No
         if connected:
             with st.container(key=f"district-people-{member['id']}"):
                 st.page_link(
-                    PAGES["councillors"], label=member["name"],
+                    PAGES["councillors"], label=t("districts.open", name=member["name"]),
                     query_params={"id": member["id"]},
                 )
         else:
@@ -137,14 +135,16 @@ def render() -> None:
         # copy. Otherwise start on the official Mile-End code, also in the roster.
         saved = st.session_state.get(SAVED_SELECTION_KEY)
         st.session_state[SELECTION_KEY] = saved if saved in properties else "111"
-    selected = st.selectbox(
+    pick, find = st.columns(2, gap="medium")
+    selected = pick.selectbox(
         t("districts.choose"), codes, key=SELECTION_KEY,
         format_func=lambda code: (
             f"{properties[code]['NOM_ARR']}: {properties[code]['NOM_DISTRICT']}"
         ),
     )
     st.session_state[SAVED_SELECTION_KEY] = selected
-    _find_district()
+    with find:
+        _find_district()
     map_column, details = st.columns([1.65, 1], gap="large")
     with map_column:
         chart = st.container()
@@ -169,7 +169,8 @@ def render() -> None:
         )
         st.caption(
             f"{t('districts.map_help')} {t('districts.attribution')} "
-            f"[{t('districts.boundaries')}]({district_map.BOUNDARY_SOURCE})"
+            f"[{t('districts.boundaries')}]({district_map.BOUNDARY_SOURCE}) · "
+            f"[{t('find.source')}]({address_lookup.SOURCE})"
         )
     with details:
         _representatives(properties[selected], members, connected)

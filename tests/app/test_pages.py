@@ -232,8 +232,8 @@ def test_district_selector_shows_the_imported_representative():
     at.selectbox[0].select("111").run()
     assert not at.exception
     links = [element.proto.label for element in at.get("page_link")]
-    assert "Marie Plourde" in links
-    assert "Soraya Martinez Ferrada" not in links
+    assert "Marie Plourde: see votes →" in links
+    assert not any("Soraya Martinez Ferrada" in link for link in links)
     # Meetings and votes live on the councillor's own page now.
     assert "Original minutes" not in " ".join(b.proto.label for b in at.get("link_button"))
 

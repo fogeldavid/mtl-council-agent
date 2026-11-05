@@ -145,9 +145,10 @@ STRINGS: dict[str, dict[str, str]] = {
               "numéro ou sélectionnez votre district sur la carte.",
     },
     "districts.representatives": {
-        "en": "Who represents you at city council. Select a name to see their votes.",
-        "fr": "Qui vous représente au conseil municipal. Sélectionnez un nom pour voir ses votes.",
+        "en": "Who represents you at city council",
+        "fr": "Qui vous représente au conseil municipal",
     },
+    "districts.open": {"en": "{name}: see votes →", "fr": "{name} : voir les votes →"},
     "districts.title": {
         "en": 'District and councillor',
         "fr": 'District et élus',
