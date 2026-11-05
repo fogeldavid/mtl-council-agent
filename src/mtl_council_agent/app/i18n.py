@@ -9,7 +9,225 @@ from __future__ import annotations
 import streamlit as st
 
 STRINGS: dict[str, dict[str, str]] = {
-    "nav.ask": {"en": "Ask", "fr": "Questions"},
+    'find.title': {
+        "en": ('Find my district'),
+        "fr": ('Trouver mon district'),
+    },
+    'find.address': {
+        "en": ('Civic number and street name'),
+        "fr": ('Numéro civique et nom de rue'),
+    },
+    'find.hint': {
+        "en": ('Example: 275 rue Notre-Dame Est. No apartment number or postal code '
+               'needed.'),
+        "fr": ('Exemple : 275 rue Notre-Dame Est. Sans appartement ni code postal.'),
+    },
+    'find.french': {
+        'en': 'Use the French street name, including Est/Ouest where applicable.',
+        'fr': 'Utilisez le nom de rue en français, avec Est/Ouest au besoin.',
+    },
+    'find.privacy': {
+        "en": ('Search sends your civic number and street to Québec’s official address '
+               'service. This app does not save searches.'),
+        "fr": ('La recherche transmet le numéro et la rue au service officiel '
+               'd’adresses du Québec. Cette application ne conserve pas les '
+               'recherches.'),
+    },
+    'find.submit': {
+        "en": ('Find address'),
+        "fr": ('Rechercher l’adresse'),
+    },
+    'find.invalid': {
+        "en": ('Enter a civic number followed by a street name. A postal code alone '
+               'cannot identify your district reliably.'),
+        "fr": ('Saisissez un numéro civique suivi du nom de rue. Un code postal seul '
+               'ne suffit pas à identifier le district.'),
+    },
+    'find.none': {
+        "en": ('No confirmed address found within Montréal’s electoral districts. '
+               'Check the French street name and direction (Est/Ouest), or select your '
+               'district on the map.'),
+        "fr": ('Aucune adresse confirmée dans les districts de Montréal. Vérifiez le '
+               'nom de rue et la direction (Est/Ouest), ou choisissez sur la carte.'),
+    },
+    'find.error': {
+        "en": ('Address lookup is unavailable or the search is too broad. Try the full '
+               'French street name, or select on the map.'),
+        "fr": ('Le service est indisponible ou la recherche trop large. Essayez le nom '
+               'complet en français, ou choisissez sur la carte.'),
+    },
+    'find.confirm': {
+        "en": ('Choose your matching address'),
+        "fr": ('Choisissez votre adresse'),
+    },
+    'find.select': {
+        "en": ('Show this district'),
+        "fr": ('Afficher ce district'),
+    },
+    'find.success': {
+        "en": ('District selected: {district}. The map and councillors above have '
+               'updated.'),
+        "fr": ('District sélectionné : {district}. La carte et les élus ci-dessus ont '
+               'été actualisés.'),
+    },
+    'find.source': {
+        "en": ('Address source: Québec · Ministère des Ressources naturelles et des '
+               'Forêts'),
+        "fr": ('Source des adresses : Québec · Ministère des Ressources naturelles et '
+               'des Forêts'),
+    },
+    "feed.back": {"en": "Back to the newsfeed", "fr": "Retour au fil d’actualités"},
+    "feed.minutes_only": {
+        "en": "Council votes with published minutes. "
+              "Open a record for the summary and voting details.",
+        "fr": "Votes avec procès-verbal publié. Ouvrez un document pour le résumé et les votes.",
+    },
+    "feed.search_hint": {
+        "en": "Search decisions, a company, or a resolution number…",
+        "fr": "Rechercher une décision, une entreprise ou un numéro de résolution…",
+    },
+    "feed.search_french": {
+        "en": "This box searches the French text. To search in English, "
+              "open Search and choose By meaning.",
+        "fr": "Cette recherche porte sur le texte français.",
+    },
+    "feed.filters": {"en": "Filter decisions", "fr": "Filtrer les décisions"},
+    "feed.count": {
+        "en": "{start}–{end} of {total} decisions", "fr": "{start}–{end} sur {total} décisions",
+    },
+    "feed.previous": {"en": "← Previous", "fr": "← Précédent"},
+    "feed.next": {"en": "Next →", "fr": "Suivant →"},
+    "translation.label": {
+        "en": "Translated from the French original · Machine translation",
+        "fr": "Traduction automatique de l’original français",
+    },
+    "translation.pending": {
+        "en": "French original — English translation awaiting review.",
+        "fr": "Original français — traduction anglaise en attente de vérification.",
+    },
+    "translation.context": {"en": "Context (English)", "fr": "Contexte (anglais)"},
+    "translation.original": {
+        "en": "Read the French original", "fr": "Lire l’original français",
+    },
+    "translation.context_missing": {
+        "en": "An English context excerpt is not available for this record. "
+              "Read the French original below.",
+        "fr": "Aucun extrait de contexte anglais pour ce document. "
+              "Consultez l’original français ci-dessous.",
+    },
+    "nav.records": {"en": "Records & about", "fr": "Archives et à propos"},
+    "nav.feed": {"en": "Newsfeed", "fr": "Fil d’actualités"},
+    "nav.map": {"en": "Map", "fr": "Carte"},
+    "nav.ask": {"en": "Ask the council", "fr": "Questions au conseil"},
+    "nav.updates": {"en": "Council updates", "fr": "Actualités du conseil"},
+    "nav.districts": {"en": "District explorer", "fr": "Explorer les districts"},
+    "publication.tagline": {
+        "en": "Your city. Your council. Your everyday life.",
+        "fr": "Votre ville. Votre conseil. Votre quotidien.",
+    },
+    "updates.title": {
+        "en": "Inside your city council.",
+        "fr": "Au cœur de votre conseil municipal.",
+    },
+    "updates.subtitle": {
+        "en": "The decisions being made. The neighbourhoods they shape.",
+        "fr": "Les décisions qui se prennent. Les quartiers qu’elles façonnent.",
+    },
+    "updates.kicker": {"en": "THE CITY, IN FOCUS", "fr": "PLEINS FEUX SUR LA VILLE"},
+    "updates.read": {"en": "Read the record", "fr": "Lire le document"},
+    "updates.empty": {
+        "en": "No records match these filters.",
+        "fr": "Aucun document ne correspond à ces filtres.",
+    },
+    "updates.more": {
+        "en": "Showing up to 24 records. Search the full archive for more.",
+        "fr": "Jusqu’à 24 documents affichés. Consultez les archives pour en voir davantage.",
+    },
+    "districts.title": {
+        "en": "Where decisions meet daily life.",
+        "fr": "Là où les décisions rejoignent le quotidien.",
+    },
+    "districts.subtitle": {
+        "en": "Find your representative and explore their recorded council votes.",
+        "fr": "Trouvez votre élu et explorez ses votes consignés au conseil municipal.",
+    },
+    "districts.choose": {"en": "Find your district", "fr": "Trouvez votre district"},
+    "districts.empty": {
+        "en": "No districts are available in the imported roster.",
+        "fr": "Aucun district dans le répertoire importé.",
+    },
+    "districts.profile": {"en": "View recorded votes", "fr": "Voir les votes consignés"},
+    "districts.map_note": {
+        "en": "These are representatives’ recorded city council votes. A vote does not "
+              "establish that the decision affects this district. Geographic links to "
+              "decisions have not been imported.",
+        "fr": "Il s’agit des votes consignés au conseil municipal. Un vote ne prouve pas "
+              "que la décision concerne ce district. Les liens géographiques avec les "
+              "décisions ne sont pas encore importés.",
+    },
+    "districts.preview": {
+        "en": "Map preview: official boundaries and a saved public roster. Connect the "
+              "council database to see recorded votes and source minutes.",
+        "fr": "Aperçu : limites officielles et répertoire public enregistré. Connectez la "
+              "base de données pour voir les votes consignés et les procès-verbaux.",
+    },
+    "districts.no_representative": {
+        "en": "No exact district match in the city council roster. Some districts elect "
+              "borough-only councillors, whose votes this app does not cover.",
+        "fr": "Aucune correspondance exacte dans le répertoire du conseil municipal. "
+              "Certains districts élisent des conseillers d’arrondissement dont les votes "
+              "ne sont pas couverts ici.",
+    },
+    "districts.borough_wide": {
+        "en": "Elected for the whole borough, not only this district.",
+        "fr": "Élu pour tout l’arrondissement, pas seulement ce district.",
+    },
+    "districts.no_votes": {
+        "en": "No explicit individual votes for this representative in the imported records.",
+        "fr": "Aucun vote individuel explicite pour cet élu dans les documents importés.",
+    },
+    "districts.vote_note": {
+        "en": "Up to 20 most recent recorded positions. No votes inferred from attendance.",
+        "fr": "Jusqu’à 20 positions consignées récentes. Aucun vote déduit de la présence.",
+    },
+    "districts.minutes": {"en": "Original minutes (FR)", "fr": "Procès-verbal original (FR)"},
+    "districts.no_source": {
+        "en": "The original minutes link is unavailable in the database.",
+        "fr": "Le lien du procès-verbal original est absent de la base de données.",
+    },
+    "districts.basemap": {
+        "en": "Show street background (loads external map tiles)",
+        "fr": "Afficher les rues (charge des tuiles cartographiques externes)",
+    },
+    "districts.map_help": {
+        "en": "Click a district or use the selector above. Boundaries are loaded locally.",
+        "fr": "Cliquez sur un district ou utilisez le sélecteur. Les limites sont locales.",
+    },
+    "districts.attribution": {
+        "en": "2025 electoral boundaries · Ville de Montréal · CC BY 4.0. "
+              "Source geometry preserved; JSON compressed for storage.",
+        "fr": "Limites électorales de 2025 · Ville de Montréal · CC BY 4.0. "
+              "Géométrie source conservée; JSON compressé pour le stockage.",
+    },
+    "districts.roster_source": {
+        "en": "Official representative roster", "fr": "Répertoire officiel des élus",
+    },
+    "districts.roster_date": {
+        "en": "Public roster downloaded {date}; this preview does not update it live.",
+        "fr": "Répertoire public téléchargé le {date}; cet aperçu ne l’actualise pas en direct.",
+    },
+    "database.title": {"en": "Connect your council records", "fr": "Connectez vos documents"},
+    "database.missing": {
+        "en": "Add WEB_DATABASE_URL to .env or Streamlit secrets to browse council records. "
+              "The district map can already be previewed without a database.",
+        "fr": "Ajoutez WEB_DATABASE_URL à .env ou aux secrets Streamlit pour consulter "
+              "les documents. La carte des districts est accessible sans base de données.",
+    },
+    "database.preview": {"en": "Preview the district map", "fr": "Voir la carte des districts"},
+    "districts.boundaries": {
+        "en": "Official electoral district map data",
+        "fr": "Données officielles des districts électoraux",
+    },
     "nav.search": {"en": "Search", "fr": "Recherche"},
     "nav.meetings": {"en": "Meetings", "fr": "Séances"},
     "nav.councillors": {"en": "Councillors", "fr": "Élus"},
@@ -49,35 +267,23 @@ STRINGS: dict[str, dict[str, str]] = {
         "en": "{n} of {total} free questions left today.",
         "fr": "{n} questions gratuites sur {total} restantes aujourd'hui.",
     },
-    "chat.using_own_key": {
-        "en": "Using your own Anthropic key.",
-        "fr": "Utilisation de votre propre clé Anthropic.",
-    },
     "chat.clear": {"en": "New conversation", "fr": "Nouvelle conversation"},
-    "chat.out_of_free": {
-        "en": "You've used today's free questions, or the free pool is spent for this month. "
-        "Search and the meeting pages keep working. To keep asking, add your own Anthropic "
-        "API key.",
-        "fr": "Vous avez utilisé vos questions gratuites du jour, ou la réserve gratuite est "
-        "épuisée pour ce mois. La recherche et les séances restent accessibles. Pour continuer, "
-        "ajoutez votre propre clé API Anthropic.",
+    "chat.sources": {
+        "en": "Documents for the meetings above, in French. "
+              "Each covers a whole meeting, not one claim.",
+        "fr": "Documents des séances ci-dessus, en français. "
+              "Chacun couvre toute une séance, pas une seule affirmation.",
     },
-    "chat.key_label": {"en": "Your Anthropic API key", "fr": "Votre clé API Anthropic"},
-    "chat.key_help": {
-        "en": "Kept in this browser tab's session only: never saved, logged or shared. A "
-        "question costs about 2–5 US cents with Claude Haiku. Get a key at console.anthropic.com.",
-        "fr": "Conservée seulement dans la session de cet onglet : jamais enregistrée, journalisée "
-        "ni partagée. Une question coûte environ 2 à 5 cents US avec Claude Haiku. Obtenez une "
-        "clé sur console.anthropic.com.",
+    "doc.agenda": {"en": "Agenda (FR)", "fr": "Ordre du jour"},
+    "doc.minutes": {"en": "Minutes (FR)", "fr": "Procès-verbal"},
+    "doc.bundle": {"en": "Decision documents (FR)", "fr": "Dossiers décisionnels"},
+    "chat.unavailable": {
+        "en": "Chat is temporarily unavailable. You can still browse decisions and source records.",
+        "fr": "Le clavardage est indisponible. Les décisions et leurs sources restent accessibles.",
     },
-    "chat.forget_key": {"en": "Forget my key", "fr": "Oublier ma clé"},
     "chat.pool_out": {
         "en": "The free questions are used up for now.",
         "fr": "Les questions gratuites sont épuisées pour le moment.",
-    },
-    "chat.key_rejected": {
-        "en": "Anthropic didn't accept that key, or its account has no credit left.",
-        "fr": "Anthropic a refusé cette clé, ou son compte n'a plus de crédit.",
     },
     "chat.busy": {
         "en": "The model is busy. Try again in a minute.",
@@ -91,10 +297,6 @@ STRINGS: dict[str, dict[str, str]] = {
         "fr": "Expliquez en français simple le point {number} de la séance du {date} "
         "(item_id {item_id}, « {title} ») : ce qui a été décidé, pourquoi, ce que ça coûte et "
         "comment le conseil a voté.",
-    },
-    "explain.needs_key": {
-        "en": "No free questions left. Add your own key on the Ask page.",
-        "fr": "Plus de questions gratuites. Ajoutez votre clé à la page Questions.",
     },
     "stat.meetings": {"en": "Meetings", "fr": "Séances"},
     "stat.items": {"en": "Agenda items", "fr": "Points à l'ordre du jour"},
@@ -151,6 +353,10 @@ STRINGS: dict[str, dict[str, str]] = {
     "item.moved_by": {
         "en": "Moved by {mover}, seconded by {seconder}",
         "fr": "Proposé par {mover}, appuyé par {seconder}",
+    },
+    "item.pdf_bundle": {
+        "en": "Original decision documents (French PDF)",
+        "fr": "Dossiers décisionnels originaux (PDF français)",
     },
     "item.summary": {"en": "Decision summary (French)", "fr": "Sommaire décisionnel"},
     "item.no_summary": {"en": "No decision summary on file.", "fr": "Aucun sommaire décisionnel."},

@@ -34,6 +34,7 @@ MAX_TOKENS = 16000
 class AgentAnswer:
     text: str
     citations: list[str] = field(default_factory=list)
+    source_documents: list[dict] = field(default_factory=list)
     turns: int = 0
     input_tokens: int = 0
     output_tokens: int = 0
@@ -207,6 +208,7 @@ def ask(
     messages.append({"role": "user", "content": question})
     answer = AgentAnswer(text="")
     seen_citations: list[str] = []
+    source_documents: list[dict] = []
 
     # The fixed instructions are cached; the meeting list changes weekly, so it
     # goes after them, outside the cache marker.
@@ -238,6 +240,7 @@ def ask(
                 block.text for block in response.content if block.type == "text"
             )
             answer.citations = list(dict.fromkeys(seen_citations))
+            answer.source_documents = source_documents
             return answer
 
         # All tool results for one assistant turn go back in ONE user message.
@@ -251,7 +254,20 @@ def ask(
                 is_error = False
             except Exception as exc:
                 logger.exception("tool %s failed", block.name)
-                result_text, is_error = f"Tool error: {exc}", True
+                result_text, citations, is_error = f"Tool error: {exc}", [], True
+            if conn is not None and citations:
+                # Links are extra: failing to load them must not cost the records.
+                try:
+                    documents = council_tools.source_documents(conn, citations)
+                except Exception:
+                    logger.exception("source documents failed")
+                else:
+                    for document in documents:
+                        if document not in source_documents:
+                            source_documents.append(document)
+                    result_text += "\nSource documents (French originals): " + json.dumps(
+                        documents, ensure_ascii=False
+                    )
 
             tool_results.append(
                 {

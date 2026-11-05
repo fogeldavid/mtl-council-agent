@@ -1,13 +1,8 @@
-"""Who pays for a question, and asking it.
+"""Ask questions using the team key configured on the server.
 
-Questions are paid from a shared pool first: an Anthropic key in a workspace
-capped at $5 a month with auto-reload off, so Anthropic itself stops the
-spending. Each visitor gets FREE_PER_DAY pool questions a day, counted in app
-memory by IP address; the count resets when the app restarts, which is
-accepted for a cap this small. After that, or once the pool's key is refused,
-visitors can add their own key. That key lives in their session only.
-
-No question text is stored anywhere, only the per-visitor daily counts.
+Each visitor receives a daily in-memory allowance. A missing/refused shared key
+or exhausted allowance disables chat; visitors never supply credentials.
+Configure spending controls in the provider account separately.
 """
 
 from __future__ import annotations
@@ -21,9 +16,10 @@ from datetime import date, datetime, timedelta
 import anthropic
 import streamlit as st
 
+from mtl_council_agent.agent.dates import dates_in
 from mtl_council_agent.agent.loop import ask
 from mtl_council_agent.agent.prompts import TOOL_SCHEMAS
-from mtl_council_agent.app.common import run
+from mtl_council_agent.app.common import fmt_date, run
 from mtl_council_agent.app.i18n import t
 
 FREE_PER_DAY = 5
@@ -47,10 +43,6 @@ _OUT_OF_FUNDS = re.compile(r"credit|usage limit|spend limit|billing", re.IGNOREC
 
 class PoolUnavailable(Exception):
     """The shared key was refused: spend limit reached, no credit, or revoked."""
-
-
-class KeyRejected(Exception):
-    """The visitor's own key was refused."""
 
 
 class Busy(Exception):
@@ -107,14 +99,8 @@ def visitor_id() -> str:
     return ip if isinstance(ip, str) and ip else "unknown"
 
 
-def own_key() -> str | None:
-    return st.session_state.get("own_key") or None
-
-
 def can_ask(today: date | None = None, now: datetime | None = None) -> bool:
-    """Whether a question can be asked right now, by the pool or the visitor's key."""
-    if own_key():
-        return True
+    """Whether the shared service has capacity for this visitor."""
     return _pool_turn(today or date.today(), now or datetime.now())
 
 
@@ -127,15 +113,25 @@ def _pool_turn(today: date, now: datetime) -> bool:
     return bool(pool_key()) and book.pool_up(now) and book.remaining(visitor_id(), today) > 0
 
 
+def with_sources(text: str, documents: list[dict]) -> str:
+    """Add database-owned links for the meetings the answer names, so an answer
+    that found nothing doesn't list everything its searches touched. These cover
+    a whole meeting, not one claim, and the heading says so."""
+    named = dates_in(text)
+    lines = [
+        f"- [{fmt_date(date.fromisoformat(d['meeting_date']))} · {t('doc.' + d['doc_type'])}]"
+        f"(<{d['url']}>)"  # Angle brackets keep query strings inside the URL.
+        for d in documents if d["meeting_date"] in named
+    ]
+    return f"{text}\n\n{t('chat.sources')}\n\n" + "\n".join(lines) if lines else text
+
+
 def answer(question: str, history: list[tuple[str, str]] | None = None) -> str:
-    """Ask the agent, paying from the pool if this visitor still has free
-    questions, otherwise with their own key. Raises PoolUnavailable,
-    KeyRejected or Busy for the page to explain."""
+    """Ask with the server's shared key; never fall back to visitor credentials."""
     today, now = date.today(), datetime.now()
-    use_pool = _pool_turn(today, now)
-    key = pool_key() if use_pool else own_key()
-    if not key:
+    if not _pool_turn(today, now):
         raise PoolUnavailable
+    key = pool_key()
     client = anthropic.Anthropic(api_key=key, max_retries=2)
     # Reconnect now if Neon closed the idle connection. Inside the loop a
     # dropped connection would surface as tool errors mid-answer instead.
@@ -152,18 +148,13 @@ def answer(question: str, history: list[tuple[str, str]] | None = None) -> str:
         )
         if not refused:
             raise
-        if use_pool:
-            ledger().mark_pool_down(now)
-            raise PoolUnavailable from exc
-        raise KeyRejected from exc
-    if use_pool:
-        ledger().record(visitor_id(), today)
-    return result.text
+        ledger().mark_pool_down(now)
+        raise PoolUnavailable from exc
+    ledger().record(visitor_id(), today)
+    return with_sources(result.text, result.source_documents)
 
 
 def error_message(exc: Exception) -> str:
     if isinstance(exc, PoolUnavailable):
         return t("chat.pool_out")
-    if isinstance(exc, KeyRejected):
-        return t("chat.key_rejected")
     return t("chat.busy")

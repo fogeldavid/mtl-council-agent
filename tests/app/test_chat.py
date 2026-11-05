@@ -38,7 +38,6 @@ def setup(monkeypatch):
 
     monkeypatch.setattr(chat, "ledger", lambda: book)
     monkeypatch.setattr(chat, "visitor_id", lambda: "1.2.3.4")
-    monkeypatch.setattr(chat, "own_key", lambda: state["own_key"])
     monkeypatch.setattr(chat, "pool_key", lambda: state["pool_key"])
     monkeypatch.setattr(chat, "ask", fake_ask)
     conn = type("Conn", (), {"execute": lambda self, sql: None})()
@@ -74,19 +73,14 @@ def test_pool_pays_for_the_first_five_then_stops(setup):
         chat.answer("q")
 
 
-def test_own_key_takes_over_after_the_free_questions(setup):
+def test_stale_visitor_key_cannot_bypass_shared_allowance(setup, monkeypatch):
+    monkeypatch.setitem(chat.st.session_state, "own_key", "visitor-key")
     for _ in range(chat.FREE_PER_DAY):
         chat.answer("q")
-    setup["own_key"] = "visitor-key"
-    assert chat.can_ask()
-    chat.answer("q")
-    assert setup["keys_used"][-1] == "visitor-key"
-
-
-def test_free_questions_are_used_before_the_visitors_key(setup):
-    setup["own_key"] = "visitor-key"
-    chat.answer("q")
-    assert setup["keys_used"] == ["pool-key"]
+    assert not chat.can_ask()
+    with pytest.raises(chat.PoolUnavailable):
+        chat.answer("q")
+    assert set(setup["keys_used"]) == {"pool-key"}
 
 
 def test_spend_limit_marks_the_pool_down_for_everyone(setup):
@@ -109,12 +103,11 @@ def test_pool_is_retried_after_an_hour():
     assert book.pool_up(NOW + chat.POOL_RETRY_AFTER)
 
 
-def test_a_bad_own_key_is_reported_as_such(setup):
-    setup["pool_key"] = None
-    setup["own_key"] = "bad-key"
+def test_invalid_team_key_disables_shared_chat(setup):
     setup["raise"] = _api_error(anthropic.AuthenticationError, 401, "invalid x-api-key")
-    with pytest.raises(chat.KeyRejected):
+    with pytest.raises(chat.PoolUnavailable):
         chat.answer("q")
+    assert not chat.can_ask()
 
 
 def test_rate_limit_is_busy_not_a_refusal(setup):
@@ -134,6 +127,26 @@ def test_other_bad_requests_are_not_mistaken_for_a_spent_pool(setup):
 def test_no_pool_key_and_no_own_key_cannot_ask(setup):
     setup["pool_key"] = None
     assert not chat.can_ask()
+
+
+DOCS = [
+    {"meeting_date": "2026-06-15", "doc_type": "minutes", "url": "https://x.test/pv.pdf?doc=1"},
+    {"meeting_date": "2026-03-23", "doc_type": "agenda", "url": "https://x.test/odj.pdf?doc=2"},
+]
+
+
+def test_sources_list_only_the_meetings_the_answer_names():
+    text = chat.with_sources("On June 15, 2026 (item 20.01) it passed.", DOCS)
+    assert text.startswith("On June 15, 2026 (item 20.01) it passed.")
+    assert "(<https://x.test/pv.pdf?doc=1>)" in text
+    assert "odj.pdf" not in text
+    assert "Sources" not in text and "Each covers a whole meeting" in text
+
+
+def test_an_answer_that_found_nothing_lists_no_sources():
+    assert chat.with_sources("I don't have a record of that.", DOCS) == (
+        "I don't have a record of that."
+    )
 
 
 def test_history_is_passed_through(setup):

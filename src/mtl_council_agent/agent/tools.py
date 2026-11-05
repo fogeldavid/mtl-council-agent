@@ -427,3 +427,27 @@ def get_official_record(conn, name: str, limit: int = 400) -> list[ItemResult]:
         item.involvement = list(row[0])
         results.append(item)
     return results
+
+
+def source_documents(conn, citations: list[str]) -> list[dict]:
+    """Official PDFs for the meetings behind retrieved citations.
+
+    The database stores document URLs but currently discards page boundaries.
+    Never manufacture a page number or imply these links pinpoint a passage.
+    """
+    dates = sorted({citation[:10] for citation in citations})
+    rows = conn.execute(
+        """
+        select distinct m.meeting_date, d.doc_type, d.source_pdf_url
+        from meetings m
+        join documents d on d.meeting_id = m.id
+        where m.meeting_date = any(%s::date[])
+        order by m.meeting_date, d.doc_type, d.source_pdf_url
+        """,
+        (dates,),
+    ).fetchall()
+    return [
+        {"meeting_date": day.isoformat(), "doc_type": kind, "url": url}
+        for day, kind, url in rows
+        if url.startswith(("https://", "http://"))
+    ]

@@ -22,3 +22,62 @@ header[data-testid="stHeader"] p { color: #F6F2EA !important; font-weight: 500; 
 .summary { font-family: 'Source Serif 4', serif; font-size: 16px; line-height: 1.6; white-space: pre-wrap;
            background: #FFFDF8; border: 1px solid #D9D2C3; border-radius: 6px; padding: 16px 20px;
            max-height: 520px; overflow-y: auto; }
+
+/* Publication layout adapted from the user's Lovable template. */
+html, body, [data-testid="stAppViewContainer"] { background: #FAFAF7; color: #20221F; }
+header[data-testid="stHeader"] { background: #FAFAF7; border-bottom: 1px solid #B6B8B0; }
+header[data-testid="stHeader"] a, header[data-testid="stHeader"] span,
+header[data-testid="stHeader"] p { color: #20221F !important; }
+.block-container { max-width: 1260px; padding-top: 4.8rem !important; padding-bottom: 3rem; }
+.banner { background: transparent; color: #53574E; padding: 0; font-size: 11px; }
+.publication { text-align: center; border-top: 1px solid #989C92; border-bottom: 3px double #989C92;
+               padding: 24px 12px; margin: 14px 0 28px; }
+.publication-name { font-family: 'Source Serif 4', Georgia, serif; font-size: clamp(30px, 5vw, 60px);
+                    font-weight: 700; line-height: 1.15; letter-spacing: -1.5px; }
+.publication-tagline { font-size: 12px; color: #5A6056; margin-top: 10px; }
+h1 { font-size: clamp(30px, 4vw, 48px) !important; line-height: 1.15 !important; }
+a { color: #345D50; }
+.record-story { border-top: 1px solid #B6B8B0; padding: 20px 0 12px; }
+.record-story h3 { font-size: 22px; line-height: 1.3; }
+.lead-story h2 { font-size: clamp(27px, 3.4vw, 40px); line-height: 1.18; }
+.story-kicker { font-size: 10px; text-transform: uppercase; letter-spacing: 1.4px;
+                 color: #345D50; margin-bottom: 12px; }
+.record-story .meta { margin: 12px 0; }
+.card, .summary { background: #FEFEFC; border-color: #DADCD4; border-radius: 0; }
+.note, .cite { background: #F0F0EC; }
+[data-testid="stChatMessage"] { border: 1px solid #DADCD4; background: #FEFEFC; border-radius: 4px; }
+[data-testid="stChatInput"] { border-color: #345D50; }
+button:focus-visible, a:focus-visible { outline: 2px solid #345D50; outline-offset: 3px; }
+@media (max-width: 640px) {
+  .block-container { padding-left: 1rem; padding-right: 1rem; }
+  .publication { padding: 20px 0; }
+  .publication-name { letter-spacing: -.6px; }
+}
+
+/* Primary tabs stay horizontal; secondary links belong to their section. */
+.st-key-primary-navigation { border-bottom: 1px solid #B6B8B0; padding-bottom: 6px; }
+.st-key-primary-navigation [data-testid="stHorizontalBlock"],
+.st-key-section-navigation [data-testid="stHorizontalBlock"] { flex-wrap: nowrap; gap: .5rem; }
+.st-key-primary-navigation [data-testid="stColumn"],
+.st-key-section-navigation [data-testid="stColumn"] { min-width: 0 !important; }
+.st-key-primary-navigation [data-testid="stPageLink"] a {
+  justify-content: center; border-radius: 0; padding: 12px 4px;
+}
+.st-key-primary-navigation [data-testid="stPageLink"] p {
+  font-size: 14px; font-weight: 600; text-align: center; white-space: normal;
+}
+.st-key-nav-ask-active, .st-key-nav-districts-active, .st-key-nav-updates-active,
+.st-key-nav-records-active {
+  border-bottom: 3px solid #345D50;
+}
+.st-key-section-navigation { margin-bottom: 12px; }
+.st-key-section-navigation [data-testid="stPageLink"] p { font-size: 12px; }
+@media (max-width: 640px) {
+  .st-key-primary-navigation [data-testid="stPageLink"] p { font-size: 12px; }
+}
+
+/* Compact shell keeps the search and first decision visible above the fold. */
+header[data-testid="stHeader"] { display: none; }
+.block-container { padding-top: 1.5rem !important; }
+.publication { padding: 14px 10px; margin: 8px 0 18px; }
+.publication-name { font-size: clamp(30px, 4.5vw, 50px); }

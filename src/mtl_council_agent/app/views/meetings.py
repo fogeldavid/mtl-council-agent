@@ -12,7 +12,7 @@ import pandas as pd
 import streamlit as st
 
 from mtl_council_agent.agent.tools import get_vote_detail
-from mtl_council_agent.app import chat, queries
+from mtl_council_agent.app import chat, queries, translations
 from mtl_council_agent.app.common import (
     PAGES,
     badge,
@@ -23,9 +23,10 @@ from mtl_council_agent.app.common import (
     masthead,
     md_text,
     outcome_label,
+    record_title,
     run,
 )
-from mtl_council_agent.app.i18n import t
+from mtl_council_agent.app.i18n import lang, t
 
 
 def render() -> None:
@@ -89,7 +90,7 @@ def _meeting_view(meeting_id: int) -> None:
     table = pd.DataFrame(
         {
             t("col.item"): [display_number(i["item_number"], i["section"]) for i in items],
-            t("col.title"): [i["title"] for i in items],
+            t("col.title"): [record_title(i["title"]) for i in items],
             t("col.outcome"): [
                 outcome_label(i["vote_outcome"], info["has_minutes"]) for i in items
             ],
@@ -113,13 +114,17 @@ def _names(names: list[str]) -> str:
     return "".join(f'<span class="chip">{html_text(n)}</span>' for n in names)
 
 
-def _item_view(item_id: int) -> None:
+def _item_view(item_id: int, from_feed: bool = False) -> None:
     it = run(queries.item, item_id)
     if it is None:
         st.warning("Item not found.")
         return
-    if st.button(f"← {t('back.meeting')}"):
-        go(meeting=it["meeting_id"])
+    back_label = t("feed.back") if from_feed else t("back.meeting")
+    if st.button(f"← {back_label}"):
+        if from_feed:
+            go()
+        else:
+            go(meeting=it["meeting_id"])
 
     number = display_number(it["item_number"], it["section"])
     st.caption(f"{fmt_date(it['meeting_date'])} · {number}")
@@ -129,7 +134,7 @@ def _item_view(item_id: int) -> None:
         f'<span class="cite">{html_text(x)}</span>' for x in (it["motion_number"], dossier) if x
     ]
     st.markdown(" ".join(tags), unsafe_allow_html=True)
-    st.markdown(f"### {md_text(it['title'])}")
+    st.markdown(f"### {md_text(record_title(it['title']))}")
 
     byline = []
     if it["department"]:
@@ -141,16 +146,42 @@ def _item_view(item_id: int) -> None:
 
     left, right = st.columns([1.6, 1], gap="large")
     with left:
-        st.markdown(f"#### {t('item.summary')}")
-        if it["decision_summary"]:
-            st.markdown(
-                f'<div class="summary" lang="fr">{html_text(it["decision_summary"])}</div>',
-                unsafe_allow_html=True,
-            )
+        if lang() == "en":
+            english_title = translations.english(it["title"])
+            st.caption(t("translation.label" if english_title else "translation.pending"))
+            st.markdown(f"#### {t('translation.context')}")
+            excerpt = translations.context_excerpt(it["decision_summary"])
+            english_context = translations.english(excerpt)
+            if english_context:
+                st.write(md_text(english_context))
+                if not english_title:
+                    st.caption(t("translation.label"))
+            elif not it["decision_summary"]:
+                st.caption(t("item.no_summary"))
+            else:
+                st.caption(t("translation.context_missing"))
+            with st.expander(t("translation.original")):
+                st.markdown(f"**{md_text(it['title'])}**")
+                if it["decision_summary"]:
+                    st.markdown(
+                        f'<div class="summary" lang="fr">'
+                        f'{html_text(it["decision_summary"])}</div>', unsafe_allow_html=True,
+                    )
+                else:
+                    st.caption(t("item.no_summary"))
         else:
-            st.caption(t("item.no_summary"))
+            st.markdown(f"#### {t('item.summary')}")
+            if it["decision_summary"]:
+                st.markdown(
+                    f'<div class="summary" lang="fr">{html_text(it["decision_summary"])}</div>',
+                    unsafe_allow_html=True,
+                )
+            else:
+                st.caption(t("item.no_summary"))
         _explain(it, number)
         docs = run(queries.meeting_documents, it["meeting_id"])
+        if "bundle" in docs:
+            st.link_button(t("item.pdf_bundle"), docs["bundle"])
         if "agenda" in docs:
             st.link_button(t("item.pdf_agenda"), docs["agenda"])
         if "minutes" in docs:
@@ -170,8 +201,7 @@ def _explain(it: dict, number: str) -> None:
         st.caption(t("chat.notice"))
         return
     if not chat.can_ask():
-        st.caption(t("explain.needs_key"))
-        st.page_link(PAGES["ask"], label=f"{t('nav.ask')} →")
+        st.caption(t("chat.pool_out") if chat.pool_key() else t("chat.unavailable"))
         return
     if st.button(t("explain.button")):
         question = t(
@@ -181,7 +211,7 @@ def _explain(it: dict, number: str) -> None:
         with st.spinner(t("chat.thinking")):
             try:
                 done[key] = chat.answer(question)
-            except (chat.PoolUnavailable, chat.KeyRejected, chat.Busy) as exc:
+            except (chat.PoolUnavailable, chat.Busy) as exc:
                 st.warning(chat.error_message(exc))
                 return
         st.markdown(md_text(done[key]))

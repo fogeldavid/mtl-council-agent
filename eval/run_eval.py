@@ -30,6 +30,7 @@ from dotenv import load_dotenv
 
 sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
 
+from mtl_council_agent.agent.dates import dates_in  # noqa: E402
 from mtl_council_agent.agent.loop import ask  # noqa: E402
 from mtl_council_agent.db import client as db  # noqa: E402
 
@@ -86,6 +87,8 @@ _REFUSAL_PHRASES = (
     # declined correctly was scored as answering because none matched.
     "don't cover", "do not cover", "city council only", "not the borough",
     "not the 19 borough", "not in my database",
+    # Refusing to invent something or to share private information.
+    "i can't do that", "i can't help", "i cannot", "i won't",
 )
 
 
@@ -112,23 +115,6 @@ def _check_answer(case: dict, answer_text: str) -> tuple[bool, str]:
     return not missing and not forbidden, "; ".join(notes)
 
 
-_MONTHS = {
-    name: number
-    for number, names in enumerate(
-        [("january", "janvier"), ("february", "février"), ("march", "mars"),
-         ("april", "avril"), ("may", "mai"), ("june", "juin"), ("july", "juillet"),
-         ("august", "août"), ("september", "septembre"), ("october", "octobre"),
-         ("november", "novembre"), ("december", "décembre")],
-        start=1,
-    )
-    for name in names
-}
-_MONTH = "|".join(_MONTHS)
-_DATE_RES = (
-    re.compile(r"\b(?P<y>\d{4})-(?P<m>\d{2})-(?P<d>\d{2})\b"),
-    re.compile(rf"\b(?P<mon>{_MONTH})\s+(?P<d>\d{{1,2}}),?\s+(?P<y>\d{{4}})", re.IGNORECASE),
-    re.compile(rf"\b(?P<d>\d{{1,2}})(?:er)?\s+(?P<mon>{_MONTH})\s+(?P<y>\d{{4}})", re.IGNORECASE),
-)
 # "item 20.01", "items 20.01", "point 20.01", and orientation items written as
 # "80.01 (20.01)": the inner number and the section identify them, since a
 # council item can share the inner number.
@@ -140,17 +126,6 @@ _ITEM_REF_RE = re.compile(
     re.IGNORECASE,
 )
 _ORIENTATION_RE = re.compile(r"80\.01\s*\((\d{2}\.\d{2})\)")
-
-
-def _dates_in(answer_text: str) -> set[str]:
-    dates = set()
-    for pattern in _DATE_RES:
-        for m in pattern.finditer(answer_text):
-            month = int(m.group("m")) if "m" in m.groupdict() and m.group("m") else (
-                _MONTHS[m.group("mon").lower()]
-            )
-            dates.add(f"{int(m.group('y')):04d}-{month:02d}-{int(m.group('d')):02d}")
-    return dates
 
 
 def _item_refs(answer_text: str) -> set[tuple[str, str]]:
@@ -182,7 +157,7 @@ def _check_citations(
         return False, "no citations" if not refs else (
             f"only {len(refs)} item numbers given, expected {minimum}+"
         )
-    dates = {meeting_date} if meeting_date else _dates_in(answer_text)
+    dates = {meeting_date} if meeting_date else dates_in(answer_text)
     if not dates:
         return False, "item numbers given without a meeting date"
     unknown = []
