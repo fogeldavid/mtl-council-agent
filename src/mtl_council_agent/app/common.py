@@ -102,16 +102,16 @@ def setup_page() -> None:
 
 
 def masthead() -> None:
-    left, right = st.columns([6, 1], vertical_alignment="center")
-    left.markdown(f'<div class="banner">{t("banner")}</div>', unsafe_allow_html=True)
-    st.markdown(
-        '<div class="publication"><div class="publication-name">The Montréal Record.</div>'
-        f'<div class="publication-tagline">{t("publication.tagline")}</div></div>',
-        unsafe_allow_html=True,
-    )
-    right.segmented_control(
-        "Language", ["EN", "FR"], default="EN", label_visibility="collapsed", key="lang"
-    )
+    with st.container(key="masthead"):
+        left, right = st.columns([6, 1], vertical_alignment="center")
+        left.markdown(
+            '<div class="publication-name">The Montréal Record.</div>'
+            f'<div class="banner">{t("banner")}</div>',
+            unsafe_allow_html=True,
+        )
+        right.segmented_control(
+            "Language", ["EN", "FR"], default="EN", label_visibility="collapsed", key="lang"
+        )
 
 
 def md_text(text: str) -> str:
