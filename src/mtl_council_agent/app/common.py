@@ -104,7 +104,7 @@ def masthead() -> None:
     with st.container(key="masthead"):
         left, right = st.columns([6, 1], vertical_alignment="center")
         with left:
-            st.page_link(PAGES["landing"], label="The Montréal Record.")
+            st.page_link(PAGES["landing"], label="The Montréal Record.", icon=":material/home:")
             st.markdown(f'<div class="banner">{t("banner")}</div>', unsafe_allow_html=True)
         right.segmented_control(
             "Language", ["EN", "FR"], default="EN", label_visibility="collapsed", key="lang"

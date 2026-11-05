@@ -84,6 +84,13 @@ def test_the_landing_photo_is_bundled_and_credited_on_the_about_page():
     assert "Concierge.2C" in credit and "CC BY-SA 3.0" in credit
 
 
+def test_the_top_left_link_goes_home_with_a_home_icon(monkeypatch):
+    at = _entrypoint(monkeypatch)
+    link = at.get("page_link")[0].proto
+    assert link.label == "The Montréal Record."
+    assert link.icon == ":material/home:"
+
+
 def test_each_landing_box_goes_to_its_page(monkeypatch):
     from mtl_council_agent.app.views import landing
 
