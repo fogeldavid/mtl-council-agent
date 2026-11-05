@@ -127,6 +127,9 @@ header[data-testid="stHeader"] { display: none; }
 }
 .st-key-masthead { border-bottom: 1px solid #B6B8B0; padding-bottom: 6px; }
 .st-key-masthead [data-testid="stPageLink"] a { padding: 0; background: transparent; }
+.st-key-masthead [data-testid="stPageLink"] span[data-testid="stIconMaterial"] {
+  color: #345D50; font-size: 24px;
+}
 .st-key-masthead [data-testid="stPageLink"] p {
   font-family: 'Source Serif 4', Georgia, serif; font-size: 22px; font-weight: 700;
   line-height: 1.2; letter-spacing: -.4px; color: #20221F;
