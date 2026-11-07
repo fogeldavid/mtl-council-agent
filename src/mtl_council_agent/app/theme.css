@@ -163,30 +163,66 @@ header[data-testid="stHeader"] { display: none; }
   height: clamp(240px, calc(100vh - 450px), 440px);
   object-fit: cover; object-position: center 35%; border-radius: 6px;
 }
-/* The whole box is the link, through a layer over it. */
-[class*="st-key-landing-box-"] {
-  position: relative; padding: 18px 20px; gap: 4px; background: #FEFEFC; min-height: 104px;
-  border: 1px solid #C9CCC4; border-radius: 6px;
+/* Front-page sections: thin rules, a small label, a serif title; the whole section is the link. */
+[class*="st-key-landing-row-"] { border-top: 1px solid #B6B8B0; }
+.st-key-landing-row-ask { border-bottom: 1px solid #B6B8B0; }
+[class*="st-key-landing-row-"] [data-testid="stHorizontalBlock"] { gap: 0; align-items: stretch; }
+/* Each section fills its column, so both sections in a row are the same height. */
+[class*="st-key-landing-row-"] [data-testid="stLayoutWrapper"]:has(> [class*="st-key-landing-section-"]) {
+  flex-grow: 1;
 }
-[class*="st-key-landing-box-"]:hover { background: #F0F0EC; border-color: #8FA79D; }
-[class*="st-key-landing-box-"] [data-testid="stPageLink"] a {
+[class*="st-key-landing-row-"] [data-testid="stColumn"]:last-child {
+  border-left: 1px solid #B6B8B0;
+}
+[class*="st-key-landing-section-"] {
+  position: relative; padding: 16px 22px 18px; gap: 4px; min-height: 110px;
+}
+/* Streamlit pulls text blocks up by a paragraph's margin; these labels aren't
+   paragraphs, so without this the title below is drawn on top of them. */
+[data-testid="stMarkdownContainer"]:has(> .landing-label),
+[data-testid="stMarkdownContainer"]:has(> .people-label) { margin-bottom: 0; }
+[class*="st-key-landing-row-"] [data-testid="stColumn"]:first-child [class*="st-key-landing-section-"] {
+  padding-left: 0;
+}
+[class*="st-key-landing-section-"]:hover { background: #F2F2EE; }
+.landing-label {
+  font-size: 11px; font-weight: 600; letter-spacing: 1.4px; text-transform: uppercase;
+  color: #5A6056;
+}
+[class*="st-key-landing-section-"] [data-testid="stPageLink"] a {
   padding: 0; background: transparent;
 }
-/* Nothing between the link and the box may be positioned, or the layer stops there. */
-[class*="st-key-landing-box-"] *:has(a),
-[class*="st-key-landing-box-"] [data-testid="stPageLink"] a { position: static !important; }
-[class*="st-key-landing-box-"] [data-testid="stPageLink"] a::after {
+/* Nothing between the link and the section may be positioned, or the layer stops there. */
+[class*="st-key-landing-section-"] *:has(a),
+[class*="st-key-landing-section-"] [data-testid="stPageLink"] a { position: static !important; }
+[class*="st-key-landing-section-"] [data-testid="stPageLink"] a::after {
   content: ""; position: absolute; inset: 0; z-index: 1;
 }
-[class*="st-key-landing-box-"] [data-testid="stPageLink"] span[data-testid="stIconMaterial"] {
-  color: #345D50; font-size: 22px;
+[class*="st-key-landing-section-"] [data-testid="stPageLink"] p {
+  font-family: 'Source Serif 4', Georgia, serif; font-size: 22px; font-weight: 600;
+  line-height: 1.25; color: #20221F;
 }
-[class*="st-key-landing-box-"] [data-testid="stPageLink"] p {
-  font-family: 'Source Serif 4', Georgia, serif; font-size: 19px; font-weight: 600; color: #264539;
-}
-[class*="st-key-landing-box-"] [data-testid="stPageLink"] a,
-[class*="st-key-landing-box-"] [data-testid="stPageLink"] a * {
+[class*="st-key-landing-section-"] [data-testid="stPageLink"] a,
+[class*="st-key-landing-section-"] [data-testid="stPageLink"] a * {
   max-width: 100%; overflow: visible; white-space: normal; text-overflow: clip;
+}
+[class*="st-key-landing-section-"]:hover [data-testid="stPageLink"] p { text-decoration: underline; }
+@media (max-width: 640px) {
+  [class*="st-key-landing-row-"] [data-testid="stColumn"]:last-child {
+    border-left: 0; border-top: 1px solid #DADCD4;
+  }
+  [class*="st-key-landing-section-"] { padding-left: 0; padding-right: 0; }
+}
+.record-snippet { font-size: 14px; color: #3B3F39; margin-top: 6px; }
+.people-label {
+  font-size: 11px; font-weight: 600; letter-spacing: 1.2px; text-transform: uppercase;
+  color: #5A6056; margin: 4px 0 2px;
+}
+[class*="st-key-district-people-"] { gap: 2px; margin-bottom: 10px; }
+.st-key-masthead-about [data-testid="stPageLink"] a { padding: 0; justify-content: flex-end; }
+.st-key-masthead-about [data-testid="stPageLink"] p {
+  font-family: 'IBM Plex Sans', sans-serif !important; font-size: 14px !important;
+  font-weight: 600 !important; letter-spacing: 0 !important; color: #345D50 !important;
 }
 /* The map's clear and full-screen buttons sat over the address box; keep them on the map. */
 [data-testid="stElementContainer"]:has([data-testid="stDeckGlJsonChart"])

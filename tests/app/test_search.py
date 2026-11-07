@@ -71,12 +71,8 @@ def test_meaning_applies_filters_before_limiting(conn):
     assert ids(rows) == [11]
 
 
-def test_newsfeed_only_has_voted_items_with_minutes(conn):
-    rows = queries.newsfeed(conn)
+def test_decided_keeps_voted_items_with_minutes(conn):
+    rows = queries.search(conn, decided=True)
     assert ids(rows) == [10, 11, 12, 13]
     assert all(row["has_minutes"] for row in rows)
-    assert all(row["total_count"] == 4 for row in rows)
-    assert ids(queries.newsfeed(conn, limit=2, offset=2)) == [12, 13]
-    assert ids(queries.newsfeed(conn, text="Veille")) == [10]
-    assert ids(queries.newsfeed(conn, outcome="rejected")) == [11]
-    assert queries.newsfeed(conn, meeting_id=2) == []
+    assert ids(queries.search(conn, "Veille", decided=True)) == [10]

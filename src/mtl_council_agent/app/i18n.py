@@ -67,27 +67,11 @@ STRINGS: dict[str, dict[str, str]] = {
         "fr": ('Source des adresses : Québec · Ministère des Ressources naturelles et '
                'des Forêts'),
     },
-    "feed.back": {"en": "Back to the newsfeed", "fr": "Retour au fil d’actualités"},
-    "feed.minutes_only": {
-        "en": "Council votes with published minutes. "
-              "Open a record for the summary and voting details.",
-        "fr": "Votes avec procès-verbal publié. Ouvrez un document pour le résumé et les votes.",
-    },
+    "feed.back": {"en": "Back to decisions", "fr": "Retour aux décisions"},
     "feed.search_hint": {
         "en": "Search decisions, a company, or a resolution number…",
         "fr": "Rechercher une décision, une entreprise ou un numéro de résolution…",
     },
-    "feed.search_french": {
-        "en": "This box searches the French text. To search in English, "
-              "open Search and choose By meaning.",
-        "fr": "Cette recherche porte sur le texte français.",
-    },
-    "feed.filters": {"en": "Filter decisions", "fr": "Filtrer les décisions"},
-    "feed.count": {
-        "en": "{start}–{end} of {total} decisions", "fr": "{start}–{end} sur {total} décisions",
-    },
-    "feed.previous": {"en": "← Previous", "fr": "← Précédent"},
-    "feed.next": {"en": "Next →", "fr": "Suivant →"},
     "translation.label": {
         "en": "Translated from the French original · Machine translation",
         "fr": "Traduction automatique de l’original français",
@@ -106,8 +90,6 @@ STRINGS: dict[str, dict[str, str]] = {
         "fr": "Aucun extrait de contexte anglais pour ce document. "
               "Consultez l’original français ci-dessous.",
     },
-    "nav.records": {"en": "Records & about", "fr": "Archives et à propos"},
-    "nav.feed": {"en": "Newsfeed", "fr": "Fil d’actualités"},
     "nav.map": {
         "en": 'Districts',
         "fr": 'Districts',
@@ -115,28 +97,7 @@ STRINGS: dict[str, dict[str, str]] = {
     "nav.ask": {"en": "Ask the council", "fr": "Questions au conseil"},
     "nav.updates": {"en": "Council updates", "fr": "Actualités du conseil"},
     "nav.districts": {"en": "District explorer", "fr": "Explorer les districts"},
-    "publication.tagline": {
-        "en": "Your city. Your council. Your everyday life.",
-        "fr": "Votre ville. Votre conseil. Votre quotidien.",
-    },
-    "updates.title": {
-        "en": "Inside your city council.",
-        "fr": "Au cœur de votre conseil municipal.",
-    },
-    "updates.subtitle": {
-        "en": "The decisions being made. The neighbourhoods they shape.",
-        "fr": "Les décisions qui se prennent. Les quartiers qu’elles façonnent.",
-    },
-    "updates.kicker": {"en": "THE CITY, IN FOCUS", "fr": "PLEINS FEUX SUR LA VILLE"},
     "updates.read": {"en": "Read the record", "fr": "Lire le document"},
-    "updates.empty": {
-        "en": "No records match these filters.",
-        "fr": "Aucun document ne correspond à ces filtres.",
-    },
-    "updates.more": {
-        "en": "Showing up to 24 records. Search the full archive for more.",
-        "fr": "Jusqu’à 24 documents affichés. Consultez les archives pour en voir davantage.",
-    },
     "find.searching": {"en": "Searching for your address…", "fr": "Recherche de votre adresse…"},
     "find.no_number": {
         "en": "We found that street, but not that civic number. Check the number, "
@@ -156,6 +117,48 @@ STRINGS: dict[str, dict[str, str]] = {
         "fr": "Photo de la page d’accueil : [Hôtel de ville de Montréal]({source}), par "
               "Concierge.2C, [CC BY-SA 3.0]({license}), recadrée.",
     },
+    "landing.districts_label": {"en": "Your district", "fr": "Votre district"},
+    "landing.search_label": {"en": "The record", "fr": "Le registre"},
+    "landing.ask_label": {"en": "Ask", "fr": "Questions"},
+    "landing.latest_label": {"en": "Latest", "fr": "Dernière séance"},
+    "landing.latest": {"en": "Council meetings", "fr": "Séances du conseil"},
+    "landing.latest_help": {
+        "en": "Every meeting on file, with its agenda and decisions.",
+        "fr": "Toutes les séances, avec leur ordre du jour et leurs décisions.",
+    },
+    "landing.latest_items": {
+        "en": "{n} items, minutes published.", "fr": "{n} points, procès-verbal publié.",
+    },
+    "nav.council": {"en": "Council updates", "fr": "Actualités du conseil"},
+    "nav.decisions": {"en": "Decisions", "fr": "Décisions"},
+    "decisions.title": {"en": "Council decisions", "fr": "Décisions du conseil"},
+    "decisions.subtitle": {
+        "en": "The latest first. Search by topic in English or French, or by exact words.",
+        "fr": "Les plus récentes d’abord. Cherchez par sujet en français ou en anglais, "
+              "ou par mots exacts.",
+    },
+    "decisions.search": {"en": "Search decisions", "fr": "Chercher des décisions"},
+    "decisions.decided": {"en": "Decided only", "fr": "Décisions prises seulement"},
+    "decisions.decided_help": {
+        "en": "Adopted or rejected items from meetings with published minutes. Untick to "
+              "include items still on an upcoming agenda.",
+        "fr": "Points adoptés ou rejetés lors de séances dont le procès-verbal est publié. "
+              "Décochez pour inclure les points d’un ordre du jour à venir.",
+    },
+    "decisions.more_filters": {"en": "More filters", "fr": "Plus de filtres"},
+    "decisions.count": {"en": "{n} decisions", "fr": "{n} décisions"},
+    "decisions.count_one": {"en": "1 decision", "fr": "1 décision"},
+    "decisions.none": {
+        "en": "No items match. Try other words, or fewer filters.",
+        "fr": "Aucun point ne correspond. Essayez d’autres mots ou moins de filtres.",
+    },
+    "districts.role_district": {
+        "en": "{role} for this district · {party}", "fr": "{role} pour ce district · {party}",
+    },
+    "districts.role_borough": {
+        "en": "{role}, for the whole borough · {party}",
+        "fr": "{role}, pour tout l’arrondissement · {party}",
+    },
     "landing.title": {
         "en": "See what Montreal city council decided and how your councillor voted.",
         "fr": "Voyez ce que le conseil municipal de Montréal a décidé et comment vos "
@@ -167,34 +170,26 @@ STRINGS: dict[str, dict[str, str]] = {
         "fr": "Ce site rend les documents publics du conseil plus faciles à lire et à "
               "consulter, avec des liens vers les documents originaux de la Ville.",
     },
-    "landing.districts": {
-        "en": "Find your district and councillors →",
-        "fr": "Trouvez votre district et vos élus →",
-    },
+    "landing.districts": {"en": "Find who represents you", "fr": "Trouvez qui vous représente"},
     "landing.districts_help": {
         "en": "Enter your address or pick your district on the map to see who "
               "represents you and how they voted.",
         "fr": "Entrez votre adresse ou choisissez votre district sur la carte pour voir "
               "qui vous représente et comment ces personnes ont voté.",
     },
-    "landing.search": {"en": "Search the records →", "fr": "Cherchez dans le registre →"},
+    "landing.search": {"en": "Search every decision", "fr": "Cherchez parmi les décisions"},
     "landing.search_help": {
         "en": "Look up decisions by topic, company or resolution number, in English or French.",
         "fr": "Cherchez des décisions par sujet, entreprise ou numéro de résolution, "
               "en français ou en anglais.",
     },
     "landing.ask": {
-        "en": "Ask our AI about council decisions →",
-        "fr": "Questionnez notre IA sur les décisions du conseil →",
+        "en": "Ask a question about a council vote",
+        "fr": "Posez une question sur un vote du conseil",
     },
     "landing.ask_help": {
         "en": "Get answers that cite the record. Five free questions a day.",
         "fr": "Obtenez des réponses qui citent le registre. Cinq questions gratuites par jour.",
-    },
-    "landing.recent": {"en": "Recent meetings →", "fr": "Séances récentes →"},
-    "landing.recent_help": {
-        "en": "Read the latest decisions from meetings with published minutes.",
-        "fr": "Lisez les dernières décisions des séances dont le procès-verbal est publié.",
     },
     "districts.title": {
         "en": 'District and councillor',
@@ -217,10 +212,6 @@ STRINGS: dict[str, dict[str, str]] = {
         "fr": "Aucune correspondance exacte dans le répertoire du conseil municipal. "
               "Certains districts élisent des conseillers d’arrondissement dont les votes "
               "ne sont pas couverts ici.",
-    },
-    "districts.borough_wide": {
-        "en": "Elected for the whole borough, not only this district.",
-        "fr": "Élu pour tout l’arrondissement, pas seulement ce district.",
     },
     "districts.basemap": {
         "en": "Show street background (loads external map tiles)",

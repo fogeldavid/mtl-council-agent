@@ -30,22 +30,19 @@ def _render(view: str, params: dict[str, str]) -> None:
     from mtl_council_agent.app.views import (
         about,
         councillors,
+        decisions,
         districts,
         home,
         meetings,
-        search,
-        updates,
     )
 
     views = {
-        "home": home, "search": search, "meetings": meetings,
-        "councillors": councillors, "about": about,
-        "updates": updates, "districts": districts,
+        "home": home, "decisions": decisions, "meetings": meetings,
+        "councillors": councillors, "about": about, "districts": districts,
     }
     PAGES.update(
-        updates=st.Page(updates.render, title="Newsfeed", url_path="updates"),
+        decisions=st.Page(decisions.render, title="Decisions", url_path="decisions"),
         ask=st.Page(home.render, title="Ask", url_path="ask", default=True),
-        search=st.Page(search.render, title="Search", url_path="search"),
         meetings=st.Page(meetings.render, title="Meetings", url_path="meetings"),
         councillors=st.Page(councillors.render, title="Councillors", url_path="councillors"),
         about=st.Page(about.render, title="About", url_path="about"),
@@ -62,15 +59,17 @@ def _run(view: str, params: dict | None = None) -> AppTest:
 @pytest.fixture(autouse=True)
 def _web_database(db_url, monkeypatch):
     monkeypatch.setenv("WEB_DATABASE_URL", db_url)
+    # Searching by meaning would load the embedding model; these tests cover exact words.
+    monkeypatch.setattr("mtl_council_agent.app.views.decisions.MEANING_ENABLED", False)
 
 
 @pytest.mark.parametrize(
     ("view", "params"),
     [
         ("home", {}),
-        ("updates", {}),
+        ("decisions", {}),
+        ("decisions", {"item": "10"}),
         ("districts", {}),
-        ("search", {}),
         ("meetings", {}),
         ("meetings", {"meeting": "1"}),
         ("meetings", {"meeting": "2"}),
@@ -114,24 +113,34 @@ def test_missing_item_shows_a_warning_not_a_crash():
     assert at.warning
 
 
-def test_search_by_words_shows_results_and_csv():
-    at = _run("search")
+def test_decisions_by_words_shows_results_and_csv():
+    at = _run("decisions")
     at.text_input[0].input("Veille").run()
     assert not at.exception
     text = " ".join(m.value for m in at.markdown)
     assert "1 results" in text
     assert "<mark>Veille</mark>" in text
+    assert at.get("download_button")
 
 
-def test_search_filter_without_words():
-    at = _run("search")
+def test_decisions_open_on_decided_items_newest_first():
+    at = _run("decisions")
+    assert not at.exception
+    text = " ".join(m.value for m in at.markdown)
+    assert "4 decisions" in text
+    at.checkbox[0].uncheck().run()
+    assert "5 decisions" in " ".join(m.value for m in at.markdown)
+
+
+def test_decisions_filter_without_words():
+    at = _run("decisions")
     at.multiselect[0].select("rejected").run()
     assert not at.exception
-    assert "1 results" in " ".join(m.value for m in at.markdown)
+    assert "1 decision" in " ".join(m.value for m in at.markdown)
 
 
-def test_search_with_no_match_says_so():
-    at = _run("search")
+def test_decisions_with_no_match_says_so():
+    at = _run("decisions")
     at.text_input[0].input("zzzqqq").run()
     assert "No items match" in " ".join(i.value for i in at.info)
 
@@ -274,10 +283,3 @@ def test_district_selector_shows_the_imported_representative():
     assert not any("Soraya Martinez Ferrada" in link for link in links)
     # Meetings and votes live on the councillor's own page now.
     assert "Original minutes" not in " ".join(b.proto.label for b in at.get("link_button"))
-
-
-def test_updates_search_has_an_empty_state():
-    at = _run("updates")
-    at.text_input[0].set_value("zzzxxyynonexistent").run()
-    assert not at.exception
-    assert any("No records match" in info.value for info in at.info)
