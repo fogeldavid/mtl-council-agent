@@ -62,7 +62,7 @@ def _item_table(rows: list[dict], columns: dict[str, callable], key: str) -> Non
     )
     picked = event.selection.rows if event and event.selection else []
     if picked:
-        st.switch_page(PAGES["updates"], query_params={"item": rows[picked[0]]["id"]})
+        st.switch_page(PAGES["decisions"], query_params={"item": rows[picked[0]]["id"]})
 
 
 def _profile(official_id: int) -> None:

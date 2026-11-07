@@ -296,6 +296,7 @@ def search(
     department: str | None = None,
     limit: int = 500,
     snippets: bool = True,
+    decided: bool = False,
 ) -> list[dict]:
     """Items matching the words (or meaning) and every filter given.
 
@@ -306,9 +307,16 @@ def search(
     vector index: at ~13,500 chunks that takes milliseconds, and an index scan
     followed by filtering can silently return fewer results than exist.
     No text: every item matching the filters, newest first.
+    `decided` keeps adopted or rejected items from meetings with published minutes.
     """
     where = ["true"]
     params: dict = {"limit": limit}
+    if decided:
+        where.append(
+            "ai.vote_outcome = any(%(voted)s) and exists (select 1 from documents d "
+            "where d.meeting_id = ai.meeting_id and d.doc_type = 'minutes')"
+        )
+        params["voted"] = list(VOTED_OUTCOMES)
     if meeting_id:
         where.append("ai.meeting_id = %(meeting_id)s")
         params["meeting_id"] = meeting_id
@@ -406,44 +414,3 @@ def search(
 
 
 VOTED_OUTCOMES = ("adopted_unanimous", "adopted_majority", "adopted", "rejected")
-
-
-def newsfeed(
-    conn, text: str = "", meeting_id: int | None = None,
-    outcome: str | None = None, department: str | None = None,
-    limit: int = 20, offset: int = 0,
-) -> list[dict]:
-    """Only voted items backed by minutes, filtered and paginated in SQL."""
-    conditions = [
-        "exists (select 1 from documents d "
-        "where d.meeting_id = m.id and d.doc_type = 'minutes')",
-        "ai.vote_outcome = any(%(outcomes)s)",
-    ]
-    params = {"outcomes": [outcome] if outcome in VOTED_OUTCOMES else list(VOTED_OUTCOMES),
-              "limit": limit, "offset": offset}
-    for value, column, key in (
-        (meeting_id, "ai.meeting_id", "meeting"),
-        (department, "ai.department", "department"),
-    ):
-        if value is not None:
-            conditions.append(f"{column} = %({key})s")
-            params[key] = value
-    order = "m.meeting_date desc, m.meeting_time desc, ai.position, ai.id"
-    if text.strip():
-        params["text"] = text.strip()
-        conditions.append("ai.search_vector @@ plainto_tsquery('french', %(text)s)")
-        order = "ts_rank(ai.search_vector, plainto_tsquery('french', %(text)s)) desc, " + order
-    return _rows(
-        conn,
-        f"""
-        select ai.id, m.meeting_date, ai.item_number, ai.section, ai.title,
-               ai.department, ai.vote_outcome, true as has_minutes,
-               count(*) over() as total_count
-        from agenda_items ai
-        join meetings m on m.id = ai.meeting_id
-        where {" and ".join(conditions)}
-        order by {order}
-        limit %(limit)s offset %(offset)s
-        """,
-        params,
-    )

@@ -95,19 +95,24 @@ def _representatives(district: dict, members: list[dict], connected: bool) -> No
     if not matched:
         st.info(t("districts.no_representative"))
         return
-    st.caption(t("districts.representatives"))
+    st.markdown(
+        f'<div class="people-label">{t("districts.representatives")}</div>',
+        unsafe_allow_html=True,
+    )
     for member in matched:
-        if connected:
-            with st.container(key=f"district-people-{member['id']}"):
+        role = t(
+            "districts.role_district" if member.get("district") else "districts.role_borough",
+            role=t("role." + member["role"]), party=member["party"] or "—",
+        )
+        with st.container(key=f"district-people-{member.get('id') or member['name']}"):
+            st.caption(role)
+            if connected:
                 st.page_link(
                     PAGES["councillors"], label=t("districts.open", name=member["name"]),
                     query_params={"id": member["id"]},
                 )
-        else:
-            st.markdown(f"**{member['name']}**")
-        st.caption(f"{t('role.' + member['role'])} · {member['party'] or '—'}")
-        if not member.get("district"):
-            st.caption(t("districts.borough_wide"))
+            else:
+                st.markdown(f"**{member['name']}**")
 
 
 def render() -> None:
