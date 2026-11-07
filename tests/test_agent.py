@@ -225,11 +225,16 @@ def test_meeting_list_is_sent_after_the_cached_instructions(monkeypatch):
         loop.council_tools, "list_meetings",
         lambda conn: [(date(2026, 9, 21), "ordinaire", 122, False)],
     )
+    monkeypatch.setattr(
+        loop.council_tools, "list_officials",
+        lambda conn: [("Marie Plourde", "city_councillor", "Le Plateau-Mont-Royal", "Mile-End")],
+    )
     client = FakeClient([FakeResponse([FakeBlock("text", text="ok")], "end_turn")])
     loop.ask(conn=object(), question="latest meeting?", client=client)
     system = client.messages.calls[0]["system"]
     assert system[0]["text"] == loop.SYSTEM_PROMPT and "cache_control" in system[0]
     assert "2026-09-21" in system[1]["text"] and "cache_control" not in system[1]
+    assert "- Marie Plourde: city_councillor, Le Plateau-Mont-Royal, Mile-End" in system[1]["text"]
 
 
 def test_source_documents_are_loaded_from_database_urls():

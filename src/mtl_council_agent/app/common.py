@@ -158,6 +158,18 @@ def display_number(item_number: str, section: str) -> str:
     return f"80.01 ({item_number})" if section == "agglomeration_orientation" else item_number
 
 
+def open_page(label: str, page: str, key: str, **params) -> None:
+    """A link to a page showing one record, like a councillor or a meeting.
+
+    st.page_link can carry the record in its query parameters, but they never
+    reach the browser's address. The next click on that page then reruns it
+    without them, and it falls back to its list. Switching pages from Python
+    keeps them in the address.
+    """
+    if st.button(label, key=key, type="tertiary"):
+        st.switch_page(PAGES[page], query_params={k: str(v) for k, v in params.items()})
+
+
 def go(**params) -> None:
     """Move to another view of the current page via its query parameters."""
     st.query_params.clear()

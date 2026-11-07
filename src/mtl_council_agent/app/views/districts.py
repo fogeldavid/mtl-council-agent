@@ -7,7 +7,7 @@ import pydeck as pdk
 import streamlit as st
 
 from mtl_council_agent.app import address_lookup, district_map, queries
-from mtl_council_agent.app.common import PAGES, database_configured, run
+from mtl_council_agent.app.common import database_configured, open_page, run
 from mtl_council_agent.app.i18n import t
 
 SELECTION_KEY = "district_code"
@@ -107,10 +107,8 @@ def _representatives(district: dict, members: list[dict], connected: bool) -> No
         with st.container(key=f"district-people-{member.get('id') or member['name']}"):
             st.caption(role)
             if connected:
-                st.page_link(
-                    PAGES["councillors"], label=t("districts.open", name=member["name"]),
-                    query_params={"id": member["id"]},
-                )
+                open_page(t("districts.open", name=member["name"]), "councillors",
+                          f"open_member_{member['id']}", id=member["id"])
             else:
                 st.markdown(f"**{member['name']}**")
 

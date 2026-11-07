@@ -26,6 +26,8 @@ def _render_navigation(page):
     from mtl_council_agent.app import navigation
     from mtl_council_agent.app.common import PAGES
 
+    # Other tests run the whole app, which leaves its own pages behind.
+    PAGES.clear()
     for key in ("ask", "districts", "decisions", "meetings", "councillors", "about"):
         PAGES[key] = st.Page(lambda: None, title=key, url_path=key, default=key == "ask")
     st.navigation(list(PAGES.values()), position="hidden")
@@ -60,13 +62,15 @@ def test_the_landing_page_opens_first_with_four_front_page_sections(monkeypatch)
     assert not at.exception
     assert not at.sidebar.children
     labels = [element.proto.label for element in at.get("page_link")]
+    # No nav bar here: the four sections already lead to each part of the site.
     assert labels == [
-        "The Montréal Record.", "About", *PRIMARY_LABELS,
+        "The Montréal Record.", "About",
         "Find who represents you", "Search every decision",
         "Ask a question about a council vote", "Council meetings",
     ]
     text = " ".join(m.value for m in at.markdown)
-    for label in ("Your district", "The record", "Ask", "Latest"):
+    for label in ("Your district", "The record", "Ask", "Latest",
+                  "Open the map", "Search decisions", "Ask a question", "Read the meeting"):
         assert label in text
 
 
@@ -86,6 +90,11 @@ def test_the_landing_photo_is_bundled_and_credited_on_the_about_page():
     assert "Concierge.2C" in credit and "CC BY-SA 3.0" in credit
 
 
+def test_the_nav_bar_shows_on_other_pages():
+    at = AppTest.from_function(_render_navigation, args=("decisions",)).run()
+    assert [element.proto.label for element in at.get("page_link")][:3] == PRIMARY_LABELS
+
+
 def test_the_top_left_link_goes_home_with_a_home_icon(monkeypatch):
     at = _entrypoint(monkeypatch)
     link = at.get("page_link")[0].proto
@@ -100,7 +109,5 @@ def test_each_landing_section_goes_to_its_page(monkeypatch):
         "districts", "decisions", "ask", "meetings",
     ]
     at = _entrypoint(monkeypatch)
-    links = {element.proto.label: element.proto.page for element in at.get("page_link")}
-    assert links["Find who represents you"] == links["District explorer"]
-    assert links["Search every decision"] == links["Council updates"]
-    assert links["Ask a question about a council vote"] == links["Ask the council"]
+    pages = [element.proto.page for element in at.get("page_link")[2:]]
+    assert len(set(pages)) == 4

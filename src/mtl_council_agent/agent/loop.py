@@ -168,9 +168,15 @@ def meetings_note(conn, today: date | None = None) -> str:
         + ")"
         for d, kind, items, minutes in council_tools.list_meetings(conn)
     ]
+    members = [
+        f"- {name}: {role}, {borough or 'whole city'}, {district or 'whole borough'}"
+        for name, role, borough, district in council_tools.list_officials(conn)
+    ]
     return (
         f"Today's date is {(today or date.today()).isoformat()}. Council meetings in "
         "the database, newest first:\n" + "\n".join(lines)
+        + "\n\nCouncil members, to find who represents a district or borough "
+        "(name: role, borough, district):\n" + "\n".join(members)
     )
 
 

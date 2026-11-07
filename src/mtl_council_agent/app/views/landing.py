@@ -8,7 +8,13 @@ import psycopg
 import streamlit as st
 
 from mtl_council_agent.app import queries
-from mtl_council_agent.app.common import PAGES, database_configured, fmt_date, run
+from mtl_council_agent.app.common import (
+    PAGES,
+    database_configured,
+    fmt_date,
+    open_page,
+    run,
+)
 from mtl_council_agent.app.i18n import t
 
 PHOTO = Path(__file__).parents[1] / "data" / "city-hall.jpg"
@@ -21,6 +27,10 @@ SECTIONS = (
     ("ask", "ask", "landing.ask_label", "landing.ask", "landing.ask_help"),
     ("latest", "meetings", "landing.latest_label", "landing.latest", "landing.latest_help"),
 )
+ACTIONS = {
+    "districts": "landing.districts_action", "decisions": "landing.search_action",
+    "ask": "landing.ask_action", "latest": "landing.latest_action",
+}
 
 
 def _latest() -> dict | None:
@@ -44,8 +54,12 @@ def _section(key: str, page: str, label: str, title: str, help_text: str, latest
         title_text, help_line = t(title), t(help_text)
     with st.container(key=f"landing-section-{key}"):
         st.markdown(f'<div class="landing-label">{t(label)}</div>', unsafe_allow_html=True)
-        st.page_link(PAGES[page], label=title_text, query_params=params)
+        if params:
+            open_page(title_text, page, f"landing_open_{key}", **params)
+        else:
+            st.page_link(PAGES[page], label=title_text)
         st.caption(help_line)
+        st.markdown(f'<div class="landing-action">{t(ACTIONS[key])}</div>', unsafe_allow_html=True)
 
 
 def render() -> None:

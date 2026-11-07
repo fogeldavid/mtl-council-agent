@@ -14,13 +14,13 @@ import streamlit as st
 from mtl_council_agent.agent.tools import get_vote_detail
 from mtl_council_agent.app import chat, queries, translations
 from mtl_council_agent.app.common import (
-    PAGES,
     badge,
     display_number,
     fmt_date,
     go,
     html_text,
     md_text,
+    open_page,
     outcome_label,
     record_title,
     run,
@@ -45,23 +45,25 @@ def _selected_row(event) -> int | None:
 
 def _list_view() -> None:
     st.markdown(f"## {t('meetings.title')}")
-    st.caption(t("meetings.hint"))
     rows = run(queries.meetings)
-    table = pd.DataFrame(
-        {
-            t("col.date"): [fmt_date(r["meeting_date"]) for r in rows],
-            t("col.type"): [t("meeting." + r["meeting_type"]) for r in rows],
-            t("col.items"): [r["items"] for r in rows],
-            t("col.minutes"): [t("yes") if r["has_minutes"] else t("no") for r in rows],
-        }
-    )
-    event = st.dataframe(
-        table, hide_index=True, width="stretch", on_select="rerun",
-        selection_mode="single-row", key="meeting_list",
-    )
-    picked = _selected_row(event)
-    if picked is not None:
-        go(meeting=rows[picked]["id"])
+    st.caption(t("meetings.count", n=len(rows)))
+    for r in rows:
+        status = "ok" if r["has_minutes"] else "wait"
+        with st.container(key=f"list-row-meeting-{r['id']}"):
+            when, about, count = st.columns([2.2, 3.4, 1])
+            with when:
+                open_page(fmt_date(r["meeting_date"]), "meetings", f"open_meeting_{r['id']}",
+                          meeting=r["id"])
+            about.markdown(
+                f'<div class="row-main">{t("meeting." + r["meeting_type"]).capitalize()}</div>'
+                f'<div class="row-status {status}">'
+                f'{t("meetings.minutes" if r["has_minutes"] else "meetings.agenda_only")}</div>',
+                unsafe_allow_html=True,
+            )
+            count.markdown(
+                f'<div class="row-count">{t("meetings.items", n=r["items"])}</div>',
+                unsafe_allow_html=True,
+            )
 
 
 def _meeting_view(meeting_id: int) -> None:
@@ -264,5 +266,5 @@ def _votes(it: dict) -> None:
             ("item.seconded_by", it["seconder"], it["seconder_id"]),
         ):
             if official_id:
-                st.page_link(PAGES["councillors"], label=t(label, name=name),
-                             query_params={"id": official_id})
+                open_page(t(label, name=name), "councillors", f"{label}_{official_id}",
+                          id=official_id)

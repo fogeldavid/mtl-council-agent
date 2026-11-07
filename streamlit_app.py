@@ -59,5 +59,7 @@ PAGES.update(
 page = st.navigation(list(PAGES.values()), position="hidden")
 page_key = next(key for key, candidate in PAGES.items() if candidate.url_path == page.url_path)
 masthead()
-navigation.render(page_key)
+# The landing page's four sections already do the nav bar's job.
+if page_key != "landing":
+    navigation.render(page_key)
 page.run()

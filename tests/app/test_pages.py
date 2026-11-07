@@ -52,6 +52,11 @@ def _render(view: str, params: dict[str, str]) -> None:
     views[view].render()
 
 
+def _opens(at, key_prefix: str) -> list[str]:
+    """Labels of the buttons that open a record (see common.open_page)."""
+    return [b.label for b in at.button if (b.key or "").startswith(key_prefix)]
+
+
 def _run(view: str, params: dict | None = None) -> AppTest:
     return AppTest.from_function(_render, args=(view, params or {}), default_timeout=60).run()
 
@@ -223,7 +228,7 @@ def test_a_unanimous_item_without_attendance_says_so_and_labels_the_mover():
     text = " ".join(m.value for m in at.markdown)
     assert "Adopted unanimously. The minutes don" in text
     assert "No individual votes" not in text
-    assert [link.proto.label for link in at.get("page_link")] == [
+    assert _opens(at, "item.") == [
         "Moved by Soraya Martinez Ferrada →", "Seconded by Josué Corvil →",
     ]
 
@@ -233,6 +238,34 @@ def test_only_unanimous_items_are_described_as_unanimous():
     assert not at.exception
     text = " ".join(m.value for m in at.markdown)
     assert "No individual votes" in text and "unanimously" not in text
+
+
+def test_meetings_list_shows_each_meeting_and_its_minutes_status():
+    at = _run("meetings")
+    assert not at.exception
+    assert _opens(at, "open_meeting_") == ["September 21, 2026", "March 23, 2026"]
+    text = " ".join(m.value for m in at.markdown)
+    assert "Agenda only. Minutes not published yet." in text
+    assert "Minutes published" in text
+
+
+def _people(at):
+    return _opens(at, "open_member_")
+
+
+def test_councillors_list_filters_by_name_borough_and_district():
+    at = _run("councillors")
+    assert not at.exception
+    everyone = _people(at)
+    assert "Marie Plourde" in everyone
+    at.text_input[0].input("plourde").run()
+    assert _people(at) == ["Marie Plourde"]
+    at.text_input[0].input("").run()
+    at.selectbox[0].select("Le Plateau-Mont-Royal").run()
+    assert not at.exception
+    assert "Marie Plourde" in _people(at) and len(_people(at)) < len(everyone)
+    at.selectbox[1].select("Mile-End").run()
+    assert "Marie Plourde" in _people(at)
 
 
 def test_the_app_connection_can_send_search_vectors():
@@ -264,6 +297,18 @@ def test_explain_without_questions_left_never_asks_for_a_key(monkeypatch):
     assert "key" not in captions.lower()
 
 
+def test_an_example_question_can_be_asked_with_one_click(stub_agent):
+    at = _run("home")
+    example = "How did Marie Plourde vote on the 2026 budget?"
+    next(b for b in at.button if b.label == example).click().run()
+    assert not at.exception
+    assert stub_agent[-1][0] == example
+    # Once a conversation starts, the examples make way for it. AppTest keeps the
+    # interrupted run's elements after st.rerun, so look at a fresh run.
+    at.run()
+    assert not any(b.label == example for b in at.button)
+
+
 def test_explain_button_on_an_item(stub_agent):
     at = _run("meetings", {"item": "10"})
     button = next(b for b in at.button if b.label == "Explain this item in English")
@@ -278,7 +323,7 @@ def test_district_selector_shows_the_imported_representative():
     at = _run("districts")
     at.selectbox[0].select("111").run()
     assert not at.exception
-    links = [element.proto.label for element in at.get("page_link")]
+    links = _opens(at, "open_member_")
     assert "Marie Plourde: see votes →" in links
     assert not any("Soraya Martinez Ferrada" in link for link in links)
     # Meetings and votes live on the councillor's own page now.

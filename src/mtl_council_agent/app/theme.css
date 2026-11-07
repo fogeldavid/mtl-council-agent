@@ -78,12 +78,12 @@ button:focus-visible, a:focus-visible { outline: 2px solid #345D50; outline-offs
 }
 .st-key-section-navigation { margin-bottom: 12px; }
 .st-key-section-navigation [data-testid="stPageLink"] p { font-size: 12px; }
-[class*="st-key-district-people-"] [data-testid="stPageLink"] a {
+[class*="st-key-district-people-"] [data-testid="stButton"] button {
   width: fit-content; padding: 4px 12px; background: transparent;
   border: 1px solid #C9CCC4; border-radius: 4px;
 }
-[class*="st-key-district-people-"] [data-testid="stPageLink"] a:hover { background: #F0F0EC; }
-[class*="st-key-district-people-"] [data-testid="stPageLink"] p {
+[class*="st-key-district-people-"] [data-testid="stButton"] button:hover { background: #F0F0EC; }
+[class*="st-key-district-people-"] [data-testid="stButton"] p {
   color: #264539 !important; font-size: 14px; font-weight: 600;
 }
 @media (max-width: 640px) {
@@ -94,12 +94,12 @@ button:focus-visible, a:focus-visible { outline: 2px solid #345D50; outline-offs
 header[data-testid="stHeader"] { display: none; }
 .block-container { padding-top: .5rem !important; }
 .st-key-item-people { gap: 6px; margin-top: 6px; }
-.st-key-item-people [data-testid="stPageLink"] a {
+.st-key-item-people [data-testid="stButton"] button {
   width: fit-content; padding: 3px 12px; background: transparent;
   border: 1px solid #C9CCC4; border-radius: 4px;
 }
-.st-key-item-people [data-testid="stPageLink"] a:hover { background: #F0F0EC; }
-.st-key-item-people [data-testid="stPageLink"] p {
+.st-key-item-people [data-testid="stButton"] button:hover { background: #F0F0EC; }
+.st-key-item-people [data-testid="stButton"] p {
   color: #264539 !important; font-size: 13px; font-weight: 600;
 }
 [class*="st-key-feed_open_"] button {
@@ -180,6 +180,11 @@ header[data-testid="stHeader"] { display: none; }
 /* Streamlit pulls text blocks up by a paragraph's margin; these labels aren't
    paragraphs, so without this the title below is drawn on top of them. */
 [data-testid="stMarkdownContainer"]:has(> .landing-label),
+[data-testid="stMarkdownContainer"]:has(> .landing-action),
+[data-testid="stMarkdownContainer"]:has(> .row-main),
+[data-testid="stMarkdownContainer"]:has(> .row-count),
+[data-testid="stMarkdownContainer"]:has(> .list-head),
+[data-testid="stMarkdownContainer"]:has(> .list-group),
 [data-testid="stMarkdownContainer"]:has(> .people-label) { margin-bottom: 0; }
 [class*="st-key-landing-row-"] [data-testid="stColumn"]:first-child [class*="st-key-landing-section-"] {
   padding-left: 0;
@@ -189,16 +194,21 @@ header[data-testid="stHeader"] { display: none; }
   font-size: 11px; font-weight: 600; letter-spacing: 1.4px; text-transform: uppercase;
   color: #5A6056;
 }
-[class*="st-key-landing-section-"] [data-testid="stPageLink"] a {
-  padding: 0; background: transparent;
+[class*="st-key-landing-section-"] [data-testid="stPageLink"] a,
+[class*="st-key-landing-section-"] [data-testid="stButton"] button {
+  padding: 0; background: transparent; border: 0; min-height: 0; justify-content: flex-start;
 }
 /* Nothing between the link and the section may be positioned, or the layer stops there. */
 [class*="st-key-landing-section-"] *:has(a),
+[class*="st-key-landing-section-"] *:has(button),
+[class*="st-key-landing-section-"] [data-testid="stButton"] button,
 [class*="st-key-landing-section-"] [data-testid="stPageLink"] a { position: static !important; }
-[class*="st-key-landing-section-"] [data-testid="stPageLink"] a::after {
+[class*="st-key-landing-section-"] [data-testid="stPageLink"] a::after,
+[class*="st-key-landing-section-"] [data-testid="stButton"] button::after {
   content: ""; position: absolute; inset: 0; z-index: 1;
 }
-[class*="st-key-landing-section-"] [data-testid="stPageLink"] p {
+[class*="st-key-landing-section-"] [data-testid="stPageLink"] p,
+[class*="st-key-landing-section-"] [data-testid="stButton"] p {
   font-family: 'Source Serif 4', Georgia, serif; font-size: 22px; font-weight: 600;
   line-height: 1.25; color: #20221F;
 }
@@ -206,7 +216,10 @@ header[data-testid="stHeader"] { display: none; }
 [class*="st-key-landing-section-"] [data-testid="stPageLink"] a * {
   max-width: 100%; overflow: visible; white-space: normal; text-overflow: clip;
 }
-[class*="st-key-landing-section-"]:hover [data-testid="stPageLink"] p { text-decoration: underline; }
+.landing-action {
+  margin-top: 6px; font-size: 12px; font-weight: 600; letter-spacing: 1.2px;
+  text-transform: uppercase; color: #345D50;
+}
 @media (max-width: 640px) {
   [class*="st-key-landing-row-"] [data-testid="stColumn"]:last-child {
     border-left: 0; border-top: 1px solid #DADCD4;
@@ -230,3 +243,75 @@ header[data-testid="stHeader"] { display: none; }
 .banner { font-size: 11px; line-height: 1.3; padding-bottom: 12px; }
 h1 { font-size: clamp(22px, 2.4vw, 28px) !important; padding: 0 !important; }
 h2 { font-size: clamp(21px, 2.2vw, 26px) !important; padding: 0 !important; }
+
+/* Home link: the house icon sits in a small square box, so it reads as a button. */
+.st-key-masthead [data-testid="stPageLink"] span[data-testid="stIconMaterial"] {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 32px; min-width: 32px; height: 32px; flex-shrink: 0;
+  font-size: 21px; color: #345D50; background: #FEFEFC;
+  border: 1px solid #8FA79D; border-radius: 6px;
+}
+.st-key-masthead [data-testid="stPageLink"] a:hover span[data-testid="stIconMaterial"] {
+  background: #E9EEEB; border-color: #345D50;
+}
+
+/* Ask page: example questions as chips. */
+.st-key-chat-examples { gap: 8px; align-items: flex-start; }
+.st-key-chat-examples [data-testid="stButton"] button {
+  min-height: 0; padding: 6px 14px; border: 1px solid #C9CCC4; border-radius: 18px;
+  background: #FEFEFC;
+}
+.st-key-chat-examples [data-testid="stButton"] button:hover { background: #F0F0EC; border-color: #8FA79D; }
+.st-key-chat-examples [data-testid="stButton"] p { font-size: 14px; color: #264539; }
+
+/* Meetings and councillors lists: one row per entry; the whole row is the link. */
+[class*="st-key-list-row-"] {
+  position: relative; padding: 10px 6px; border-bottom: 1px solid #E2E3DD;
+}
+[class*="st-key-list-row-meeting-"] { padding: 14px 10px; border-color: #DADCD4; }
+[class*="st-key-list-row-"]:hover { background: #F2F2EE; }
+[class*="st-key-list-row-"] [data-testid="stHorizontalBlock"] { gap: 16px; align-items: baseline; }
+[class*="st-key-list-row-"] *:has(a),
+[class*="st-key-list-row-"] *:has(button),
+[class*="st-key-list-row-"] [data-testid="stButton"] button,
+[class*="st-key-list-row-"] [data-testid="stPageLink"] a { position: static !important; }
+[class*="st-key-list-row-"] [data-testid="stPageLink"] a,
+[class*="st-key-list-row-"] [data-testid="stButton"] button {
+  padding: 0; background: transparent; border: 0; min-height: 0; justify-content: flex-start;
+  text-align: left; color: #20221F;
+}
+[class*="st-key-list-row-"] [data-testid="stPageLink"] a::after,
+[class*="st-key-list-row-"] [data-testid="stButton"] button::after {
+  content: ""; position: absolute; inset: 0; z-index: 1;
+}
+[class*="st-key-list-row-person-"] [data-testid="stButton"] p {
+  font-size: 14px; font-weight: 600; color: #20221F;
+}
+[class*="st-key-list-row-meeting-"] [data-testid="stButton"] p {
+  font-family: 'Source Serif 4', Georgia, serif; font-size: 20px; font-weight: 600;
+}
+.row-main { font-size: 14px; color: #3B3F39; }
+.row-main i { color: #8A8D84; }
+.row-count { font-size: 14px; color: #3B3F39; text-align: right; }
+.row-status { font-size: 13px; margin-top: 2px; }
+.row-status::before { content: "● "; }
+.row-status.ok { color: #1F6B45; }
+.row-status.wait { color: #8A5A00; }
+.list-head {
+  display: grid; grid-template-columns: 1.3fr 1fr 1.6fr 1fr; gap: 16px; padding: 8px 6px;
+  font-size: 11px; font-weight: 600; letter-spacing: 1.2px; text-transform: uppercase;
+  color: #5A6056; border-bottom: 2px solid #B6B8B0;
+}
+/* The column names stay at the top of the window while the list scrolls under them. */
+[data-testid="stElementContainer"]:has(.list-head) {
+  position: sticky; top: 0; z-index: 5; background: #FAFAF7;
+}
+.list-group {
+  margin-top: 14px; padding: 6px 0; font-size: 12px; font-weight: 600; letter-spacing: 1.4px;
+  text-transform: uppercase; color: #345D50; border-bottom: 1px solid #B6B8B0;
+}
+@media (max-width: 640px) {
+  .list-head { display: none; }
+  [class*="st-key-list-row-"] [data-testid="stHorizontalBlock"] { gap: 2px; }
+  .row-count { text-align: left; }
+}
