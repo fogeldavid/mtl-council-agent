@@ -251,6 +251,9 @@ h2 { font-size: clamp(21px, 2.2vw, 26px) !important; padding: 0 !important; }
   font-size: 21px; color: #345D50; background: #FEFEFC;
   border: 1px solid #8FA79D; border-radius: 6px;
 }
+.st-key-masthead [data-testid="stPageLink"]:has([data-testid="stIconMaterial"]) p {
+  margin-left: 10px;
+}
 .st-key-masthead [data-testid="stPageLink"] a:hover span[data-testid="stIconMaterial"] {
   background: #E9EEEB; border-color: #345D50;
 }
