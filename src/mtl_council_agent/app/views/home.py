@@ -14,18 +14,26 @@ def render() -> None:
     _chat()
 
 
+EXAMPLES = ("chat.example_1", "chat.example_2", "chat.example_3")
+
+
 def _chat() -> None:
     log: list[tuple[str, str]] = st.session_state.setdefault("chat", [])
+    picked = None
     # Messages go in a box above the input, including ones answered this run.
     box = st.container()
     with box:
-        if not log:
-            st.caption(t("chat.examples"))
+        if not log and chat.can_ask():
+            st.caption(t("chat.try"))
+            with st.container(key="chat-examples"):
+                for key in EXAMPLES:
+                    if st.button(t(key), key=key):
+                        picked = t(key)
         for question, reply in log:
             st.chat_message("user").markdown(md_text(question))
             st.chat_message("assistant").markdown(md_text(reply))
 
-    question = st.chat_input(t("chat.placeholder"), disabled=not chat.can_ask())
+    question = st.chat_input(t("chat.placeholder"), disabled=not chat.can_ask()) or picked
     if question:
         with box:
             st.chat_message("user").markdown(md_text(question))
@@ -37,8 +45,9 @@ def _chat() -> None:
                 else:
                     st.markdown(md_text(reply))
                     log.append((question, reply))
-        # Redraw after the last shared question so the input becomes disabled.
-        if not chat.can_ask():
+        # Redraw after the last shared question so the input becomes disabled, and
+        # after an example question so the examples make way for the conversation.
+        if not chat.can_ask() or picked:
             st.rerun()
 
     st.caption(t("chat.notice"))

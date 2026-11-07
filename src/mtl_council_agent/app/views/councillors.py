@@ -6,6 +6,9 @@ context; nothing is scored or ranked.
 
 from __future__ import annotations
 
+import unicodedata
+from html import escape
+
 import pandas as pd
 import streamlit as st
 
@@ -15,11 +18,15 @@ from mtl_council_agent.app.common import (
     display_number,
     fmt_date,
     go,
+    open_page,
     outcome_label,
     record_title,
     run,
 )
 from mtl_council_agent.app.i18n import t
+
+# The mayor's "borough" in the roster is the whole city.
+CITY_WIDE = "Ville de Montréal"
 
 
 def render() -> None:
@@ -29,25 +36,82 @@ def render() -> None:
         _list()
 
 
+def _fold(text: str) -> str:
+    """Lowercase without accents, so "helene" finds "Hélène"."""
+    text = unicodedata.normalize("NFKD", text or "")
+    return "".join(c for c in text if not unicodedata.combining(c)).casefold()
+
+
+def _matches(row: dict, name: str, borough: str | None, district: str | None,
+             district_borough: str | None) -> bool:
+    if name and _fold(name) not in _fold(row["name"]):
+        return False
+    if borough and row["borough"] != borough:
+        return False
+    # A district is represented by its councillor and by members elected for its whole borough.
+    return not district or row["district"] == district or (
+        not row["district"] and row["borough"] == district_borough
+    )
+
+
 def _list() -> None:
     st.markdown(f"## {t('councillors.title')}")
-    st.caption(t("councillors.hint"))
     rows = run(queries.councillors)
-    table = pd.DataFrame(
-        {
-            t("col.name"): [r["name"] for r in rows],
-            t("col.role"): [t("role." + r["role"]) for r in rows],
-            t("col.borough"): [r["borough"] or "" for r in rows],
-            t("col.party"): [r["party"] or "" for r in rows],
-        }
+    st.caption(t("councillors.hint", n=len(rows)))
+    boroughs = sorted({r["borough"] for r in rows if r["borough"] != CITY_WIDE})
+    name_col, borough_col, district_col = st.columns([1.3, 1, 1])
+    name = name_col.text_input(
+        t("councillors.filter"), placeholder=t("councillors.filter_hint"), key="cl_name",
     )
-    event = st.dataframe(
-        table, hide_index=True, width="stretch", height=720, on_select="rerun",
-        selection_mode="single-row", key="councillor_list",
+    borough = borough_col.selectbox(
+        t("col.borough"), [None, *boroughs], key="cl_borough",
+        format_func=lambda b: t("filter.any") if b is None else b,
     )
-    picked = event.selection.rows if event and event.selection else []
-    if picked:
-        go(id=rows[picked[0]]["id"])
+    district_boroughs = {
+        r["district"]: r["borough"] for r in rows
+        if r["district"] and (borough is None or r["borough"] == borough)
+    }
+    districts = [None, *sorted(district_boroughs)]
+    # A district from another borough can't stay chosen once the borough changes.
+    if st.session_state.get("cl_district") not in districts:
+        st.session_state["cl_district"] = None
+    district = district_col.selectbox(
+        t("col.district"), districts, key="cl_district",
+        format_func=lambda d: t("filter.any") if d is None else d,
+    )
+    shown = [
+        r for r in rows
+        if _matches(r, name.strip(), borough, district, district_boroughs.get(district))
+    ]
+    if not shown:
+        st.info(t("councillors.none"))
+        return
+    st.markdown(
+        '<div class="list-head people"><span>{}</span><span>{}</span><span>{}</span>'
+        "<span>{}</span></div>".format(
+            t("col.name"), t("col.role"), t("col.district"), t("col.party"),
+        ),
+        unsafe_allow_html=True,
+    )
+    order = sorted({r["borough"] for r in shown}, key=lambda b: (b == CITY_WIDE, b or ""))
+    for group in order:
+        st.markdown(f'<div class="list-group">{escape(group or "")}</div>',
+                    unsafe_allow_html=True)
+        for r in sorted((r for r in shown if r["borough"] == group),
+                        key=lambda r: (r["district"] is None, r["district"] or "", r["name"])):
+            with st.container(key=f"list-row-person-{r['id']}"):
+                who, role, where, party = st.columns([1.3, 1, 1.6, 1])
+                with who:
+                    open_page(r["name"], "councillors", f"open_member_{r['id']}", id=r["id"])
+                whole = ("councillors.whole_city" if r["role"] == "mayor"
+                         else "councillors.whole_borough")
+                where_text = escape(r["district"]) if r["district"] else f"<i>{t(whole)}</i>"
+                role.markdown(f'<div class="row-main">{t("role." + r["role"])}</div>',
+                              unsafe_allow_html=True)
+                where.markdown(f'<div class="row-main">{where_text}</div>',
+                               unsafe_allow_html=True)
+                party.markdown(f'<div class="row-main">{escape(r["party"] or "—")}</div>',
+                               unsafe_allow_html=True)
 
 
 def _item_table(rows: list[dict], columns: dict[str, callable], key: str) -> None:

@@ -158,6 +158,20 @@ def get_meeting_items(conn, meeting_date: date, limit: int = 300) -> list[ItemRe
     return items
 
 
+def list_officials(conn) -> list[tuple[str, str, str | None, str | None]]:
+    """Every council member: (name, role, borough, district), by borough.
+
+    The tools find a member by name, so without this a question about "the
+    councillor for Mile-End" had no way to reach Marie Plourde.
+    """
+    return conn.execute(
+        """
+        select name, role, borough, district from officials
+        where role is not null order by borough, district nulls last, last_name
+        """
+    ).fetchall()
+
+
 def list_meetings(conn) -> list[tuple[date, str, int, bool]]:
     """Every meeting on file, newest first: (date, type, item count, has minutes).
 

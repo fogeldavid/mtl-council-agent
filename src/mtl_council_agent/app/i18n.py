@@ -126,6 +126,10 @@ STRINGS: dict[str, dict[str, str]] = {
         "en": "Every meeting on file, with its agenda and decisions.",
         "fr": "Toutes les séances, avec leur ordre du jour et leurs décisions.",
     },
+    "landing.districts_action": {"en": "Open the map", "fr": "Ouvrir la carte"},
+    "landing.search_action": {"en": "Search decisions", "fr": "Chercher des décisions"},
+    "landing.ask_action": {"en": "Ask a question", "fr": "Poser une question"},
+    "landing.latest_action": {"en": "Read the meeting", "fr": "Lire la séance"},
     "landing.latest_items": {
         "en": "{n} items, minutes published.", "fr": "{n} points, procès-verbal publié.",
     },
@@ -259,8 +263,7 @@ STRINGS: dict[str, dict[str, str]] = {
         "Montréal. Aucun lien avec la Ville de Montréal. Vérifiez toujours la source citée.",
     },
     "home.title": {
-        "en": "What did city council decide, and who voted how?",
-        "fr": "Qu'a décidé le conseil municipal, et qui a voté quoi?",
+        "en": "Ask about council decisions", "fr": "Questions sur les décisions du conseil",
     },
     "home.record": {"en": "The record", "fr": "Le registre"},
     "home.contested": {"en": "Contested votes", "fr": "Votes contestés"},
@@ -268,11 +271,22 @@ STRINGS: dict[str, dict[str, str]] = {
         "en": "Ask about a decision, a vote or a councillor",
         "fr": "Posez une question sur une décision, un vote ou un élu",
     },
-    "chat.examples": {
-        "en": "For example: *Who voted against cancelling the Veille sur toi contract?* or "
-        "*What did council decide about bike paths this year?*",
-        "fr": "Par exemple : *Qui a voté contre la résiliation du contrat de Veille sur toi?* ou "
-        "*Qu'a décidé le conseil sur les pistes cyclables cette année?*",
+    "chat.try": {
+        "en": "Answers cite the council's records. Five free questions a day. Try one:",
+        "fr": "Les réponses citent les documents du conseil. Cinq questions gratuites par "
+              "jour. Essayez :",
+    },
+    "chat.example_1": {
+        "en": "What has Mile-End's councillor voted against this year?",
+        "fr": "Contre quoi l'élue de Mile-End a-t-elle voté cette année?",
+    },
+    "chat.example_2": {
+        "en": "How did Marie Plourde vote on the 2026 budget?",
+        "fr": "Comment Marie Plourde a-t-elle voté sur le budget 2026?",
+    },
+    "chat.example_3": {
+        "en": "What did council decide about snow removal this year?",
+        "fr": "Qu'a décidé le conseil au sujet du déneigement cette année?",
     },
     "chat.thinking": {"en": "Reading the records…", "fr": "Lecture des documents…"},
     "chat.notice": {
@@ -334,10 +348,16 @@ STRINGS: dict[str, dict[str, str]] = {
     # Minutes are in, but they record no decision (question periods, announcements).
     "outcome.no_decision": {"en": "No decision", "fr": "Aucune décision"},
     "meetings.title": {"en": "Council meetings", "fr": "Séances du conseil"},
-    "meetings.hint": {
-        "en": "Select a meeting to see its agenda and votes.",
-        "fr": "Choisissez une séance pour voir son ordre du jour et ses votes.",
+    "meetings.count": {
+        "en": "{n} meetings on file. Select one to see its agenda and votes.",
+        "fr": "{n} séances. Choisissez-en une pour voir son ordre du jour et ses votes.",
     },
+    "meetings.minutes": {"en": "Minutes published", "fr": "Procès-verbal publié"},
+    "meetings.agenda_only": {
+        "en": "Agenda only. Minutes not published yet.",
+        "fr": "Ordre du jour seulement. Procès-verbal pas encore publié.",
+    },
+    "meetings.items": {"en": "{n} items", "fr": "{n} points"},
     "meeting.ordinaire": {"en": "ordinary meeting", "fr": "séance ordinaire"},
     "meeting.extraordinaire": {"en": "special meeting", "fr": "séance extraordinaire"},
     "meeting.items_hint": {
@@ -362,6 +382,7 @@ STRINGS: dict[str, dict[str, str]] = {
     "col.role": {"en": "Role", "fr": "Fonction"},
     "col.borough": {"en": "Borough", "fr": "Arrondissement"},
     "col.party": {"en": "Party", "fr": "Parti"},
+    "col.district": {"en": "District", "fr": "District"},
     "col.vote": {"en": "Vote", "fr": "Vote"},
     "col.party_vote": {"en": "Party majority", "fr": "Majorité du parti"},
     "col.how": {"en": "How", "fr": "Comment"},
@@ -435,8 +456,16 @@ STRINGS: dict[str, dict[str, str]] = {
     },
     "councillors.title": {"en": "Council members", "fr": "Membres du conseil"},
     "councillors.hint": {
-        "en": "Select a member to see their attendance and recorded votes.",
-        "fr": "Choisissez un membre pour voir ses présences et ses votes consignés.",
+        "en": "{n} members. Select a name to see their votes and attendance.",
+        "fr": "{n} membres. Choisissez un nom pour voir ses votes et ses présences.",
+    },
+    "councillors.filter": {"en": "Name", "fr": "Nom"},
+    "councillors.filter_hint": {"en": "Filter by name…", "fr": "Filtrer par nom…"},
+    "councillors.whole_borough": {"en": "Whole borough", "fr": "Tout l’arrondissement"},
+    "councillors.whole_city": {"en": "Whole city", "fr": "Toute la ville"},
+    "councillors.none": {
+        "en": "No members match these filters.",
+        "fr": "Aucun membre ne correspond à ces filtres.",
     },
     "role.mayor": {"en": "Mayor", "fr": "Maire ou mairesse"},
     "role.borough_mayor": {"en": "Borough mayor", "fr": "Maire d'arrondissement"},
