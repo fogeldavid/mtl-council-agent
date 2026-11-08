@@ -166,6 +166,8 @@ header[data-testid="stHeader"] { display: none; }
 /* Front-page sections: thin rules, a small label, a serif title; the whole section is the link. */
 [class*="st-key-landing-row-"] { border-top: 1px solid #B6B8B0; }
 .st-key-landing-row-ask { border-bottom: 1px solid #B6B8B0; }
+/* Close the page's 16px block gap so the rules between the four sections meet. */
+[data-testid="stLayoutWrapper"]:has(> .st-key-landing-row-ask) { margin-top: -16px; }
 [class*="st-key-landing-row-"] [data-testid="stHorizontalBlock"] { gap: 0; align-items: stretch; }
 /* Each section fills its column, so both sections in a row are the same height. */
 [class*="st-key-landing-row-"] [data-testid="stLayoutWrapper"]:has(> [class*="st-key-landing-section-"]) {
