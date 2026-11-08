@@ -186,9 +186,6 @@ header[data-testid="stHeader"] { display: none; }
 [data-testid="stMarkdownContainer"]:has(> .list-head),
 [data-testid="stMarkdownContainer"]:has(> .list-group),
 [data-testid="stMarkdownContainer"]:has(> .people-label) { margin-bottom: 0; }
-[class*="st-key-landing-row-"] [data-testid="stColumn"]:first-child [class*="st-key-landing-section-"] {
-  padding-left: 0;
-}
 [class*="st-key-landing-section-"]:hover { background: #F2F2EE; }
 .landing-label {
   font-size: 11px; font-weight: 600; letter-spacing: 1.4px; text-transform: uppercase;
@@ -224,7 +221,7 @@ header[data-testid="stHeader"] { display: none; }
   [class*="st-key-landing-row-"] [data-testid="stColumn"]:last-child {
     border-left: 0; border-top: 1px solid #DADCD4;
   }
-  [class*="st-key-landing-section-"] { padding-left: 0; padding-right: 0; }
+  [class*="st-key-landing-section-"] { padding-left: 14px; padding-right: 14px; }
 }
 .record-snippet { font-size: 14px; color: #3B3F39; margin-top: 6px; }
 .people-label {
