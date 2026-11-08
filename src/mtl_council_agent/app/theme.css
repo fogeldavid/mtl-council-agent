@@ -250,8 +250,12 @@ h2 { font-size: clamp(21px, 2.2vw, 26px) !important; padding: 0 !important; }
   font-size: 21px; color: #345D50; background: #FEFEFC;
   border: 1px solid #8FA79D; border-radius: 6px;
 }
+/* The icon's wrapper is narrower than the box, so the box spilled past the page edge. */
+.st-key-masthead [data-testid="stPageLink"] span:has(> [data-testid="stIconMaterial"]) {
+  width: auto;
+}
 .st-key-masthead [data-testid="stPageLink"]:has([data-testid="stIconMaterial"]) p {
-  margin-left: 10px;
+  margin-left: 4px;
 }
 .st-key-masthead [data-testid="stPageLink"] a:hover span[data-testid="stIconMaterial"] {
   background: #E9EEEB; border-color: #345D50;
