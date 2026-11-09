@@ -6,8 +6,10 @@ on:
     workflows: [Weekly ingestion]
     types: [completed]
 
+# Write, to commit new translations to main. Streamlit Cloud deploys main, so
+# the site serves them without anyone copying the file in by hand.
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   translate:
@@ -31,11 +33,38 @@ jobs:
       - name: Install local translation dependencies
         run: pip install -e '.[translation]'
       - name: Refresh saved English titles and context
+        # Below the job's 90 minutes, so a big batch still reaches the commit
+        # step: translations are saved as they go, and next week continues.
+        timeout-minutes: 75
         env:
           WEB_DATABASE_URL: ${{ secrets.WEB_DATABASE_URL }}
         run: python scripts/refresh_translations.py
-      # No automatic commits or deployment. Maintainer reviews/copies the JSON
-      # into the deployment branch so the website can serve it without inference.
+      # The file also records when coverage was last checked, so it changes on
+      # every run. Commit only when a translation was added or changed.
+      - name: Commit new translations
+        if: ${{ !cancelled() }}
+        run: |
+          python - <<'EOF' > translations-changed
+          import json, subprocess
+          path = "src/mtl_council_agent/app/data/english-translations.json"
+          old = json.loads(subprocess.run(["git", "show", f"HEAD:{path}"],
+                                          capture_output=True, text=True, check=True).stdout)
+          new = json.load(open(path))
+          print("yes" if old.get("entries") != new.get("entries") else "no")
+          EOF
+          if [ "$(cat translations-changed)" != "yes" ]; then
+            echo "No new translations."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add src/mtl_council_agent/app/data/english-translations.json
+          git commit -m "Update English translations"
+          # Someone may have pushed while the model ran; replay onto the latest main.
+          git pull --rebase origin main
+          git push origin HEAD:main
+      # Rejected translations (numbers that didn't survive) stay French; their
+      # list is kept here for review.
       - uses: actions/upload-artifact@v4
         with:
           name: english-translations

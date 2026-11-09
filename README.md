@@ -321,11 +321,13 @@ is used. The database connection is read-only; new meeting ingestion remains the
 team's separate process. Run it again after that process finishes. The command
 prints title coverage and the latest meeting date currently in the database.
 
-A prepared GitHub workflow, `Prepare English translations`, can run manually or
-after successful weekly ingestion once this branch is deployed. It needs the
-repository secret `WEB_DATABASE_URL`. It downloads the model once into a runner
-cache and performs CPU translation there. The output is an `english-translations`
-artifact: copy its `english-translations.json` into
-`src/mtl_council_agent/app/data/` on the deployment branch after review. This
-workflow does not commit or deploy automatically. Until then, the local command
-is the simplest update path; the local preview picks up the changed JSON directly.
+The GitHub workflow `Prepare English translations` runs after each successful
+weekly ingestion, or by hand. It needs the repository secret `WEB_DATABASE_URL`,
+caches the model on the runner, and translates on CPU. When it adds or changes a
+translation, it commits `english-translations.json` to `main` as
+`github-actions[bot]`, and Streamlit Cloud redeploys with it. A week with nothing
+new makes no commit. The translation step stops after 75 minutes, and whatever
+it finished is still committed; the next run picks up the rest. Translations
+whose numbers didn't survive stay in French, and their list is in the run's
+`english-translations` artifact. A large first batch is faster to run locally
+with the command above.
