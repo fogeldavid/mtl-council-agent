@@ -21,6 +21,7 @@ from mtl_council_agent.app.translations import (  # noqa: E402
     MODEL_NAME,
     TRANSLATIONS_PATH,
     context_excerpt,
+    department_name,
     numbers_preserved,
     protect_numbers,
     restore_references,
@@ -69,7 +70,7 @@ def main():
                              options="-c default_transaction_read_only=on") as conn:
             rows = conn.execute("""
                 select ai.title, ai.decision_summary, m.meeting_date, ai.vote_outcome,
-                       ai.minutes_text
+                       ai.minutes_text, ai.department
                 from agenda_items ai
                 join meetings m on m.id = ai.meeting_id
                 order by m.meeting_date desc, ai.position
@@ -88,8 +89,9 @@ def main():
         for paragraph in minutes_text.resolved(row[4])
         + ([] if row[1] else minutes_text.body(row[4]))
     ))
+    departments = list(dict.fromkeys(department_name(row[5]) for row in rows if row[5]))
     texts = list(dict.fromkeys(
-        titles + ([] if args.titles_only else [t for t in contexts if t] + minutes)
+        titles + ([] if args.titles_only else [t for t in contexts if t] + departments + minutes)
     ))
     path = TRANSLATIONS_PATH
     data = json.loads(path.read_text()) if path.exists() else {

@@ -80,15 +80,22 @@ STRINGS: dict[str, dict[str, str]] = {
         "en": "French original — English translation awaiting review.",
         "fr": "Original français — traduction anglaise en attente de vérification.",
     },
-    "translation.context": {"en": "Context (English)", "fr": "Contexte (anglais)"},
-    "translation.original": {
-        "en": "Read the French original", "fr": "Lire l’original français",
+    "translation.context": {"en": "Context", "fr": "Contexte"},
+    "translation.note": {
+        "en": "Machine-translated from French with opus-mt. Translations can miss words. "
+              "The French original is the official text.",
+        "fr": "Traduction automatique du français avec opus-mt. L’original français fait foi.",
+    },
+    "translation.show_original": {
+        "en": "Show the French original", "fr": "Afficher l’original français",
+    },
+    "translation.show_english": {
+        "en": "Show the English translation", "fr": "Afficher la traduction anglaise",
     },
     "translation.context_missing": {
-        "en": "An English context excerpt is not available for this record. "
-              "Read the French original below.",
-        "fr": "Aucun extrait de contexte anglais pour ce document. "
-              "Consultez l’original français ci-dessous.",
+        "en": "No English context for this record yet. Show the French original "
+              "to read the full decision summary.",
+        "fr": "Aucun extrait de contexte anglais pour ce document.",
     },
     "nav.map": {
         "en": 'Districts',
@@ -323,7 +330,6 @@ STRINGS: dict[str, dict[str, str]] = {
         "en": "The model is busy. Try again in a minute.",
         "fr": "Le modèle est occupé. Réessayez dans une minute.",
     },
-    "explain.button": {"en": "Explain this item in English", "fr": "Expliquer ce point"},
     "explain.question": {
         "en": "Explain agenda item {number} of the {date} meeting (item_id {item_id}, "
         "\"{title}\") in plain English: what was decided, why, what it costs, and how "
@@ -393,19 +399,38 @@ STRINGS: dict[str, dict[str, str]] = {
     "back.councillors": {"en": "All councillors", "fr": "Tous les élus"},
     "item.moved_by": {"en": "Moved by {name} →", "fr": "Proposé par {name} →"},
     "item.seconded_by": {"en": "Seconded by {name} →", "fr": "Appuyé par {name} →"},
-    "item.pdf_bundle": {
-        "en": "Original decision documents (French PDF)",
-        "fr": "Dossiers décisionnels originaux (PDF français)",
-    },
     "item.summary": {"en": "Decision summary (French)", "fr": "Sommaire décisionnel"},
     "item.no_summary": {"en": "No decision summary on file.", "fr": "Aucun sommaire décisionnel."},
-    "item.pdf_agenda": {
-        "en": "Agenda (PDF, city website)",
-        "fr": "Ordre du jour (PDF, site de la Ville)",
+    "item.sources": {"en": "Sources", "fr": "Sources"},
+    "item.sources_note": {
+        "en": "Original French documents from the City of Montréal",
+        "fr": "Documents originaux de la Ville de Montréal",
     },
-    "item.pdf_minutes_page": {
-        "en": "Minutes, page {page} (PDF, city website)",
-        "fr": "Procès-verbal, page {page} (PDF, site de la Ville)",
+    "item.src_minutes_page": {
+        "en": "Minutes, page {page} →", "fr": "Procès-verbal, page {page} →",
+    },
+    "item.src_minutes": {"en": "Minutes →", "fr": "Procès-verbal →"},
+    "item.src_agenda": {"en": "Agenda →", "fr": "Ordre du jour →"},
+    "item.src_bundle": {"en": "Decision documents →", "fr": "Dossiers décisionnels →"},
+    "item.ask": {
+        "en": "Ask a question about this item →", "fr": "Poser une question sur ce point →",
+    },
+    "ask.about": {
+        "en": "About item {number}, {date}: {title}",
+        "fr": "Au sujet du point {number}, {date} : {title}",
+    },
+    "ask.explain": {
+        "en": "Explain this item in plain English", "fr": "Expliquer ce point simplement",
+    },
+    "ask.related": {
+        "en": "Has council decided anything related before?",
+        "fr": "Le conseil a-t-il déjà pris une décision liée ?",
+    },
+    "ask.related_question": {
+        "en": "Has council decided anything related to agenda item {number} of the {date} "
+        "meeting (item_id {item_id}, \"{title}\") before? Cite each decision.",
+        "fr": "Le conseil a-t-il déjà pris des décisions liées au point {number} de la séance du "
+        "{date} (item_id {item_id}, « {title} ») ? Citez chaque décision.",
     },
     "minutes.adopted": {"en": "What council adopted", "fr": "Ce que le conseil a adopté"},
     "minutes.rejected": {"en": "What council voted down", "fr": "Ce que le conseil a rejeté"},
@@ -418,10 +443,6 @@ STRINGS: dict[str, dict[str, str]] = {
     "minutes.untranslated": {
         "en": "French original from the minutes. English translation not ready yet.",
         "fr": "Original français du procès-verbal.",
-    },
-    "item.pdf_minutes": {
-        "en": "Minutes (PDF, city website)",
-        "fr": "Procès-verbal (PDF, site de la Ville)",
     },
     "item.votes": {"en": "How council voted", "fr": "Comment le conseil a voté"},
     "item.for": {"en": "for", "fr": "pour"},

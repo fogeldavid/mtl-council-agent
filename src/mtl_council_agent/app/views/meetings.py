@@ -13,7 +13,7 @@ import streamlit as st
 
 from mtl_council_agent import minutes_text
 from mtl_council_agent.agent.tools import get_vote_detail
-from mtl_council_agent.app import chat, queries, translations
+from mtl_council_agent.app import queries, translations
 from mtl_council_agent.app.common import (
     badge,
     display_number,
@@ -115,6 +115,14 @@ def _names(names: list[str]) -> str:
     return "".join(f'<span class="chip">{html_text(n)}</span>' for n in names)
 
 
+# English pages can show the French original in place, for comparing a line.
+ORIGINAL_KEY = "item_show_original"
+
+
+def _showing_original() -> bool:
+    return lang() == "en" and st.session_state.get(ORIGINAL_KEY, False)
+
+
 def _item_view(item_id: int, from_feed: bool = False) -> None:
     it = run(queries.item, item_id)
     if it is None:
@@ -127,6 +135,7 @@ def _item_view(item_id: int, from_feed: bool = False) -> None:
         else:
             go(meeting=it["meeting_id"])
 
+    original = _showing_original()
     number = display_number(it["item_number"], it["section"])
     st.caption(f"{fmt_date(it['meeting_date'])} · {number}")
     tags = [badge(it["vote_outcome"], it["has_minutes"])]
@@ -135,76 +144,93 @@ def _item_view(item_id: int, from_feed: bool = False) -> None:
         f'<span class="cite">{html_text(x)}</span>' for x in (it["motion_number"], dossier) if x
     ]
     st.markdown(" ".join(tags), unsafe_allow_html=True)
-    st.markdown(f"### {md_text(record_title(it['title']))}")
+    title = it["title"] if original else record_title(it["title"])
+    st.markdown(f"### {md_text(title)}")
 
     if it["department"]:
-        st.caption(md_text(it["department"]))
+        department = translations.department_name(it["department"])
+        if lang() == "en" and not original:
+            department = translations.english(department) or department
+        st.caption(md_text(department))
 
+    excerpt = translations.context_excerpt(it["decision_summary"])
+    english_context = translations.english(excerpt)
     left, right = st.columns([1.6, 1], gap="large")
     with left:
         if lang() == "en":
-            english_title = translations.english(it["title"])
-            st.caption(t("translation.label" if english_title else "translation.pending"))
+            translated = translations.english(it["title"]) or english_context
+            _translation_note(original, bool(translated))
+        if lang() == "en" and not original:
             if it["decision_summary"]:
                 st.markdown(f"#### {t('translation.context')}")
-                excerpt = translations.context_excerpt(it["decision_summary"])
-                english_context = translations.english(excerpt)
                 if english_context:
                     st.write(md_text(english_context))
-                    if not english_title:
-                        st.caption(t("translation.label"))
                 else:
                     st.caption(t("translation.context_missing"))
-            _minutes(it)
-            with st.expander(t("translation.original")):
-                st.markdown(f"**{md_text(it['title'])}**")
-                if it["decision_summary"]:
-                    st.markdown(
-                        f'<div class="summary" lang="fr">'
-                        f'{html_text(it["decision_summary"])}</div>', unsafe_allow_html=True,
-                    )
-                elif not it["minutes_text"]:
-                    st.caption(t("item.no_summary"))
-        else:
-            if it["decision_summary"]:
-                st.markdown(f"#### {t('item.summary')}")
-                st.markdown(
-                    f'<div class="summary" lang="fr">{html_text(it["decision_summary"])}</div>',
-                    unsafe_allow_html=True,
-                )
-            _minutes(it)
-        _explain(it, number)
-        docs = run(queries.meeting_documents, it["meeting_id"])
-        if "bundle" in docs:
-            st.link_button(t("item.pdf_bundle"), docs["bundle"])
-        if "agenda" in docs:
-            st.link_button(t("item.pdf_agenda"), docs["agenda"])
-        if "minutes" in docs:
-            if it["minutes_page"]:
-                st.link_button(
-                    t("item.pdf_minutes_page", page=it["minutes_page"]),
-                    f'{docs["minutes"]}#page={it["minutes_page"]}',
-                )
-            else:
-                st.link_button(t("item.pdf_minutes"), docs["minutes"])
+        elif it["decision_summary"]:
+            st.markdown(f"#### {t('item.summary')}")
+            st.markdown(
+                f'<div class="summary" lang="fr">{html_text(it["decision_summary"])}</div>',
+                unsafe_allow_html=True,
+            )
+        _minutes(it, original)
+        with st.container(key="item-ask"):
+            open_page(t("item.ask"), "ask", "ask_about", about=it["id"])
 
     with right:
         _votes(it)
+        _sources(it)
 
 
-def _in_reading_language(parts: list[str]) -> tuple[list[str], str]:
+def _translation_note(original: bool, translated: bool) -> None:
+    """One note for the whole page, and the switch to the French original. A
+    page with nothing translated yet says so rather than claim a translation."""
+    with st.container(key="translation-note", horizontal=True, gap="small"):
+        st.caption(t("translation.note" if translated or original else "translation.pending"))
+        label = "translation.show_english" if original else "translation.show_original"
+        if st.button(t(label), key="toggle_original", type="tertiary"):
+            st.session_state[ORIGINAL_KEY] = not original
+            st.rerun()
+
+
+def _sources(it: dict) -> None:
+    docs = run(queries.meeting_documents, it["meeting_id"])
+    links = []
+    if "minutes" in docs:
+        page = it["minutes_page"]
+        links.append((
+            t("item.src_minutes_page", page=page) if page else t("item.src_minutes"),
+            f'{docs["minutes"]}#page={page}' if page else docs["minutes"],
+        ))
+    if "agenda" in docs:
+        links.append((t("item.src_agenda"), docs["agenda"]))
+    if "bundle" in docs:
+        links.append((t("item.src_bundle"), docs["bundle"]))
+    if not links:
+        return
+    st.markdown(
+        f'<div class="sources-label">{t("item.sources")}</div>'
+        f'<div class="sources-note">{t("item.sources_note")}</div>',
+        unsafe_allow_html=True,
+    )
+    with st.container(key="item-sources"):
+        for label, url in links:
+            st.link_button(label, url)
+
+
+def _in_reading_language(parts: list[str], original: bool) -> tuple[list[str], str]:
     """The paragraphs in English when every one has a saved translation, else
     in French: a half-translated resolution would read as one text in two
     languages."""
-    if lang() == "en" and parts:
+    if lang() == "en" and not original and parts:
         english = [translations.english(p) for p in parts]
         if all(english):
             return english, "en"
     return parts, "fr"
 
 
-def _paragraphs(parts: list[str]) -> None:
-    shown, language = _in_reading_language(parts)
+def _paragraphs(parts: list[str], original: bool) -> None:
+    shown, language = _in_reading_language(parts, original)
     # One <div> per paragraph on a single line: a blank line inside the HTML
     # would end it as far as markdown is concerned, and the renderer drops a
     # leading <p>, which left the first paragraph as bare text.
@@ -213,11 +239,11 @@ def _paragraphs(parts: list[str]) -> None:
         f'<div class="summary minutes" lang="{language}">{text}</div>',
         unsafe_allow_html=True,
     )
-    if lang() == "en":
-        st.caption(t("translation.label" if language == "en" else "minutes.untranslated"))
+    if lang() == "en" and not original and language == "fr":
+        st.caption(t("minutes.untranslated"))
 
 
-def _minutes(it: dict) -> None:
+def _minutes(it: dict, original: bool) -> None:
     """What the minutes record council adopted, and for items without a
     decision summary (declarations, councillors' motions), the full entry."""
     if not it["minutes_text"]:
@@ -233,42 +259,15 @@ def _minutes(it: dict) -> None:
             else "minutes.rejected" if outcome == "rejected" else "minutes.voted_on"
         )
         st.markdown(f"#### {t(heading)}")
-        _paragraphs(clauses)
+        _paragraphs(clauses, original)
     if it["decision_summary"] or not entry:
         return
     if clauses:
         with st.expander(t("minutes.full")):
-            _paragraphs(entry)
+            _paragraphs(entry, original)
     else:
         st.markdown(f"#### {t('minutes.entry')}")
-        _paragraphs(entry)
-
-
-def _explain(it: dict, number: str) -> None:
-    """A plain-language explanation from the chat agent, kept for the session
-    so reopening the item doesn't pay for it twice."""
-    done: dict = st.session_state.setdefault("explained", {})
-    key = (it["id"], t("explain.button"))
-    if key in done:
-        st.markdown(md_text(done[key]))
-        st.caption(t("chat.notice"))
-        return
-    if not chat.can_ask():
-        st.caption(t("chat.pool_out") if chat.pool_key() else t("chat.unavailable"))
-        return
-    if st.button(t("explain.button")):
-        question = t(
-            "explain.question", number=number, date=fmt_date(it["meeting_date"]),
-            item_id=it["id"], title=it["title"],
-        )
-        with st.spinner(t("chat.thinking")):
-            try:
-                done[key] = chat.answer(question)
-            except (chat.PoolUnavailable, chat.Busy) as exc:
-                st.warning(chat.error_message(exc))
-                return
-        st.markdown(md_text(done[key]))
-    st.caption(t("chat.notice"))
+        _paragraphs(entry, original)
 
 
 def _votes(it: dict) -> None:
