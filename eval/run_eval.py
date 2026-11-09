@@ -13,7 +13,7 @@ The second matters most. An agent that is right but cites nothing, or cites
 something plausible-looking that isn't real, is exactly the failure mode that
 makes a civic-information tool untrustworthy.
 
-Usage:  python eval/run_eval.py [--limit N] [--verbose]
+Usage:  python eval/run_eval.py [--limit N] [--start N] [--verbose]
 """
 
 from __future__ import annotations
@@ -26,6 +26,7 @@ from dataclasses import dataclass
 from pathlib import Path
 
 import anthropic
+import psycopg
 from dotenv import load_dotenv
 
 sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
@@ -89,6 +90,9 @@ _REFUSAL_PHRASES = (
     "not the 19 borough", "not in my database",
     # Refusing to invent something or to share private information.
     "i can't do that", "i can't help", "i cannot", "i won't",
+    # "I can't answer that question. This tool suite covers Montreal city
+    # council meeting records" (live stock prices, 2026-11-09).
+    "can't answer", "cannot answer",
 )
 
 
@@ -177,54 +181,76 @@ def _check_citations(
     return True, ""
 
 
+def _score(conn, case: dict) -> CaseResult:
+    answer = ask(conn, case["question"])
+    answer_ok, answer_notes = _check_answer(case, answer.text)
+    if case.get("should_refuse"):
+        citations_ok, citation_notes = True, ""
+    else:
+        citations_ok, citation_notes = _check_citations(
+            conn, answer.text, case.get("meeting_date"), case.get("min_item_refs", 1)
+        )
+    return CaseResult(
+        question=case["question"],
+        passed_answer=answer_ok,
+        passed_citations=citations_ok,
+        answer=answer.text,
+        notes="; ".join(n for n in (answer_notes, citation_notes) if n),
+    )
+
+
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--limit", type=int, default=None)
     parser.add_argument("--verbose", action="store_true")
+    parser.add_argument(
+        "--start", type=int, default=0,
+        help="Skip the first N cases, to resume a run that stopped part way",
+    )
     args = parser.parse_args()
 
     load_dotenv()
-    cases = _load_cases(args.limit)
+    cases = _load_cases(args.limit)[args.start:]
     results: list[CaseResult] = []
 
-    with db.connect() as conn:
+    conn = db.connect()
+    connection = conn.__enter__()
+    try:
         for case in cases:
             try:
-                answer = ask(conn, case["question"])
+                result = _score(connection, case)
+            except psycopg.OperationalError:
+                # Neon closes connections it sees as idle, and a run holds one
+                # for its whole length; a 2026-11-09 run lost it after 34
+                # cases. Reconnect and ask that case again.
+                conn.__exit__(None, None, None)
+                conn = db.connect()
+                connection = conn.__enter__()
+                try:
+                    result = _score(connection, case)
+                except anthropic.APIStatusError as exc:
+                    result = exc
             except anthropic.APIStatusError as exc:
+                result = exc
+            if isinstance(result, anthropic.APIStatusError):
                 # Stop rather than scoring the remaining cases as failures: an
                 # exhausted balance would otherwise look like a quality drop.
-                print(f"\nAborted on model API error ({exc.status_code}): {exc.message}")
+                print(f"\nAborted on model API error ({result.status_code}): {result.message}")
                 print(f"Scored {len(results)} of {len(cases)} cases before stopping.")
                 break
-            answer_ok, answer_notes = _check_answer(case, answer.text)
-
-            if case.get("should_refuse"):
-                citations_ok, citation_notes = True, ""
-            else:
-                citations_ok, citation_notes = _check_citations(
-                    conn, answer.text, case.get("meeting_date"), case.get("min_item_refs", 1)
-                )
-
-            results.append(
-                CaseResult(
-                    question=case["question"],
-                    passed_answer=answer_ok,
-                    passed_citations=citations_ok,
-                    answer=answer.text,
-                    notes="; ".join(n for n in (answer_notes, citation_notes) if n),
-                )
-            )
+            results.append(result)
 
             if args.verbose:
-                status = "PASS" if answer_ok and citations_ok else "FAIL"
-                print(f"[{status}] {case['question']}")
-                if results[-1].notes:
-                    print(f"        {results[-1].notes}")
+                status = "PASS" if result.passed_answer and result.passed_citations else "FAIL"
+                print(f"[{status}] {case['question']}", flush=True)
+                if result.notes:
+                    print(f"        {result.notes}")
                 if status == "FAIL":
                     # Without the answer, a failure can't be told apart from a
                     # grader that doesn't recognize a correct phrasing.
-                    print("        answer: " + " ".join(answer.text.split())[:600])
+                    print("        answer: " + " ".join(result.answer.split())[:600])
+    finally:
+        conn.__exit__(None, None, None)
 
     total = len(results)
     if not total:
