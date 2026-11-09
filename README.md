@@ -39,38 +39,30 @@ Live at **[mtl-council-agent.streamlit.app](https://mtl-council-agent.streamlit.
                                                                                └──▶ AI agent
 ```
 
-**The data pipeline.** Montreal publishes its council records as PDFs that can reach over 4,000 pages per meeting, with each meeting having three documents:
+**The data pipeline:** Montreal publishes its council records as PDFs that can reach over 4,000 pages per meeting, with each meeting having three documents:
 1. **Agenda:** What is proposed. It lists the items council will consider and the department bringing each one, such as a contract for lighting equipment from the culture department.
 2. **Decision summaries:** The city's write-up for each item. Each one explains the background, the cost and the reasons for the choice, followed by attachments like spreadsheets and contracts.
 3. **Minutes:** What council decided, published weeks after the meeting. They record the wording adopted, who moved and seconded it, the outcome, who attended, and how each member voted on contested items.
 
-A weekly GitHub Actions job downloads new or revised documents, parses them, and joins the three into one record per agenda item. The records are stored in Postgres with pgvector, for both exact word search and search by meaning. A quality check fails the run if data goes missing, and a second job then translates new titles and text into English with a free open-source model.
+A weekly GitHub Actions job downloads new or revised documents, parses them, and joins the three into one record per agenda item. The site covers every council meeting since January 2026, updated weekly. The records are stored in Postgres with pgvector, for both exact word search and search by meaning. A quality check fails the run if data goes missing, and a second job then translates new titles and text into English with a free open-source model.
 
-**The agent.** The chat is a Claude agent with a hand-written tool loop and five tools:
-- search by meaning, in English or French;
-- search by exact words, for resolution numbers and company names;
-- list a meeting's items;
-- read one item in full, with its vote;
-- pull a councillor's record of motions and votes.
+**The agent:** The chat is a Claude agent with a hand-written tool loop and five tools:
+- Search by meaning, in English or French
+- Search by exact words, for resolution numbers and company names
+- List a meeting's items
+- Read one item in full, with its vote
+- Pull a councillor's record of motions and votes
 
-The agent decides which tools to call and cites each item it uses. Each citation is checked against the database in the eval. A few rules it follows:
+The agent decides which tools to call and cites each item it uses. On a test of 85 hand-written questions, it answers 96% correctly, with every citation pointing to a real decision. A few rules it follows:
 - It keeps recorded votes apart from inferred ones. A unanimous vote names nobody, so it never claims to know how an individual voted unless the minutes say so.
 - It declines questions outside the city council's records, such as borough decisions or future budgets.
 - It runs on `claude-haiku-4-5`, and visitors get five free questions a day.
 
-**The website** is a Streamlit app that reads the database through a read-only account, so a bug in the site can't change the data.
-
-## Results
-
-| What was measured | Result |
-|---|---|
-| Which council meetings are on the site | Every meeting since January 2026, added weekly |
-| Decisions where the site found the city's background document (cost, reasons, history) | 99.9% |
-| Test questions the AI answered correctly, citing real decisions (85 questions) | 96% |
+**The website:** A Streamlit app with read-only access to the database. It displays the data but can't change it.
 
 ## What was hard
 
-- **File format changes:** One meeting's minutes dropped a colon from a heading, and that meeting lost all its attendance without any error. A weekly check now fails when a meeting's minutes yield no attendance.
+- **File format changes:** One meeting's minutes dropped a colon from a heading, and that meeting lost all its attendance without any error. A weekly check now fails and sends a notification when a meeting's minutes yield no attendance.
 - **Large files:** One meeting's documents can run to 4,000 pages and 500 MB. Each item's write-up comes with pages of attachments, like cost spreadsheets and contracts. The site keeps the write-up and drops the attachments, which shrinks the data by about three quarters and keeps it on a free hosting plan.
 - **Votes without names:** When a vote is unanimous, the minutes just say "adopted unanimously" and don't list who voted. To still show how each councillor voted, the site counts everyone present at that sitting as voting yes, and labels it "inferred from attendance" so it's never mistaken for a recorded vote.
 
@@ -119,7 +111,7 @@ tests/              tests built from real document excerpts
 
 City data is © Ville de Montréal, used under [CC-BY 4.0](https://donnees.montreal.ca/licence-d-utilisation).
 
-- Council agendas, minutes and decision summaries, from the City's council portal.
+- Council agendas, minutes and decision summaries, from the City's [council portal](https://ville.montreal.qc.ca/portal/page?_pageid=5798,85945578&_dad=portal&_schema=PORTAL).
 - Council roster and 2025 electoral districts, from [Montreal open data](https://donnees.montreal.ca/).
 - Address lookup, from Québec's official [AQ Adresses service](https://servicescarto.mrnf.gouv.qc.ca/pes/rest/services/Territoire/AQ_ADRESSES_WMS/MapServer).
 - Translations by the open-source [opus-mt-fr-en](https://huggingface.co/Helsinki-NLP/opus-mt-fr-en) model.
