@@ -103,6 +103,17 @@ _NOTED_RE = re.compile(
 # conséquence".
 _RESOLVED_RE = re.compile(r"RÉSOLU\s+en\s+conséquence")
 
+# A councillor's motion council sends to a committee instead of deciding:
+# "de référer la présente motion à la Commission de la présidence", and the
+# chair's "la motion 65.03 est référée à la Commission". The referral itself
+# carries, so the entry's last outcome-like word says nothing about the
+# motion. Only motions: "Le présent rapport est référé à la Commission" on a
+# filing is still a filing.
+_REFERRED_RE = re.compile(
+    r"de\s+référer\s+la\s+présente\s+motion|motion\s+[\d.]+\s+est\s+référée\s+à",
+    re.IGNORECASE,
+)
+
 # Items withdrawn without ever getting a footer: a motion pulled by its
 # sponsor ("retire le point 65.04 conformément à l'article 88") or items
 # struck when the agenda is adopted ("en y retirant les points 15.03, 30.06,
@@ -512,7 +523,9 @@ def parse_minutes(text: str, raw: str | None = None) -> list[MinutesItem]:
                 motion_number=motion_match.group("motion") if motion_match else None,
                 mover=_first_line_name(mover_match),
                 seconder=_first_line_name(seconder_match),
-                vote_outcome=_fallback_outcome(block) or _extract_outcome(outcome_match)
+                vote_outcome="referred"
+                if _REFERRED_RE.search(block[_item_start(block) :])
+                else _fallback_outcome(block) or _extract_outcome(outcome_match)
                 if outcome_match is None
                 else _extract_outcome(outcome_match),
                 section=section,

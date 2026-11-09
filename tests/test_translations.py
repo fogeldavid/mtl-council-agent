@@ -326,3 +326,47 @@ def test_numbers_already_well_formed_are_left_alone():
         "for 2026 125 projects",
     ):
         assert fix_number_grouping(text) == text
+
+
+def _render_referred_motion():
+    from datetime import date
+    from unittest.mock import patch
+
+    import streamlit as st
+
+    from mtl_council_agent.app import queries, translations
+    from mtl_council_agent.app.views import meetings
+
+    st.session_state["lang"] = "EN"
+    motion = (
+        "CM26 0555\n\nMotion de l'Opposition officielle\n\n"
+        "Il est proposé par   Olivier Demers-Dubé\n\nappuyé par   Ericka Alneus\n\n"
+        "1- que le conseil municipal demande un encadrement responsable;\n\n"
+        "Un débat s'engage."
+    )
+    item = {
+        "id": 1, "meeting_id": 1, "meeting_date": date(2026, 5, 11), "item_number": "65.03",
+        "section": "council", "title": "Motion de l'Opposition officielle",
+        "vote_outcome": "referred", "has_minutes": True, "dossier_number": None,
+        "motion_number": "CM26 0555", "department": None, "mover": None, "seconder": None,
+        "decision_summary": None, "minutes_text": motion, "minutes_page": 70,
+    }
+
+    def query_result(query, *args):
+        return item if query is queries.item else {}
+
+    with patch.object(meetings, "run", side_effect=query_result), \
+         patch.object(meetings, "_votes"), \
+         patch.object(translations, "english", return_value=None):
+        meetings._item_view(1, from_feed=True)
+
+
+def test_a_referred_motion_shows_what_it_proposed_not_what_was_adopted():
+    from streamlit.testing.v1 import AppTest
+
+    at = AppTest.from_function(_render_referred_motion).run()
+    assert not at.exception
+    text = " ".join(m.value for m in at.markdown)
+    assert "Referred to committee" in text
+    assert "What the motion proposed" in text
+    assert "What council adopted" not in text

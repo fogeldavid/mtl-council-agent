@@ -256,7 +256,8 @@ def _minutes(it: dict, original: bool) -> None:
         outcome = it["vote_outcome"] or ""
         heading = (
             "minutes.adopted" if outcome.startswith("adopted")
-            else "minutes.rejected" if outcome == "rejected" else "minutes.voted_on"
+            else "minutes.rejected" if outcome == "rejected"
+            else "minutes.proposed" if outcome == "referred" else "minutes.voted_on"
         )
         st.markdown(f"#### {t(heading)}")
         _paragraphs(clauses, original)
@@ -301,6 +302,8 @@ def _votes(it: dict) -> None:
         note = t("item.note.unanimous_unnamed")
     elif it["vote_outcome"] == "adopted_majority":
         note = t("item.note.majority_named" if n_against else "item.note.majority_unnamed")
+    elif it["vote_outcome"] == "referred":
+        note = t("item.note.referred")
     else:
         note = t("item.note.none")
     if it["section"] == "agglomeration_orientation":

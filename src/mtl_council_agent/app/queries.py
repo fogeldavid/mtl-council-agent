@@ -274,7 +274,8 @@ def latest_update(conn) -> date | None:
 MARK_START, MARK_END = "⟦", "⟧"
 
 OUTCOMES = [
-    "adopted_unanimous", "adopted_majority", "adopted", "rejected", "withdrawn", "noted", "unknown",
+    "adopted_unanimous", "adopted_majority", "adopted", "rejected", "withdrawn", "noted",
+    "referred", "unknown",
 ]
 
 

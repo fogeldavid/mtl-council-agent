@@ -114,10 +114,11 @@ create table if not exists agenda_items (
     seconder_id integer references officials(id),
     -- 'adopted' is an adoption the minutes don't qualify as unanimous or by
     -- majority; 'noted' is a filing or notice of motion, recorded but not
-    -- voted on.
+    -- voted on; 'referred' is a motion council sent to a committee for study
+    -- instead of deciding it.
     vote_outcome text check (vote_outcome in (
         'adopted_unanimous', 'adopted_majority', 'adopted', 'rejected',
-        'withdrawn', 'noted', 'unknown'
+        'withdrawn', 'noted', 'referred', 'unknown'
     )),
     dossier_number text,
     -- The agenda's closing section ("80 – Conseil d'agglomération - Dossiers
@@ -156,6 +157,21 @@ create table if not exists agenda_items (
 alter table documents add column if not exists extracted_text text;
 alter table agenda_items add column if not exists minutes_text text;
 alter table agenda_items add column if not exists minutes_page smallint;
+do $$
+begin
+    if not exists (
+        select 1 from pg_constraint
+        where conname = 'agenda_items_vote_outcome_check'
+          and pg_get_constraintdef(oid) like '%referred%'
+    ) then
+        alter table agenda_items drop constraint if exists agenda_items_vote_outcome_check;
+        alter table agenda_items add constraint agenda_items_vote_outcome_check
+            check (vote_outcome in (
+                'adopted_unanimous', 'adopted_majority', 'adopted', 'rejected',
+                'withdrawn', 'noted', 'referred', 'unknown'
+            ));
+    end if;
+end $$;
 do $$
 begin
     if not exists (

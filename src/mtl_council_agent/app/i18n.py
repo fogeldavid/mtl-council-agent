@@ -350,6 +350,7 @@ STRINGS: dict[str, dict[str, str]] = {
     "outcome.rejected": {"en": "Rejected", "fr": "Rejeté"},
     "outcome.withdrawn": {"en": "Withdrawn", "fr": "Retiré"},
     "outcome.noted": {"en": "Noted", "fr": "Pris acte"},
+    "outcome.referred": {"en": "Referred to committee", "fr": "Référé en commission"},
     "outcome.unknown": {"en": "No minutes yet", "fr": "Procès-verbal à venir"},
     # Minutes are in, but they record no decision (question periods, announcements).
     "outcome.no_decision": {"en": "No decision", "fr": "Aucune décision"},
@@ -434,6 +435,7 @@ STRINGS: dict[str, dict[str, str]] = {
     },
     "minutes.adopted": {"en": "What council adopted", "fr": "Ce que le conseil a adopté"},
     "minutes.rejected": {"en": "What council voted down", "fr": "Ce que le conseil a rejeté"},
+    "minutes.proposed": {"en": "What the motion proposed", "fr": "Ce que proposait la motion"},
     "minutes.voted_on": {"en": "What council voted on", "fr": "Ce sur quoi le conseil a voté"},
     "minutes.entry": {"en": "From the minutes", "fr": "Au procès-verbal"},
     "minutes.full": {
@@ -486,6 +488,12 @@ STRINGS: dict[str, dict[str, str]] = {
         "which makes the final decision.",
         "fr": "Vote d'orientation : la position du conseil municipal pour le conseil "
         "d'agglomération, qui prend la décision finale.",
+    },
+    "item.note.referred": {
+        "en": "Council sent this motion to a committee for study instead of deciding it. "
+        "The vote recorded was on sending it, not on the motion.",
+        "fr": "Le conseil a référé cette motion à une commission plutôt que de la trancher. "
+        "Le vote consigné porte sur ce renvoi, pas sur la motion.",
     },
     "item.note.none": {
         "en": "No individual votes are recorded for this item.",

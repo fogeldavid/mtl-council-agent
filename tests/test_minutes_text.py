@@ -103,6 +103,59 @@ def test_mover_is_the_motion_author_not_the_roll_call_request():
     assert _items()["20.01"].mover == "Julien Hénault-Ratelle"
 
 
+_REFERRAL = """
+                                    ____________________________
+
+CM26 0555
+
+Motion de l'Opposition officielle - Motion pour un encadrement responsable
+
+Attendu que la motion vise un encadrement responsable;
+
+Il est proposé par   Olivier Demers-Dubé
+
+appuyé par     Ericka Alneus
+
+1- que le conseil municipal demande un encadrement responsable;
+
+Un débat s'engage.
+
+À 21 h 41,
+
+Il est proposé par   Julien Hénault-Ratelle
+
+appuyé par     Alexandre Teodoresco
+
+de référer la présente motion à la Commission de la présidence pour en faire l'étude.
+
+Adopté à l'unanimité.
+
+À 21 h 54, la présidente du conseil confirme que la motion 65.03 est référée à la Commission de la
+présidence, et il est
+
+RÉSOLU
+
+en conséquence.
+
+65.03
+"""
+
+
+def test_a_motion_sent_to_a_committee_is_referred_not_adopted():
+    item = parse_minutes(_REFERRAL)[0]
+    assert item.vote_outcome == "referred"
+    assert item.mover == "Olivier Demers-Dubé"
+
+
+def test_a_filing_referred_to_a_committee_is_still_a_filing():
+    text = (
+        "\n____________________________\n\nCM26 0929\n\nDépôt du rapport public 2026\n\n"
+        "Le leader dépose le rapport, et le conseil en prend acte.\n\n"
+        "Le présent rapport est référé à la Commission sur l'inspecteur général.\n\n07.03\n"
+    )
+    assert parse_minutes(text)[0].vote_outcome == "noted"
+
+
 def test_attendance_heading_without_a_colon_is_read_but_not_the_contents_line():
     from mtl_council_agent.ingestion.minutes_parser import parse_attendance
 
