@@ -22,6 +22,7 @@ from pathlib import Path
 
 import httpx
 
+from mtl_council_agent import minutes_text as entry
 from mtl_council_agent.db import client as db
 from mtl_council_agent.ingestion.agenda_parser import parse_agenda
 from mtl_council_agent.ingestion.chunker import chunk_text
@@ -54,14 +55,19 @@ class IngestionResult:
             self.failures = []
 
 
-def _download_and_extract(client: httpx.Client, url: str) -> str:
+def _download_text(client: httpx.Client, url: str) -> str:
+    """pdftotext's output, form feeds included: page numbers need them."""
     with tempfile.NamedTemporaryFile(suffix=".pdf", delete=True) as tmp:
         with client.stream("GET", url, follow_redirects=True, timeout=300) as response:
             response.raise_for_status()
             for block in response.iter_bytes(chunk_size=1 << 20):
                 tmp.write(block)
         tmp.flush()
-        return strip_page_artifacts(extract_text(Path(tmp.name)))
+        return extract_text(Path(tmp.name))
+
+
+def _download_and_extract(client: httpx.Client, url: str) -> str:
+    return strip_page_artifacts(_download_text(client, url))
 
 
 def _fingerprints(http: httpx.Client, meeting: MeetingRef) -> dict[str, Fingerprint]:
@@ -148,9 +154,11 @@ def ingest_meeting(
     if agenda_doc is None:
         raise ValueError(f"meeting {meeting.meeting_date} has no agenda document")
 
-    agenda_items = parse_agenda(_download_and_extract(http, agenda_doc.url))
-    minutes_text = _download_and_extract(http, minutes_doc.url) if minutes_doc else None
-    minutes_items = parse_minutes(minutes_text) if minutes_text else []
+    agenda_raw = _download_text(http, agenda_doc.url)
+    agenda_items = parse_agenda(strip_page_artifacts(agenda_raw))
+    minutes_raw = _download_text(http, minutes_doc.url) if minutes_doc else None
+    minutes_text = strip_page_artifacts(minutes_raw) if minutes_raw else None
+    minutes_items = parse_minutes(minutes_text, minutes_raw) if minutes_text else []
     bundle_text = _download_and_extract(http, bundle_doc.url) if bundle_doc else None
 
     linked = link_items(agenda_items, minutes_items, bundle_text)
@@ -169,6 +177,9 @@ def ingest_meeting(
             db.upsert_document(
                 conn, meeting_id, doc.doc_type, doc.url, fingerprints.get(doc.url)
             )
+    db.save_document_text(conn, agenda_doc.url, agenda_raw)
+    if minutes_raw:
+        db.save_document_text(conn, minutes_doc.url, minutes_raw)
     if minutes_text:
         _store_attendance(conn, meeting_id, minutes_text)
 
@@ -194,11 +205,17 @@ def ingest_meeting(
             dossier_number=item.dossier_number,
             section=item.section,
             sitting=item.sitting,
+            minutes_text=item.minutes_text,
+            minutes_page=item.minutes_page,
         )
         items_loaded += 1
         unresolved += _store_votes(conn, item_id, item)
 
-        embeddable = item.decision_summary or item.title
+        # The minutes' wording stands in only where there is no summary, so an
+        # item with both isn't indexed twice over near-identical text.
+        embeddable = item.decision_summary or (
+            entry.for_search(item.title, item.minutes_text) if item.minutes_text else item.title
+        )
         chunks = chunk_text(embeddable)
         if chunks:
             db.replace_item_chunks(conn, item_id, chunks, embed_passages(chunks))

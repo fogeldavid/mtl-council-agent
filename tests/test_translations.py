@@ -71,6 +71,7 @@ def _render_translated_detail(language):
         "vote_outcome": "adopted", "has_minutes": True,
         "department": None, "mover": None, "seconder": None,
         "decision_summary": "CONTEXTE\nLe projet améliore le parc.\nDESCRIPTION\nOriginal complet.",
+        "minutes_text": None, "minutes_page": None,
     }
     translated = {"Approuver un contrat": "Approve a contract",
                   "Le projet améliore le parc.": "The project improves the park."}
@@ -110,6 +111,7 @@ def _render_untranslated_detail(saved):
         "has_minutes": True, "dossier_number": None, "motion_number": None,
         "department": None, "mover": None, "seconder": None,
         "decision_summary": "CONTEXTE\nLe projet améliore le parc.\nDESCRIPTION\nOriginal.",
+        "minutes_text": None, "minutes_page": None,
     }
 
     def query_result(query, *args):
@@ -176,3 +178,118 @@ def test_numeric_protection_roundtrips_and_rejects_dropped_values():
 def test_administrative_validation_is_not_presented_as_context():
     metadata = "VALIDATION\nIntervenant et sens de l'intervention 1234"
     assert translations.context_excerpt(metadata) == ""
+
+
+
+def _render_declaration(saved):
+    from datetime import date
+    from unittest.mock import patch
+
+    import streamlit as st
+
+    from mtl_council_agent.app import queries, translations
+    from mtl_council_agent.app.views import meetings
+
+    # Inside the function: AppTest runs its source alone, without module globals.
+    declaration = (
+        "CM26 0924\n\nDéclaration soulignant la Journée\n\n"
+        "Attendu que la journée est observée le 30 septembre;\n\n"
+        "Il est proposé par   Soraya Martinez Ferrada\n\nappuyé par   Josué Corvil\n\n"
+        "Et résolu :\n\n1- que la Ville observe la journée.\n\n"
+        "Un débat s'engage.\n\nAdopté à l'unanimité."
+    )
+    st.session_state["lang"] = "EN"
+    item = {
+        "id": 1, "meeting_id": 1, "meeting_date": date(2026, 9, 21), "item_number": "15.02",
+        "section": "council", "title": "Déclaration soulignant la Journée",
+        "vote_outcome": "adopted_unanimous", "has_minutes": True, "dossier_number": None,
+        "motion_number": "CM26 0924", "department": None, "mover": None, "seconder": None,
+        "decision_summary": None, "minutes_text": declaration, "minutes_page": 8,
+    }
+    docs = {"minutes": "https://example.org/pv.pdf"}
+
+    def query_result(query, *args):
+        if query is queries.item:
+            return item
+        return docs if query is queries.meeting_documents else {}
+
+    with patch.object(meetings, "run", side_effect=query_result), \
+         patch.object(meetings, "_votes"), patch.object(meetings, "_explain"), \
+         patch.object(translations, "english", side_effect=saved.get):
+        meetings._item_view(1, from_feed=True)
+
+
+def _declaration(saved):
+    from streamlit.testing.v1 import AppTest
+
+    at = AppTest.from_function(_render_declaration, args=(saved,)).run()
+    assert not at.exception
+    return at
+
+
+def test_an_item_without_a_summary_shows_its_minutes_instead():
+    at = _declaration({})
+    text = " ".join(m.value for m in at.markdown)
+    assert "What council adopted" in text
+    assert "1- que la Ville observe la journée." in text
+    assert "No decision summary on file" not in " ".join(c.value for c in at.caption)
+    assert "Full entry in the minutes" in [e.label for e in at.expander]
+    assert "Soraya Martinez Ferrada" not in text
+
+
+def test_minutes_show_in_english_only_when_every_paragraph_is_translated():
+    clause = "1- que la Ville observe la journée."
+    full = _declaration({clause: "1- that the City observe the day."})
+    assert "1- that the City observe the day." in " ".join(m.value for m in full.markdown)
+    partial = _declaration({})
+    assert "English translation not ready yet" in " ".join(c.value for c in partial.caption)
+
+
+def test_minutes_link_opens_at_the_item_page():
+    at = _declaration({})
+    buttons = at.get("link_button")
+    assert any(b.proto.url == "https://example.org/pv.pdf#page=8" for b in buttons)
+    assert any("page 8" in b.proto.label for b in buttons)
+
+
+def _render_rejected_motion():
+    from datetime import date
+    from unittest.mock import patch
+
+    import streamlit as st
+
+    from mtl_council_agent.app import queries, translations
+    from mtl_council_agent.app.views import meetings
+
+    st.session_state["lang"] = "EN"
+    motion = (
+        "CM26 1036\n\nMotion de l'Opposition officielle\n\n"
+        "Il est proposé par   Olivier Demers-Dubé\n\nappuyé par   Marie Plourde\n\n"
+        "1 - que le conseil municipal souligne le 15 septembre;\n\n"
+        "Un débat s'engage."
+    )
+    item = {
+        "id": 1, "meeting_id": 1, "meeting_date": date(2026, 9, 21), "item_number": "65.02",
+        "section": "council", "title": "Motion de l'Opposition officielle",
+        "vote_outcome": "rejected", "has_minutes": True, "dossier_number": None,
+        "motion_number": "CM26 1036", "department": None, "mover": None, "seconder": None,
+        "decision_summary": None, "minutes_text": motion, "minutes_page": 85,
+    }
+
+    def query_result(query, *args):
+        return item if query is queries.item else {}
+
+    with patch.object(meetings, "run", side_effect=query_result), \
+         patch.object(meetings, "_votes"), patch.object(meetings, "_explain"), \
+         patch.object(translations, "english", return_value=None):
+        meetings._item_view(1, from_feed=True)
+
+
+def test_a_rejected_motion_is_not_headed_as_adopted():
+    from streamlit.testing.v1 import AppTest
+
+    at = AppTest.from_function(_render_rejected_motion).run()
+    assert not at.exception
+    text = " ".join(m.value for m in at.markdown)
+    assert "What council voted down" in text
+    assert "What council adopted" not in text

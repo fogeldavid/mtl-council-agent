@@ -403,6 +403,22 @@ STRINGS: dict[str, dict[str, str]] = {
         "en": "Agenda (PDF, city website)",
         "fr": "Ordre du jour (PDF, site de la Ville)",
     },
+    "item.pdf_minutes_page": {
+        "en": "Minutes, page {page} (PDF, city website)",
+        "fr": "Procès-verbal, page {page} (PDF, site de la Ville)",
+    },
+    "minutes.adopted": {"en": "What council adopted", "fr": "Ce que le conseil a adopté"},
+    "minutes.rejected": {"en": "What council voted down", "fr": "Ce que le conseil a rejeté"},
+    "minutes.voted_on": {"en": "What council voted on", "fr": "Ce sur quoi le conseil a voté"},
+    "minutes.entry": {"en": "From the minutes", "fr": "Au procès-verbal"},
+    "minutes.full": {
+        "en": "Full entry in the minutes",
+        "fr": "Texte intégral au procès-verbal",
+    },
+    "minutes.untranslated": {
+        "en": "French original from the minutes. English translation not ready yet.",
+        "fr": "Original français du procès-verbal.",
+    },
     "item.pdf_minutes": {
         "en": "Minutes (PDF, city website)",
         "fr": "Procès-verbal (PDF, site de la Ville)",

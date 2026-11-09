@@ -16,6 +16,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
+from mtl_council_agent import minutes_text  # noqa: E402
 from mtl_council_agent.app.translations import (  # noqa: E402
     MODEL_NAME,
     TRANSLATIONS_PATH,
@@ -59,14 +60,16 @@ def main():
     parser.add_argument("--batch-size", type=int, default=16)
     parser.add_argument("--protect-numbers", action="store_true")
     args = parser.parse_args()
-    url = dotenv_values(".env").get("WEB_DATABASE_URL") or os.environ.get("WEB_DATABASE_URL")
+    # The environment first, so a run can point at a copy of the database.
+    url = os.environ.get("WEB_DATABASE_URL") or dotenv_values(".env").get("WEB_DATABASE_URL")
     if not url:
         raise SystemExit("WEB_DATABASE_URL is not configured")
     try:
         with psycopg.connect(url, connect_timeout=15,
                              options="-c default_transaction_read_only=on") as conn:
             rows = conn.execute("""
-                select ai.title, ai.decision_summary, m.meeting_date, ai.vote_outcome
+                select ai.title, ai.decision_summary, m.meeting_date, ai.vote_outcome,
+                       ai.minutes_text
                 from agenda_items ai
                 join meetings m on m.id = ai.meeting_id
                 order by m.meeting_date desc, ai.position
@@ -77,7 +80,17 @@ def main():
         ) from None
     titles = list(dict.fromkeys(row[0] for row in rows if row[0]))
     contexts = list(dict.fromkeys(context_excerpt(row[1]) for row in rows if row[1]))
-    texts = list(dict.fromkeys(titles + ([] if args.titles_only else [t for t in contexts if t])))
+    # The minutes, a paragraph at a time, as the item page shows them: the
+    # adopted wording for every item, the full entry where there's no summary.
+    minutes = list(dict.fromkeys(
+        paragraph
+        for row in rows if row[4]
+        for paragraph in minutes_text.resolved(row[4])
+        + ([] if row[1] else minutes_text.body(row[4]))
+    ))
+    texts = list(dict.fromkeys(
+        titles + ([] if args.titles_only else [t for t in contexts if t] + minutes)
+    ))
     path = TRANSLATIONS_PATH
     data = json.loads(path.read_text()) if path.exists() else {
         "model": MODEL_NAME, "source_language": "fr", "target_language": "en", "entries": {},
