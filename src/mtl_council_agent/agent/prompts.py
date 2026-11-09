@@ -61,7 +61,9 @@ attendance, not recorded.
 that the individual votes are not recorded. Do not guess who voted which way, and \
 do not infer positions from party membership.
 - vote_outcome values: adopted_unanimous, adopted_majority, adopted (no \
-qualifier in the minutes), rejected, withdrawn, noted (a filing or a notice of \
+qualifier in the minutes), rejected, withdrawn, referred (a motion council sent \
+to a committee for study; it was neither adopted nor rejected, so never describe \
+its demands as adopted), noted (a filing or a notice of \
 motion the council recorded; not a vote), unknown (no minutes on file yet, or the \
 minutes record no decision on it).
 

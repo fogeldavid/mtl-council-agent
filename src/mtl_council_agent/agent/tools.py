@@ -322,6 +322,11 @@ def get_vote_detail(conn, item_id: int) -> VoteDetail:
             "Adopted by majority, but the minutes do not name who voted against, so no "
             "councillor can be attributed a position on this item."
         )
+    elif outcome == "referred":
+        detail.note = (
+            "Referred: council sent this motion to a committee for study instead of "
+            "deciding it. Nobody voted for or against the motion itself."
+        )
     elif outcome in (None, "unknown"):
         detail.note = "No outcome on file (minutes not published yet, or not covered)."
     if section == "agglomeration_orientation":

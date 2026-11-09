@@ -32,6 +32,7 @@ BADGE_CLASS = {
     "rejected": "b-r",
     "withdrawn": "b-w",
     "noted": "b-n",
+    "referred": "b-w",
     "unknown": "b-n",
     "no_decision": "b-n",
 }
