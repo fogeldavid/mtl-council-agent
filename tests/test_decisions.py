@@ -58,7 +58,7 @@ def test_opens_on_the_latest_decisions_with_extra_filters_folded_away():
     assert at.checkbox[0].label == "Decided only" and at.checkbox[0].value is True
     assert at.expander[0].label == "More filters"
     assert any("25 decisions" in m.value for m in at.markdown)
-    assert len([b for b in at.button if b.label == "Read the record"]) == 20
+    assert len([b for b in at.button if (b.key or "").startswith("open_decision_")]) == 20
     _, kwargs = at.session_state["calls"][-1]
     assert kwargs["decided"] is True
 
@@ -66,21 +66,41 @@ def test_opens_on_the_latest_decisions_with_extra_filters_folded_away():
 def test_show_more_and_unticking_decided():
     at = _run()
     next(b for b in at.button if b.label == "Show more").click().run()
-    assert len([b for b in at.button if b.label == "Read the record"]) == 25
+    assert len([b for b in at.button if (b.key or "").startswith("open_decision_")]) == 25
     at.checkbox[0].uncheck().run()
     assert not at.exception
     assert at.session_state["calls"][-1][1]["decided"] is False
     # A new search starts from the top again.
-    assert len([b for b in at.button if b.label == "Read the record"]) == 20
+    assert len([b for b in at.button if (b.key or "").startswith("open_decision_")]) == 20
 
 
-def test_typed_words_search_by_meaning_unless_exact_is_chosen():
+def test_one_box_shows_matches_first_then_related_by_meaning():
     at = _run()
     at.text_input[0].set_value("bike lanes").run()
     assert not at.exception
-    assert at.session_state["calls"][-1][1]["mode"] == "meaning"
+    modes = [kwargs.get("mode") for _, kwargs in at.session_state["calls"]]
+    assert "exact" in modes and "meaning" in modes
+    assert not at.get("segmented_control")
+    # The fake search returns the same rows for both; exact matches aren't repeated.
+    assert any("25 matching decisions" in m.value for m in at.markdown)
+    assert not any("Related by topic" in m.value for m in at.markdown)
     at.text_input[0].set_value("absent").run()
     assert any("No items match" in info.value for info in at.info)
+
+
+def test_english_titles_match_every_word_typed():
+    from unittest.mock import patch
+
+    from mtl_council_agent.app.views import decisions
+
+    rows = [{"id": 1, "title": "Accorder un contrat de déneigement"},
+            {"id": 2, "title": "Accorder un contrat d'éclairage"}]
+    english = {"Accorder un contrat de déneigement": "Grant a snow removal contract",
+               "Accorder un contrat d'éclairage": "Grant a lighting contract"}
+    with patch.object(decisions.translations, "english", side_effect=english.get):
+        assert [r["id"] for r in decisions._english_matches("Snow removal", rows)] == [1]
+        assert [r["id"] for r in decisions._english_matches("contract", rows)] == [1, 2]
+        assert decisions._english_matches("snow lighting", rows) == []
 
 
 def test_a_record_and_back_keeps_the_search():
