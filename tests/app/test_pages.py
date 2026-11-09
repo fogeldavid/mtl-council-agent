@@ -123,7 +123,7 @@ def test_decisions_by_words_shows_results_and_csv():
     at.text_input[0].input("Veille").run()
     assert not at.exception
     text = " ".join(m.value for m in at.markdown)
-    assert "1 results" in text
+    assert "1 matching decision" in text
     assert "<mark>Veille</mark>" in text
     assert at.get("download_button")
 

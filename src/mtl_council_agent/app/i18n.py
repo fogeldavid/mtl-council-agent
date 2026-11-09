@@ -104,7 +104,6 @@ STRINGS: dict[str, dict[str, str]] = {
     "nav.ask": {"en": "Ask the council", "fr": "Questions au conseil"},
     "nav.updates": {"en": "Council updates", "fr": "Actualités du conseil"},
     "nav.districts": {"en": "District explorer", "fr": "Explorer les districts"},
-    "updates.read": {"en": "Read the record", "fr": "Lire le document"},
     "find.searching": {"en": "Searching for your address…", "fr": "Recherche de votre adresse…"},
     "find.no_number": {
         "en": "We found that street, but not that civic number. Check the number, "
@@ -538,39 +537,18 @@ STRINGS: dict[str, dict[str, str]] = {
     "pos.abstained": {"en": "Abstained", "fr": "Abstention"},
     "how.moved": {"en": "Moved", "fr": "Proposé"},
     "how.seconded": {"en": "Seconded", "fr": "Appuyé"},
-    "search.title": {"en": "Search the record", "fr": "Chercher dans le registre"},
-    "search.box": {"en": "Search words", "fr": "Mots à chercher"},
-    "search.placeholder": {
-        "en": "e.g. piste cyclable, déneigement, CM26 0316",
-        "fr": "ex. piste cyclable, déneigement, CM26 0316",
-    },
-    "search.exact": {"en": "Exact words", "fr": "Mots exacts"},
-    "search.meaning": {"en": "By meaning", "fr": "Par le sens"},
-    "search.tip_exact": {
-        "en": "Records are in French: search French words. For questions in English, use Ask.",
-        "fr": "Les documents sont en français. Pour une question en anglais, utilisez Questions.",
-    },
-    "search.tip_meaning": {
-        "en": "Finds items about the same topic even when the words differ, in English or French.",
-        "fr": "Trouve les points sur le même sujet même si les mots diffèrent, en français ou en "
-        "anglais.",
-    },
     "search.loading_model": {
         "en": "Loading the meaning model (first search only)…",
         "fr": "Chargement du modèle de sens (première recherche seulement)…",
     },
-    "search.meaning_unavailable": {
-        "en": "Search by meaning is unavailable right now; showing exact-word results.",
-        "fr": "La recherche par le sens est indisponible; résultats par mots exacts.",
+    "search.matches": {"en": "{n} matching decisions", "fr": "{n} décisions correspondantes"},
+    "search.matches_one": {"en": "1 matching decision", "fr": "1 décision correspondante"},
+    "search.no_matches": {
+        "en": "No matching decisions",
+        "fr": "Aucune décision correspondante",
     },
-    "search.results": {"en": "{n} results", "fr": "{n} résultats"},
-    "search.results_capped": {"en": "Top {n} results", "fr": "{n} premiers résultats"},
-    "search.none": {
-        "en": "No items match. Try fewer filters, or other words.",
-        "fr": "Aucun point ne correspond. Essayez moins de filtres ou d'autres mots.",
-    },
+    "search.related": {"en": "Related by topic", "fr": "Liées par le sujet"},
     "search.more": {"en": "Show more", "fr": "Afficher plus"},
-    "search.open": {"en": "Open item {number} →", "fr": "Ouvrir le point {number} →"},
     "search.csv": {"en": "Download results (CSV)", "fr": "Télécharger les résultats (CSV)"},
     "filter.meeting": {"en": "Meeting", "fr": "Séance"},
     "filter.outcome": {"en": "Outcome", "fr": "Résultat"},
