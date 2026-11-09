@@ -1,4 +1,4 @@
-# The Montréal Record (mtl-council-agent)
+# The Montréal Record
 
 A public site for what Montreal's city council decided and how each councillor voted, in English and French. It turns the city's French-only PDF records into a searchable database, and an AI agent answers questions about them with a citation for every claim.
 
@@ -18,15 +18,15 @@ Live at **[mtl-council-agent.streamlit.app](https://mtl-council-agent.streamlit.
 | District explorer | Find who represents you, and see how they voted. |
 | Council updates | Browse and search every decision and meeting. |
 
-**Ask the council.** The chat answering a question about a declaration from the September 21, 2026 meeting.
+**Ask the council:** The chat answering a question about a declaration from the September 21, 2026 meeting.
 
 <img src="images/app-chat-answer.png" width="800" alt="The Ask page answering what item 15.02 of the September 21, 2026 meeting was: a declaration for the National Day of Truth and Reconciliation, with its five commitments, the debate, a citation, and links to the minutes and agenda">
 
-**District explorer.** Mile-End selected on the map, with its city councillor and borough mayor.
+**District explorer:** Mile-End selected on the map, with its city councillor and borough mayor.
 
 <img src="images/app-districts.png" width="800" alt="District explorer with Mile-End selected on the map, showing city councillor Marie Plourde and borough mayor Cathy Wong">
 
-**Council updates.** A decision page: the opposition's democracy motion, rejected by roll call.
+**Council updates:** An opposition motion council voted down, with how each member voted.
 
 <img src="images/app-item-motion.png" width="800" alt="Item page for the opposition's September 2026 democracy motion: rejected by roll call, 24 for and 36 against with every name, and the motion's fourteen clauses under What council voted down">
 
@@ -44,14 +44,14 @@ Live at **[mtl-council-agent.streamlit.app](https://mtl-council-agent.streamlit.
 2. **Decision summaries:** The city's write-up for each item. Each one explains the background, the cost and the reasons for the choice, followed by attachments like spreadsheets and contracts.
 3. **Minutes:** What council decided, published weeks after the meeting. They record the wording adopted, who moved and seconded it, the outcome, who attended, and how each member voted on contested items.
 
-A weekly GitHub Actions job downloads new or revised documents, parses them, and joins the three into one record per agenda item. The site covers every council meeting since January 2026, updated weekly. The records are stored in Postgres with pgvector, for both exact word search and search by meaning. A quality check fails the run if data goes missing, and a second job then translates new titles and text into English with a free open-source model.
+A weekly GitHub Actions job downloads new or revised documents, parses them, and joins the three into one record per agenda item, so the site covers every council meeting since January 2026. The records are stored in Postgres with pgvector, for both exact word search and search by meaning. A quality check fails the run if data goes missing, and a second job then translates new titles and text into English with a free open-source model.
 
-**The agent:** The chat is a Claude agent with a hand-written tool loop and five tools:
-- Search by meaning, in English or French
-- Search by exact words, for resolution numbers and company names
-- List a meeting's items
-- Read one item in full, with its vote
-- Pull a councillor's record of motions and votes
+**The agent:** The chat is a Claude agent with five tools
+1. Search by meaning, in English or French
+2. Search by exact words, for resolution numbers and company names
+3. List a meeting's items
+4. Read one item in full, with its vote
+5. Pull a councillor's record of motions and votes
 
 The agent decides which tools to call and cites each item it uses. On a test of 85 hand-written questions, it answers 96% correctly, with every citation pointing to a real decision. A few rules it follows:
 - It keeps recorded votes apart from inferred ones. A unanimous vote names nobody, so it never claims to know how an individual voted unless the minutes say so.
@@ -111,7 +111,7 @@ tests/              tests built from real document excerpts
 
 City data is © Ville de Montréal, used under [CC-BY 4.0](https://donnees.montreal.ca/licence-d-utilisation).
 
-- Council agendas, minutes and decision summaries, from the City's [council portal](https://ville.montreal.qc.ca/portal/page?_pageid=5798,85945578&_dad=portal&_schema=PORTAL).
+- Council agendas, minutes and decision summaries, from the City's [council page](https://montreal.ca/conseils-decisionnels/conseil-municipal).
 - Council roster and 2025 electoral districts, from [Montreal open data](https://donnees.montreal.ca/).
 - Address lookup, from Québec's official [AQ Adresses service](https://servicescarto.mrnf.gouv.qc.ca/pes/rest/services/Territoire/AQ_ADRESSES_WMS/MapServer).
 - Translations by the open-source [opus-mt-fr-en](https://huggingface.co/Helsinki-NLP/opus-mt-fr-en) model.
