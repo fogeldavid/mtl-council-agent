@@ -38,6 +38,9 @@ class QualityReport:
     council_items_in_minuted_meetings: int = 0
     council_items_with_outcome: int = 0
     meetings_with_attendance: int = 0
+    # Minutes on file but no roll read from them: the 2026-09-21 minutes
+    # dropped the colon from "PRÉSENCES :", and nothing noticed for weeks.
+    meetings_missing_attendance: list[str] = None
     recorded_votes: int = 0
 
     def __post_init__(self):
@@ -45,6 +48,8 @@ class QualityReport:
             self.official_near_duplicates = []
         if self.officials_off_roster is None:
             self.officials_off_roster = []
+        if self.meetings_missing_attendance is None:
+            self.meetings_missing_attendance = []
 
     @property
     def outcome_coverage(self) -> float:
@@ -94,7 +99,14 @@ class QualityReport:
                     f"({self.council_items_with_outcome}/"
                     f"{self.council_items_in_minuted_meetings} council items with minutes)"
                 ),
-                f"attendance recorded: {self.meetings_with_attendance} meetings",
+                (
+                    f"attendance recorded: {self.meetings_with_attendance} meetings"
+                    + (
+                        f" (missing for minutes of {', '.join(self.meetings_missing_attendance)})"
+                        if self.meetings_missing_attendance
+                        else ""
+                    )
+                ),
                 f"recorded positions:  {self.recorded_votes}",
                 f"officials:           {self.officials_total}",
             ]
@@ -166,6 +178,19 @@ def build_report(conn, meetings_on_portal: int, since: date | None = None) -> Qu
         meetings_with_attendance=scalar(
             "select count(distinct meeting_id) from meeting_attendance"
         ),
+        meetings_missing_attendance=[
+            str(r[0])
+            for r in conn.execute(
+                """
+                select m.meeting_date from meetings m
+                where exists (select 1 from documents d
+                              where d.meeting_id = m.id and d.doc_type = 'minutes')
+                  and not exists (select 1 from meeting_attendance a
+                                  where a.meeting_id = m.id)
+                order by m.meeting_date
+                """
+            ).fetchall()
+        ],
         recorded_votes=scalar("select count(*) from item_votes"),
     )
 

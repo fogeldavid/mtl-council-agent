@@ -101,3 +101,21 @@ def test_mover_is_the_motion_author_not_the_roll_call_request():
     # Marie Plourde moved only "de procéder à un vote enregistré".
     assert motion.mover == "Olivier Demers-Dubé"
     assert _items()["20.01"].mover == "Julien Hénault-Ratelle"
+
+
+def test_attendance_heading_without_a_colon_is_read_but_not_the_contents_line():
+    from mtl_council_agent.ingestion.minutes_parser import parse_attendance
+
+    text = (
+        "TABLE DES MATIÈRES\n\nPRÉSENCES ........................ 3\n\n"
+        "PRÉSENCES\n\nMesdames et messieurs\n"
+        "Soraya Martinez Ferrada, Ericka Alneus et Cathy Wong\n\n\n"
+        "ABSENCES AVEC MOTIF AU SENS DU RÈGLEMENT SUR LE TRAITEMENT DES MEMBRES DU\n"
+        "CONSEIL :\n\n"
+        "Benoit Langevin et Sonny Moroz\n\n\n"
+        "AUTRES PRÉSENCES :\n\nAlain Dufort, Directeur général\n"
+    )
+    sittings = parse_attendance(text)
+    assert len(sittings) == 1
+    assert sittings[0].present == ["Soraya Martinez Ferrada", "Ericka Alneus", "Cathy Wong"]
+    assert sittings[0].absent_excused == ["Benoit Langevin", "Sonny Moroz"]
