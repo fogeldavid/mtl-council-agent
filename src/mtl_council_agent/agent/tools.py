@@ -159,7 +159,7 @@ def get_meeting_items(conn, meeting_date: date, limit: int = 300) -> list[ItemRe
 
 
 def list_officials(conn) -> list[tuple[str, str, str | None, str | None]]:
-    """Every council member: (name, role, borough, district), by borough.
+    """Every current council member: (name, role, borough, district), by borough.
 
     The tools find a member by name, so without this a question about "the
     councillor for Mile-End" had no way to reach Marie Plourde.
@@ -167,7 +167,8 @@ def list_officials(conn) -> list[tuple[str, str, str | None, str | None]]:
     return conn.execute(
         """
         select name, role, borough, district from officials
-        where role is not null order by borough, district nulls last, last_name
+        where role is not null and current_member
+        order by borough, district nulls last, last_name
         """
     ).fetchall()
 

@@ -170,7 +170,7 @@ def render() -> None:
     )
 
     meeting_rows = run(queries.meetings)
-    people = run(queries.councillors)
+    people = run(queries.councillors, True)
     options = {
         "dec_mode": ["meaning", "exact"] if MEANING_ENABLED else ["exact"],
         "dec_meeting": [None, *(m["id"] for m in meeting_rows)],

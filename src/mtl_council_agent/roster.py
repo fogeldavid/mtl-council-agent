@@ -122,7 +122,7 @@ def parse_roster(text: str) -> list[RosterMember]:
 
 
 def load_roster(conn, members: list[RosterMember]) -> int:
-    for member in members:
+    on_roster = [
         db.upsert_roster_official(
             conn,
             first_name=member.first_name,
@@ -132,5 +132,14 @@ def load_roster(conn, members: list[RosterMember]) -> int:
             district=member.district,
             party=member.party,
         )
+        for member in members
+    ]
+    # Someone who left council (resigned, lost a by-election) is no longer on
+    # the roster but was never removed: they stayed in the chat's council
+    # list and the district page as a current member.
+    conn.execute(
+        "update officials set current_member = (id = any(%s)) where role is not null",
+        (on_roster,),
+    )
     conn.commit()
     return len(members)

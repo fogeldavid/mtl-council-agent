@@ -62,8 +62,14 @@ create table if not exists officials (
     role text check (role in ('mayor', 'borough_mayor', 'city_councillor')),
     borough text,
     district text,
-    party text
+    party text,
+    -- On the City's roster at its last weekly load. A member who leaves
+    -- keeps their role, so their past votes still read correctly and the
+    -- quality check doesn't flag them as unknown, but drops out of every
+    -- "current members" list.
+    current_member boolean not null default true
 );
+alter table officials add column if not exists current_member boolean not null default true;
 
 -- Every spelling the minutes have used for an official, and how it was
 -- resolved. Without this a fuzzy merge is invisible: you cannot tell whether
