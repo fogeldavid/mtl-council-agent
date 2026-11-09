@@ -152,3 +152,14 @@ def test_an_answer_that_found_nothing_lists_no_sources():
 def test_history_is_passed_through(setup):
     chat.answer("and who voted against?", [("what was 20.06?", "A cancellation.")])
     assert setup["history"] == [("what was 20.06?", "A cancellation.")]
+
+
+def test_a_document_the_answer_already_links_is_not_listed_again():
+    answer = "On June 15, 2026 ([item 20.01](https://x.test/pv.pdf?doc=1)) it passed."
+    assert chat.with_sources(answer, DOCS) == answer
+    both = DOCS + [
+        {"meeting_date": "2026-06-15", "doc_type": "agenda", "url": "https://x.test/odj.pdf?doc=3"},
+    ]
+    text = chat.with_sources(answer, both)
+    assert text.count("pv.pdf?doc=1") == 1
+    assert "(<https://x.test/odj.pdf?doc=3>)" in text
