@@ -111,6 +111,31 @@ def _numeric_runs(text: str, english_text: bool = False) -> Counter:
     return Counter(re.findall(r"\d+", normalized))
 
 
+_GROUP_SPACE = "[ \u00a0\u202f]"
+# A number the model converted only partly: "8 999 704,92 $" came out as
+# "$8,999 704.92", which reads as two numbers. Comma grouping already started,
+# then a space before three more digits; or a dollar amount grouped with spaces.
+_HALF_GROUPED = re.compile(
+    rf"(?<![\d.,])\d{{1,3}}(?:,\d{{3}})+(?:{_GROUP_SPACE}\d{{3}})+(?:,\d{{3}})*(?:\.\d{{2}})?(?!\d)"
+    rf"|(?<=\$)\d{{1,3}}(?:{_GROUP_SPACE}\d{{3}})+(?:\.\d{{2}})?(?!\d)"
+)
+
+
+def fix_number_grouping(text: str) -> str:
+    """Finish a half-converted number. Money (a dollar sign or cents) takes
+    English commas. Anything else is a Quebec cadastre lot ("lot 1 336 164"),
+    which is written with spaces in English too, so its stray comma goes."""
+
+    def repair(match: re.Match) -> str:
+        number = match[0]
+        money = "." in number or text[max(0, match.start() - 1):match.start()] == "$"
+        if money:
+            return re.sub(_GROUP_SPACE, ",", number)
+        return re.sub(f"{_GROUP_SPACE}|,", " ", number)
+
+    return _HALF_GROUPED.sub(repair, text)
+
+
 def numbers_preserved(source: str, translated: str) -> bool:
     # Resolution, tender and project references must retain their exact digits/zeros.
     reference = r"\b(?:CM|CG|CA)\d{2}(?:\s+\d{2})?\s+\d{4}\b|\b\d{2}-\d{4,}\b"
