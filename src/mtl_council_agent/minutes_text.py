@@ -98,6 +98,14 @@ def resolved(text: str | None) -> list[str]:
     return _until(_CLAUSES_END_RE, parts[starts[-1] + 1 :])
 
 
+def adds_to_resolved(text: str | None) -> bool:
+    """Whether the full entry says more than its resolved clauses: a preamble,
+    a debate summary. Adopting the agenda is "Et résolu :" and one clause, so
+    showing it in full would repeat the clause."""
+    clauses = set(resolved(text))
+    return any(p not in clauses and not _RESOLVED_RE.match(p) for p in body(text))
+
+
 def for_search(title: str, text: str | None) -> str:
     """What to embed for an item with no decision summary."""
     return "\n\n".join([title, *body(text)])
