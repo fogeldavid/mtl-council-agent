@@ -22,6 +22,7 @@ from mtl_council_agent.app.translations import (  # noqa: E402
     TRANSLATIONS_PATH,
     context_excerpt,
     department_name,
+    fix_number_grouping,
     numbers_preserved,
     protect_numbers,
     restore_references,
@@ -97,6 +98,8 @@ def main():
     data = json.loads(path.read_text()) if path.exists() else {
         "model": MODEL_NAME, "source_language": "fr", "target_language": "en", "entries": {},
     }
+    # Saved translations too, so a fix to the repair reaches them.
+    data["entries"] = {k: fix_number_grouping(v) for k, v in data["entries"].items()}
     pending = [text for text in texts if source_key(text) not in data["entries"]]
     if args.limit:
         pending = pending[:args.limit]
@@ -151,7 +154,7 @@ def main():
             )
             cursor += len(pieces)
             restored = unprotect_numbers(translated, mapping)
-            translated = restored or ""
+            translated = fix_number_grouping(restored or "")
             if translated and numbers_preserved(source, translated):
                 data["entries"][source_key(source)] = translated
             else:

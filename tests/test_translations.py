@@ -296,3 +296,33 @@ def test_a_rejected_motion_is_not_headed_as_adopted():
     text = " ".join(m.value for m in at.markdown)
     assert "What council voted down" in text
     assert "What council adopted" not in text
+
+
+def test_half_converted_amounts_get_english_commas():
+    from mtl_council_agent.app.translations import fix_number_grouping
+
+    assert fix_number_grouping("CDN-117-2630 $8,999 704.92 CMS") == "CDN-117-2630 $8,999,704.92 CMS"
+    assert fix_number_grouping("a total of $451 000.94, including taxes") == (
+        "a total of $451,000.94, including taxes"
+    )
+    assert fix_number_grouping("support of $877 312 to") == "support of $877,312 to"
+
+
+def test_half_converted_lot_numbers_keep_their_spaces():
+    from mtl_council_agent.app.translations import fix_number_grouping
+
+    assert fix_number_grouping("parts of Lots 1,336 164, 1,336 166 and 1,336 220 of the") == (
+        "parts of Lots 1 336 164, 1 336 166 and 1 336 220 of the"
+    )
+
+
+def test_numbers_already_well_formed_are_left_alone():
+    from mtl_council_agent.app.translations import fix_number_grouping
+
+    for text in (
+        "On August 31, 2026, council adopted CM25 0769.",
+        "premises 314, 315 and 317",
+        "$13,141,353.68 and lots 2,245,625",
+        "for 2026 125 projects",
+    ):
+        assert fix_number_grouping(text) == text
