@@ -18,11 +18,17 @@ Live at **[mtl-council-agent.streamlit.app](https://mtl-council-agent.streamlit.
 | District explorer | Find who represents you, and see how they voted. |
 | Council updates | Browse and search every decision and meeting. |
 
+**Ask the council.** The chat answering a question about a declaration from the September 21, 2026 meeting.
+
 <img src="images/app-chat-answer.png" width="800" alt="The Ask page answering what item 15.02 of the September 21, 2026 meeting was: a declaration for the National Day of Truth and Reconciliation, with its five commitments, the debate, a citation, and links to the minutes and agenda">
 
-<img src="images/app-item-motion.png" width="800" alt="Item page for the opposition's September 2026 democracy motion: rejected by roll call, 24 for and 36 against with every name, and the motion's fourteen clauses under What council voted down">
+**District explorer.** Mile-End selected on the map, with its city councillor and borough mayor.
 
 <img src="images/app-districts.png" width="800" alt="District explorer with Mile-End selected on the map, showing city councillor Marie Plourde and borough mayor Cathy Wong">
+
+**Council updates.** A decision page: the opposition's democracy motion, rejected by roll call.
+
+<img src="images/app-item-motion.png" width="800" alt="Item page for the opposition's September 2026 democracy motion: rejected by roll call, 24 for and 36 against with every name, and the motion's fourteen clauses under What council voted down">
 
 ## How it works
 
@@ -33,7 +39,12 @@ Live at **[mtl-council-agent.streamlit.app](https://mtl-council-agent.streamlit.
                                                                                └──▶ AI agent
 ```
 
-**The data pipeline.** Montreal publishes its council records only as PDFs, up to 4,467 pages per meeting, and each meeting has three. The agenda says what was proposed, the decision summaries explain why, and the minutes record what council adopted, who moved it, and how members voted. A weekly GitHub Actions job downloads new or revised documents, parses them, and joins the three into one record per agenda item. The records are stored in Postgres with pgvector, for both exact word search and search by meaning. The same job translates new titles and text into English with a free open-source model, and a quality check fails the run if data goes missing.
+**The data pipeline.** Montreal publishes its council records as PDFs that can reach over 4,000 pages per meeting, with each meeting having three documents:
+1. **Agenda:** What is proposed. It lists the items council will consider and the department bringing each one, such as a contract for lighting equipment from the culture department.
+2. **Decision summaries:** The city's write-up for each item. Each one explains the background, the cost and the reasons for the choice, followed by attachments like spreadsheets and contracts.
+3. **Minutes:** What council decided, published weeks after the meeting. They record the wording adopted, who moved and seconded it, the outcome, who attended, and how each member voted on contested items.
+
+A weekly GitHub Actions job downloads new or revised documents, parses them, and joins the three into one record per agenda item. The records are stored in Postgres with pgvector, for both exact word search and search by meaning. A quality check fails the run if data goes missing, and a second job then translates new titles and text into English with a free open-source model.
 
 **The agent.** The chat is a Claude agent with a hand-written tool loop and five tools:
 - search by meaning, in English or French;
@@ -56,8 +67,6 @@ The agent decides which tools to call and cites each item it uses. Each citation
 | Which council meetings are on the site | Every meeting since January 2026, added weekly |
 | Decisions where the site found the city's background document (cost, reasons, history) | 99.9% |
 | Test questions the AI answered correctly, citing real decisions (85 questions) | 96% |
-
-Each weekly import ends with a quality check that fails the run, and sends an email, if data goes missing.
 
 ## What was hard
 
