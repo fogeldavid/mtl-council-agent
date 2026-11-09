@@ -6,7 +6,7 @@ Live at **[mtl-council-agent.streamlit.app](https://mtl-council-agent.streamlit.
 
 <img src="images/app-landing.png" width="800" alt="The Montréal Record's front page: a headline over a photo of City Hall, and four sections to find your representative, search decisions, ask a question, and read the latest meeting">
 
-> **Unofficial project.** Not affiliated with the Ville de Montréal, and not legal advice. Confirm against the source document cited in any answer. Data © Ville de Montréal, used under [CC-BY 4.0](https://donnees.montreal.ca/licence-d-utilisation).
+> Unofficial project, not affiliated with the Ville de Montréal.
 
 ---
 
@@ -14,13 +14,13 @@ Live at **[mtl-council-agent.streamlit.app](https://mtl-council-agent.streamlit.
 
 A Streamlit site over the same database, with the interface in English and French. It has three tabs, plus an About page in the header.
 
-| Tab | What it does |
+| Tab | What it's for |
 |---|---|
-| Ask the council | The agent answers questions in either language and cites each item it uses. Follow-up questions keep the last three exchanges. From any item page, "Ask a question about this item" opens it with two starter questions about that item. |
-| District explorer | A map of the 58 electoral districts. Pick a district, click the map, or type an address, and see the district councillor and the members elected for the whole borough. A Councillors list gives each member's attendance, roll-call votes beside their party's majority, dissents, and the items they moved or seconded. |
-| Council updates | Decisions, newest first, with one search box. Exact matches in the French text come first, which catches resolution and dossier numbers and company names, then matches in the English titles, then related decisions by meaning. Filters and a CSV download. Meetings lists each meeting with its full agenda. |
+| Ask the council | Ask a question in English or French and get an answer that cites the council's records. |
+| District explorer | Find who represents you, and see how they voted. |
+| Council updates | Browse and search every decision and meeting. |
 
-<img src="images/app-ask.png" width="800" alt="The Ask page answering what item 15.02 of the September 21, 2026 meeting was: a declaration for the National Day of Truth and Reconciliation, with its five commitments, the debate, a citation, and links to the minutes and agenda">
+<img src="images/app-chat-answer.png" width="800" alt="The Ask page answering what item 15.02 of the September 21, 2026 meeting was: a declaration for the National Day of Truth and Reconciliation, with its five commitments, the debate, a citation, and links to the minutes and agenda">
 
 Each item page shows:
 - the outcome and resolution number;
@@ -30,7 +30,7 @@ Each item page shows:
 
 Declarations and councillors' motions have no decision summary, so their page shows the full minutes text instead, including the debate summary. Sources sit in their own panel, and the minutes link opens the PDF at the item's page. A switch shows the French original in place.
 
-<img src="images/app-item.png" width="800" alt="Item page for the opposition's September 2026 democracy motion: rejected by roll call, 24 for and 36 against with every name, and the motion's fourteen clauses under What council voted down">
+<img src="images/app-item-motion.png" width="800" alt="Item page for the opposition's September 2026 democracy motion: rejected by roll call, 24 for and 36 against with every name, and the motion's fourteen clauses under What council voted down">
 
 <img src="images/app-decisions.png" width="800" alt="Decisions page searching &quot;snow removal&quot;: six matching decisions, led by the ProQuip snow removal contract for Plateau-Mont-Royal">
 
@@ -257,6 +257,8 @@ images/             screenshots of the live app
 ```
 
 ## Data sources
+
+City data is © Ville de Montréal, used under [CC-BY 4.0](https://donnees.montreal.ca/licence-d-utilisation).
 
 - Council documents: the City's legacy council portal (agendas, minutes, decision bundles), © Ville de Montréal.
 - Council roster: [Liste des élu-es de la Ville de Montréal](https://donnees.montreal.ca/), Montreal open data, CC-BY 4.0.
