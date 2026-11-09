@@ -323,3 +323,26 @@ h2 { font-size: clamp(21px, 2.2vw, 26px) !important; padding: 0 !important; }
   [class*="st-key-list-row-"] [data-testid="stHorizontalBlock"] { gap: 2px; }
   .row-count { text-align: left; }
 }
+
+/* Item page: one translation note with its French-original switch, the ask
+   link, and the source documents as outlined links like the mover/seconder. */
+.st-key-translation-note { align-items: baseline; flex-wrap: wrap; row-gap: 0; }
+.st-key-translation-note [data-testid="stCaptionContainer"] { width: auto; }
+.st-key-translation-note [data-testid="stButton"] button,
+.st-key-item-ask [data-testid="stButton"] button { min-height: 0; padding: 0; }
+.st-key-translation-note [data-testid="stButton"] p { font-size: 13px; }
+.st-key-translation-note [data-testid="stButton"] p,
+.st-key-item-ask [data-testid="stButton"] p { color: #345D50 !important; font-weight: 600; }
+.st-key-item-ask { margin-top: 10px; }
+[data-testid="stMarkdownContainer"]:has(> .sources-label) { margin-bottom: 0; }
+.sources-label { font-weight: 600; font-size: 15px; margin-top: 18px; color: #20221F; }
+.sources-note { font-size: 12.5px; color: #7A7266; margin-bottom: 4px; }
+.st-key-item-sources { gap: 6px; }
+.st-key-item-sources [data-testid="stLinkButton"] a {
+  width: fit-content; min-height: 0; padding: 3px 12px; background: transparent;
+  border: 1px solid #C9CCC4; border-radius: 4px;
+}
+.st-key-item-sources [data-testid="stLinkButton"] a:hover { background: #F0F0EC; }
+.st-key-item-sources [data-testid="stLinkButton"] p {
+  color: #264539 !important; font-size: 13px; font-weight: 600;
+}

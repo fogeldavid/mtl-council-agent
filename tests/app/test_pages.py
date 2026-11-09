@@ -285,16 +285,16 @@ def test_the_app_connection_can_send_search_vectors():
     assert row[0] == "[1,2]"
 
 
-def test_explain_without_questions_left_never_asks_for_a_key(monkeypatch):
+def test_item_starters_without_questions_left_never_ask_for_a_key(monkeypatch):
     from mtl_council_agent.app import chat
 
     monkeypatch.setenv("WEB_ANTHROPIC_API_KEY", "pool-key")
     monkeypatch.setattr(chat, "FREE_PER_DAY", 0)
-    at = _run("meetings", {"item": "10"})
+    at = _run("home", {"about": "10"})
     assert not at.exception
-    captions = " ".join(c.value for c in at.caption)
-    assert "used up" in captions
-    assert "key" not in captions.lower()
+    assert not any(b.label == "Explain this item in plain English" for b in at.button)
+    assert "used up" in " ".join(i.value for i in at.info)
+    assert "key" not in " ".join(c.value for c in at.caption).lower()
 
 
 def test_an_example_question_can_be_asked_with_one_click(stub_agent):
@@ -309,14 +309,18 @@ def test_an_example_question_can_be_asked_with_one_click(stub_agent):
     assert not any(b.label == example for b in at.button)
 
 
-def test_explain_button_on_an_item(stub_agent):
-    at = _run("meetings", {"item": "10"})
-    button = next(b for b in at.button if b.label == "Explain this item in English")
-    button.click().run()
+def test_an_item_links_to_questions_about_it(stub_agent):
+    item = _run("meetings", {"item": "10"})
+    assert not item.exception
+    assert _opens(item, "ask_about") == ["Ask a question about this item →"]
+    at = _run("home", {"about": "10"})
+    next(b for b in at.button if b.label == "Explain this item in plain English").click().run()
     assert not at.exception
-    assert "adopted it by majority" in " ".join(m.value for m in at.markdown)
     question = stub_agent[0][0]
     assert "item_id 10" in question and "20.06" in question
+    # The conversation shows the chip's wording, not the item_id plumbing.
+    shown = " ".join(m.value for m in at.chat_message[0].markdown)
+    assert "Explain this item in plain English (20.06" in shown and "item_id" not in shown
 
 
 def test_district_selector_shows_the_imported_representative():

@@ -25,6 +25,11 @@ def source_key(text: str) -> str:
     return hashlib.sha256(text.encode("utf-8")).hexdigest()
 
 
+def department_name(raw: str) -> str:
+    """The agenda prints "culture, des sports" as "culture_des sports"."""
+    return raw.replace("_", ", ")
+
+
 def context_excerpt(summary: str | None) -> str:
     """A short source excerpt, not an invented or model-generated summary."""
     if not summary:

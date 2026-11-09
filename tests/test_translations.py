@@ -80,7 +80,7 @@ def _render_translated_detail(language):
         return item if query is queries.item else {}
 
     with patch.object(meetings, "run", side_effect=query_result), \
-         patch.object(meetings, "_votes"), patch.object(meetings, "_explain"), \
+         patch.object(meetings, "_votes"), \
          patch.object(translations, "english", side_effect=translated.get):
         meetings._item_view(1, from_feed=True)
 
@@ -93,9 +93,13 @@ def test_english_detail_shows_translated_title_context_and_french_original():
     text = " ".join(m.value for m in at.markdown)
     assert "Approve a contract" in text
     assert "The project improves the park." in text
-    assert "Original complet." in text
-    assert at.expander[0].label == "Read the French original"
-    assert any("Translated from the French original" in c.value for c in at.caption)
+    assert "Original complet." not in text
+    assert any("Machine-translated from French" in c.value for c in at.caption)
+    # The switch shows the French in place, full decision summary included.
+    next(b for b in at.button if b.label == "Show the French original").click().run()
+    text = " ".join(m.value for m in at.markdown)
+    assert "Approuver un contrat" in text and "Original complet." in text
+    assert any(b.label == "Show the English translation" for b in at.button)
 
 
 def _render_untranslated_detail(saved):
@@ -118,7 +122,7 @@ def _render_untranslated_detail(saved):
         return item if query is queries.item else {}
 
     with patch.object(meetings, "run", side_effect=query_result), \
-         patch.object(meetings, "_votes"), patch.object(meetings, "_explain"), \
+         patch.object(meetings, "_votes"), \
          patch.object(translations, "english", side_effect=saved.get):
         meetings._item_view(1, from_feed=True)
 
@@ -134,13 +138,12 @@ def _captions(saved):
 def test_nothing_translated_is_not_labelled_as_a_translation():
     captions = _captions({})
     assert "awaiting review" in captions
-    assert "Machine translation" not in captions
+    assert "Machine-translated" not in captions
 
 
 def test_a_translated_context_under_a_french_title_is_labelled():
     captions = _captions({"Le projet améliore le parc.": "The project improves the park."})
-    assert "awaiting review" in captions
-    assert "Machine translation" in captions
+    assert "Machine-translated" in captions
 
 
 def test_french_detail_keeps_the_original_title_and_summary():
@@ -214,7 +217,7 @@ def _render_declaration(saved):
         return docs if query is queries.meeting_documents else {}
 
     with patch.object(meetings, "run", side_effect=query_result), \
-         patch.object(meetings, "_votes"), patch.object(meetings, "_explain"), \
+         patch.object(meetings, "_votes"), \
          patch.object(translations, "english", side_effect=saved.get):
         meetings._item_view(1, from_feed=True)
 
@@ -280,7 +283,7 @@ def _render_rejected_motion():
         return item if query is queries.item else {}
 
     with patch.object(meetings, "run", side_effect=query_result), \
-         patch.object(meetings, "_votes"), patch.object(meetings, "_explain"), \
+         patch.object(meetings, "_votes"), \
          patch.object(translations, "english", return_value=None):
         meetings._item_view(1, from_feed=True)
 
