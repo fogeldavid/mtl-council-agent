@@ -11,6 +11,7 @@ from html import escape
 import pandas as pd
 import streamlit as st
 
+from mtl_council_agent import minutes_text
 from mtl_council_agent.agent.tools import get_vote_detail
 from mtl_council_agent.app import chat, queries, translations
 from mtl_council_agent.app.common import (
@@ -144,17 +145,17 @@ def _item_view(item_id: int, from_feed: bool = False) -> None:
         if lang() == "en":
             english_title = translations.english(it["title"])
             st.caption(t("translation.label" if english_title else "translation.pending"))
-            st.markdown(f"#### {t('translation.context')}")
-            excerpt = translations.context_excerpt(it["decision_summary"])
-            english_context = translations.english(excerpt)
-            if english_context:
-                st.write(md_text(english_context))
-                if not english_title:
-                    st.caption(t("translation.label"))
-            elif not it["decision_summary"]:
-                st.caption(t("item.no_summary"))
-            else:
-                st.caption(t("translation.context_missing"))
+            if it["decision_summary"]:
+                st.markdown(f"#### {t('translation.context')}")
+                excerpt = translations.context_excerpt(it["decision_summary"])
+                english_context = translations.english(excerpt)
+                if english_context:
+                    st.write(md_text(english_context))
+                    if not english_title:
+                        st.caption(t("translation.label"))
+                else:
+                    st.caption(t("translation.context_missing"))
+            _minutes(it)
             with st.expander(t("translation.original")):
                 st.markdown(f"**{md_text(it['title'])}**")
                 if it["decision_summary"]:
@@ -162,17 +163,16 @@ def _item_view(item_id: int, from_feed: bool = False) -> None:
                         f'<div class="summary" lang="fr">'
                         f'{html_text(it["decision_summary"])}</div>', unsafe_allow_html=True,
                     )
-                else:
+                elif not it["minutes_text"]:
                     st.caption(t("item.no_summary"))
         else:
-            st.markdown(f"#### {t('item.summary')}")
             if it["decision_summary"]:
+                st.markdown(f"#### {t('item.summary')}")
                 st.markdown(
                     f'<div class="summary" lang="fr">{html_text(it["decision_summary"])}</div>',
                     unsafe_allow_html=True,
                 )
-            else:
-                st.caption(t("item.no_summary"))
+            _minutes(it)
         _explain(it, number)
         docs = run(queries.meeting_documents, it["meeting_id"])
         if "bundle" in docs:
@@ -180,10 +180,68 @@ def _item_view(item_id: int, from_feed: bool = False) -> None:
         if "agenda" in docs:
             st.link_button(t("item.pdf_agenda"), docs["agenda"])
         if "minutes" in docs:
-            st.link_button(t("item.pdf_minutes"), docs["minutes"])
+            if it["minutes_page"]:
+                st.link_button(
+                    t("item.pdf_minutes_page", page=it["minutes_page"]),
+                    f'{docs["minutes"]}#page={it["minutes_page"]}',
+                )
+            else:
+                st.link_button(t("item.pdf_minutes"), docs["minutes"])
 
     with right:
         _votes(it)
+
+
+def _in_reading_language(parts: list[str]) -> tuple[list[str], str]:
+    """The paragraphs in English when every one has a saved translation, else
+    in French: a half-translated resolution would read as one text in two
+    languages."""
+    if lang() == "en" and parts:
+        english = [translations.english(p) for p in parts]
+        if all(english):
+            return english, "en"
+    return parts, "fr"
+
+
+def _paragraphs(parts: list[str]) -> None:
+    shown, language = _in_reading_language(parts)
+    # One <div> per paragraph on a single line: a blank line inside the HTML
+    # would end it as far as markdown is concerned, and the renderer drops a
+    # leading <p>, which left the first paragraph as bare text.
+    text = "".join(f"<div>{html_text(p)}</div>" for p in shown)
+    st.markdown(
+        f'<div class="summary minutes" lang="{language}">{text}</div>',
+        unsafe_allow_html=True,
+    )
+    if lang() == "en":
+        st.caption(t("translation.label" if language == "en" else "minutes.untranslated"))
+
+
+def _minutes(it: dict) -> None:
+    """What the minutes record council adopted, and for items without a
+    decision summary (declarations, councillors' motions), the full entry."""
+    if not it["minutes_text"]:
+        if not it["decision_summary"]:
+            st.caption(t("item.no_summary"))
+        return
+    clauses = minutes_text.resolved(it["minutes_text"])
+    entry = minutes_text.body(it["minutes_text"])
+    if clauses:
+        outcome = it["vote_outcome"] or ""
+        heading = (
+            "minutes.adopted" if outcome.startswith("adopted")
+            else "minutes.rejected" if outcome == "rejected" else "minutes.voted_on"
+        )
+        st.markdown(f"#### {t(heading)}")
+        _paragraphs(clauses)
+    if it["decision_summary"] or not entry:
+        return
+    if clauses:
+        with st.expander(t("minutes.full")):
+            _paragraphs(entry)
+    else:
+        st.markdown(f"#### {t('minutes.entry')}")
+        _paragraphs(entry)
 
 
 def _explain(it: dict, number: str) -> None:

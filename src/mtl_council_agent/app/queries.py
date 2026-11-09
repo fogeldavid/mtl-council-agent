@@ -132,6 +132,7 @@ def item(conn, item_id: int) -> dict | None:
         """
         select ai.id, ai.meeting_id, m.meeting_date, ai.item_number, ai.section, ai.title,
                ai.department, ai.decision_summary, ai.motion_number, ai.dossier_number,
+               ai.minutes_text, ai.minutes_page,
                ai.vote_outcome, mover.name as mover, seconder.name as seconder,
                ai.mover_id, ai.seconder_id,
                exists (

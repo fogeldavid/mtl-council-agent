@@ -35,6 +35,9 @@ It works across languages: an English question matches the French records.
 French wording for a topic even when asked in English, since the records are French.
 - Use get_item_detail to read an item's full decision summary before summarizing \
 its reasoning, budget, or history.
+- The decision summary was written before the meeting; resolution_wording is \
+what council voted on. If they differ (an amount, a clause, an amendment), the \
+resolution wording is the record: say so, and use it.
 - Search results show only a short excerpt of each item. Before saying the records \
 don't mention something, use get_item_detail to read the items closest to the \
 question: the answer may be in the part of the summary the excerpt left out.
@@ -161,7 +164,12 @@ TOOL_SCHEMAS = [
             "related resolutions, justification, and budget breakdown, plus its vote: "
             "outcome, recorded positions (roll call, dissenters, abstentions), how many "
             "members were present, and inferred positions where they can be derived. "
-            "Use after a search to get the reasoning or the vote behind a decision."
+            "Use after a search to get the reasoning or the vote behind a decision. "
+            "resolution_wording is the resolution as the minutes record it, "
+            "whether it passed or not (vote_outcome says which); "
+            "minutes_entry is the full minutes text (preamble, resolution, debate "
+            "summary) for items with no decision summary, such as declarations and "
+            "councillors' motions."
         ),
         "input_schema": {
             "type": "object",

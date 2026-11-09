@@ -240,16 +240,19 @@ class VoteDetail:
     note: str = ""
 
 
-def get_item_detail(conn, item_id: int) -> tuple[ItemResult, str | None] | None:
+def get_item_detail(
+    conn, item_id: int
+) -> tuple[ItemResult, str | None, str | None] | None:
+    """The item, its decision summary, and its entry in the minutes."""
     row = conn.execute(
         f"{_ITEM_SELECT} where ai.id = %s", (item_id,)
     ).fetchone()
     if row is None:
         return None
-    summary = conn.execute(
-        "select decision_summary from agenda_items where id = %s", (item_id,)
-    ).fetchone()[0]
-    return _row_to_item(row), summary
+    summary, minutes = conn.execute(
+        "select decision_summary, minutes_text from agenda_items where id = %s", (item_id,)
+    ).fetchone()
+    return _row_to_item(row), summary, minutes
 
 
 def get_vote_detail(conn, item_id: int) -> VoteDetail:
@@ -446,8 +449,9 @@ def get_official_record(conn, name: str, limit: int = 400) -> list[ItemResult]:
 def source_documents(conn, citations: list[str]) -> list[dict]:
     """Official PDFs for the meetings behind retrieved citations.
 
-    The database stores document URLs but currently discards page boundaries.
-    Never manufacture a page number or imply these links pinpoint a passage.
+    These cover whole meetings, and the searches behind them touch many items,
+    so no page is attached: an item's minutes_page belongs on that item's own
+    link. Never imply these links pinpoint a passage.
     """
     dates = sorted({citation[:10] for citation in citations})
     rows = conn.execute(

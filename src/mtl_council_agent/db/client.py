@@ -95,6 +95,13 @@ def upsert_document(
     return row[0]
 
 
+def save_document_text(conn: psycopg.Connection, source_pdf_url: str, text: str) -> None:
+    conn.execute(
+        "update documents set extracted_text = %s where source_pdf_url = %s",
+        (text, source_pdf_url),
+    )
+
+
 def replace_meeting_contents(conn: psycopg.Connection, meeting_id: int) -> None:
     """Clear a meeting's items and attendance before loading its new version.
 
@@ -277,15 +284,17 @@ def upsert_agenda_item(
     dossier_number: str | None,
     section: str = "council",
     sitting: int | None = None,
+    minutes_text: str | None = None,
+    minutes_page: int | None = None,
 ) -> int:
     row = conn.execute(
         """
         insert into agenda_items (
             meeting_id, position, item_number, title, department,
             decision_summary, motion_number, mover_id, seconder_id,
-            vote_outcome, dossier_number, section, sitting
+            vote_outcome, dossier_number, section, sitting, minutes_text, minutes_page
         )
-        values (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+        values (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
         on conflict (meeting_id, position) do update set
             item_number = excluded.item_number,
             title = excluded.title,
@@ -297,13 +306,15 @@ def upsert_agenda_item(
             vote_outcome = excluded.vote_outcome,
             dossier_number = excluded.dossier_number,
             section = excluded.section,
-            sitting = excluded.sitting
+            sitting = excluded.sitting,
+            minutes_text = excluded.minutes_text,
+            minutes_page = excluded.minutes_page
         returning id
         """,
         (
             meeting_id, position, item_number, title, department,
             decision_summary, motion_number, mover_id, seconder_id,
-            vote_outcome, dossier_number, section, sitting,
+            vote_outcome, dossier_number, section, sitting, minutes_text, minutes_page,
         ),
     ).fetchone()
     return row[0]

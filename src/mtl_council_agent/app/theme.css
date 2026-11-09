@@ -44,6 +44,8 @@ a { color: #345D50; }
                  color: #345D50; margin-bottom: 12px; }
 .record-story .meta { margin: 12px 0; }
 .card, .summary { background: #FEFEFC; border-color: #DADCD4; border-radius: 0; }
+.summary.minutes { white-space: normal; font-family: inherit; font-size: 15.5px; margin-bottom: 6px; }
+.summary.minutes > div + div { margin-top: 12px; }
 .note, .cite { background: #F0F0EC; }
 /* Chat reads as a conversation: questions on the right, answers on the left, no avatars. */
 [data-testid="stChatMessage"] {

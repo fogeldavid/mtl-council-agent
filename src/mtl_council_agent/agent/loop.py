@@ -16,6 +16,7 @@ from datetime import date, datetime
 
 import anthropic
 
+from mtl_council_agent import minutes_text
 from mtl_council_agent.agent import tools as council_tools
 from mtl_council_agent.agent.prompts import SYSTEM_PROMPT, TOOL_SCHEMAS
 
@@ -139,7 +140,7 @@ def _run_tool(conn, name: str, tool_input: dict) -> tuple[str, list[str]]:
         detail = council_tools.get_item_detail(conn, tool_input["item_id"])
         if detail is None:
             return "No item with that id.", []
-        item, summary = detail
+        item, summary, minutes = detail
         votes = council_tools.get_vote_detail(conn, item.item_id)
         payload = {
             "citation": item.citation(),
@@ -151,6 +152,12 @@ def _run_tool(conn, name: str, tool_input: dict) -> tuple[str, list[str]]:
             "votes": {k: v for k, v in asdict(votes).items() if v not in (None, [], "")},
             "decision_summary": summary or "(no decision summary on file)",
         }
+        clauses = minutes_text.resolved(minutes)
+        if clauses:
+            payload["resolution_wording"] = "\n\n".join(clauses)
+        if minutes and not summary:
+            # Declarations and councillors' motions: the minutes are all there is.
+            payload["minutes_entry"] = "\n\n".join(minutes_text.body(minutes))
         return json.dumps(payload, ensure_ascii=False, indent=2), [item.citation()]
     else:
         return f"Unknown tool: {name}", []

@@ -1,8 +1,8 @@
 """Joins parsed agenda, minutes, and bundle content into one record per agenda item.
 
 Agenda gives the item's title/department; minutes gives who moved/seconded it,
-the outcome, and any recorded individual votes; the bundle gives the rich
-decision-summary narrative.
+the outcome, any recorded individual votes, and the wording adopted; the bundle
+gives the rich decision-summary narrative.
 
 Minutes join on (section, item_number, dossier_number). Joining on dossier
 alone copied one vote onto two items whenever two agenda items shared a
@@ -50,6 +50,8 @@ class LinkedItem:
     abstainers: list[str] = field(default_factory=list)
     roll_call: RollCall | None = None
     department: str | None = None
+    minutes_text: str | None = None
+    minutes_page: int | None = None
 
 
 def _find_minutes(
@@ -110,6 +112,8 @@ def link_items(
                 dissenters=minutes_item.dissenters if minutes_item else [],
                 abstainers=minutes_item.abstainers if minutes_item else [],
                 roll_call=minutes_item.roll_call if minutes_item else None,
+                minutes_text=minutes_item.text if minutes_item else None,
+                minutes_page=minutes_item.page if minutes_item else None,
             )
         )
 

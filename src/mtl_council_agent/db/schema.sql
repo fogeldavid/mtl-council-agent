@@ -33,7 +33,12 @@ create table if not exists documents (
     etag text,
     last_modified text,
     content_length bigint,
-    ingested_at timestamptz not null default now()
+    ingested_at timestamptz not null default now(),
+    -- pdftotext's output, page breaks (form feeds) and all, for agendas and
+    -- minutes: a few hundred KB a meeting. Kept so a parser fix can re-read
+    -- old meetings even if the city moves or removes the PDFs. Bundles run to
+    -- hundreds of MB and their summaries are stored already, so they aren't.
+    extracted_text text
 );
 
 -- Elected officials, used for accountability search ("how did X vote").
@@ -118,6 +123,13 @@ create table if not exists agenda_items (
     -- sittings with different attendance, so "who was present for this vote"
     -- depends on it. Null when the minutes don't cover the item.
     sitting smallint,
+    -- The item's entry in the minutes, from its resolution number to its
+    -- footer: the wording council adopted (see minutes_text.py), and the PDF
+    -- page it starts on. Stored for every item, but only used in place of
+    -- decision_summary (search, display) when there is none: declarations
+    -- and councillors' motions have no dossier, so this is their only text.
+    minutes_text text,
+    minutes_page smallint,
     -- Resolution and dossier numbers belong in here, not just the prose.
     -- "What is CM26 0677 about" is the plainest exact-token lookup there is,
     -- and indexing only title and summary made it return nothing: the number
@@ -126,12 +138,38 @@ create table if not exists agenda_items (
     search_vector tsvector generated always as (
         to_tsvector(
             'french',
-            coalesce(title, '') || ' ' || coalesce(decision_summary, '') || ' '
+            coalesce(title, '') || ' ' || coalesce(decision_summary, minutes_text, '') || ' '
             || coalesce(motion_number, '') || ' ' || coalesce(dossier_number, '')
         )
     ) stored,
     unique (meeting_id, position)
 );
+
+-- Databases created before the minutes text was kept. Every statement here is
+-- a no-op once applied, since this file runs on every ingestion.
+alter table documents add column if not exists extracted_text text;
+alter table agenda_items add column if not exists minutes_text text;
+alter table agenda_items add column if not exists minutes_page smallint;
+do $$
+begin
+    if not exists (
+        select 1 from information_schema.columns
+        where table_name = 'agenda_items' and column_name = 'search_vector'
+          and generation_expression like '%minutes_text%'
+    ) then
+        -- Run as a string so older Postgres (set expression is 17+) only has
+        -- to parse it when it applies; a fresh database never needs it.
+        execute $sql$
+            alter table agenda_items alter column search_vector set expression as (
+                to_tsvector(
+                    'french',
+                    coalesce(title, '') || ' ' || coalesce(decision_summary, minutes_text, '')
+                    || ' ' || coalesce(motion_number, '') || ' ' || coalesce(dossier_number, '')
+                )
+            )
+        $sql$;
+    end if;
+end $$;
 
 -- Decision summaries run to ~26,000 characters, far past the embedding
 -- model's 512-token window, so vectors live per chunk rather than per item.

@@ -80,6 +80,7 @@ _ORIENTATION_FOOTER_RE = re.compile(
 )
 _MOTION_NUMBER_RE = re.compile(r"^\f?(?P<motion>(?:CM|CG|CE)\d{2} \d{3,4})$", re.MULTILINE)
 _MOVER_RE = re.compile(r"Il est proposé par\s+(.+)")
+_ET_RESOLU_RE = re.compile(r"^[ \t]*Et résolu[ \t]*:", re.MULTILINE)
 _SECONDER_RE = re.compile(r"appuyé par\s+(.+)")
 
 # "Adopté à l'unanimité.", "Adopté à la majorité des voix.", and the
@@ -146,6 +147,10 @@ _AMENDMENT_DECLARATION_RE = re.compile(r"déclare[^.]*?amendement", re.IGNORECAS
 # One name in a dissent list: capitalized, a few words, no sentence ending.
 _NAME_LINE_RE = re.compile(r"^[A-ZÀ-Ý][\w'’.()\- ]{1,60}$")
 
+# The rule printed between entries, and the shorter one around "Un débat
+# s'engage".
+_SEPARATOR_RE = re.compile(r"^[ \t]*_{5,}[ \t]*$", re.MULTILINE)
+
 
 @dataclass
 class RollCall:
@@ -170,6 +175,12 @@ class MinutesItem:
     dissenters: list[str] = field(default_factory=list)
     abstainers: list[str] = field(default_factory=list)
     roll_call: RollCall | None = None
+    # The item's own entry in the minutes, from its resolution number to its
+    # footer: the wording council adopted. Declarations and councillors'
+    # motions have no decision summary, so this is the only text they have.
+    text: str | None = None
+    # The PDF page the entry starts on (1-based), so links can open there.
+    page: int | None = None
 
 
 @dataclass
@@ -182,6 +193,65 @@ class Sitting:
     absent_unexcused: list[str] = field(default_factory=list)
     # Lost the right to sit (article 502 of the municipal elections act).
     absent_barred: list[str] = field(default_factory=list)
+
+
+def _item_start(block: str) -> int:
+    """Where the item's own entry starts within its block.
+
+    A block runs from the previous footer, so it can open with a section
+    banner ("20 – Affaires contractuelles"), a procedural "réunir, pour fins
+    d'étude" resolution, or, for the first item, the meeting's opening pages
+    and attendance roll. The resolution number skips all of that. Filings and
+    procedural items without one start after the last separator rule.
+    """
+    motion = _last_match(_MOTION_NUMBER_RE, block)
+    if motion:
+        # The group, not the match: a match at a page top starts at the form
+        # feed, which would count the entry on the page before.
+        return motion.start("motion")
+    separators = list(_SEPARATOR_RE.finditer(block))
+    return separators[-1].end() if separators else 0
+
+
+def _item_text(block: str) -> str | None:
+    """The entry with layout indentation, separator rules and blank runs removed."""
+    lines = [line.strip() for line in block[_item_start(block):].replace("\f", "\n").split("\n")]
+    text = "\n".join(line for line in lines if not _SEPARATOR_RE.fullmatch(line))
+    return re.sub(r"\n{3,}", "\n\n", text).strip() or None
+
+
+def _pages(raw: str) -> dict[tuple, int]:
+    """The page each item's entry starts on, keyed like the linker joins.
+
+    Needs the text before strip_page_artifacts, which turns the form feeds
+    pdftotext puts at each page end into newlines. The footer patterns
+    tolerate the form feeds, so the same boundaries are found.
+    """
+    pages: dict[tuple, int] = {}
+    prev_end = 0
+    for start, end, item_number, dossier_number, section in _all_boundaries(raw):
+        position = prev_end + _item_start(raw[prev_end:start])
+        pages.setdefault((section, item_number, dossier_number), raw.count("\f", 0, position) + 1)
+        prev_end = end
+    return pages
+
+
+def _proposers(entry: str) -> tuple[re.Match | None, re.Match | None]:
+    """Who moved and seconded the resolution the entry records.
+
+    The proposal just before the last "Et résolu :", the clauses minutes_text
+    shows; an item can hold two resolutions (a notice of motion, then the
+    draft bylaw's adoption). Councillors' motions have no "Et résolu", so
+    theirs is the first proposal. Proposals after it are procedural: a
+    roll-call request, an amendment, extending the sitting. Taking the last
+    one credited the opposition leader, who asks for most roll calls, with
+    moving 12 motions she didn't.
+    """
+    resolved = _last_match(_ET_RESOLU_RE, entry)
+    if resolved:
+        before = entry[: resolved.start()]
+        return _last_match(_MOVER_RE, before), _last_match(_SECONDER_RE, before)
+    return _MOVER_RE.search(entry), _SECONDER_RE.search(entry)
 
 
 def _clean_name(raw: str) -> str:
@@ -199,8 +269,8 @@ def _last_match(pattern: re.Pattern, block: str) -> re.Match | None:
     """The LAST match in the block, not the first.
 
     A block can contain a procedural "réunir, pour fins d'étude" grouping
-    motion (with its own proposer/seconder) before the item's real motion --
-    the real one is always the one immediately preceding the footer.
+    motion before the item's own entry, so its resolution number and outcome
+    are the ones nearest the footer. Movers are not: see _proposers.
     """
     matches = list(pattern.finditer(block))
     return matches[-1] if matches else None
@@ -405,8 +475,11 @@ def _all_boundaries(text: str) -> list[tuple[int, int, str, str | None, str]]:
     return boundaries
 
 
-def parse_minutes(text: str) -> list[MinutesItem]:
+def parse_minutes(text: str, raw: str | None = None) -> list[MinutesItem]:
+    """Items from the stripped minutes text. Pass `raw`, the text before
+    strip_page_artifacts, to also record the page each item starts on."""
     boundaries = _all_boundaries(text)
+    pages = _pages(raw) if raw else {}
     sitting_starts = [s.start for s in parse_attendance(text)]
     items: list[MinutesItem] = []
 
@@ -416,8 +489,7 @@ def parse_minutes(text: str) -> list[MinutesItem]:
         prev_end = end
 
         motion_match = _last_match(_MOTION_NUMBER_RE, block)
-        mover_match = _last_match(_MOVER_RE, block)
-        seconder_match = _last_match(_SECONDER_RE, block)
+        mover_match, seconder_match = _proposers(block[_item_start(block) :])
         outcome_match = _last_match(_OUTCOME_RE, block)
         after_outcome = block[outcome_match.end() :] if outcome_match else ""
 
@@ -445,6 +517,8 @@ def parse_minutes(text: str) -> list[MinutesItem]:
                 dissenters=_dissenters(after_outcome),
                 abstainers=_abstainers(block),
                 roll_call=roll_call[0] if roll_call else None,
+                text=_item_text(block),
+                page=pages.get((section, item_number, dossier_number)),
             )
         )
 
