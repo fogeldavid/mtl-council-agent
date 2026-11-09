@@ -51,21 +51,19 @@ The agent decides which tools to call and cites each item it uses. Each citation
 
 ## Results
 
-| Measure | Result |
+| What was measured | Result |
 |---|---|
-| Meetings ingested (2026) | 12, of which 10 have published minutes |
-| Agenda items | 1,339 |
-| Items linked to their decision summary | 99.9% (1,123 of 1,124) |
-| Individual votes recorded | 1,060 |
-| Agent eval, answer and citations both correct | 82 of 85 questions |
+| Which council meetings are on the site | Every meeting since January 2026, added weekly |
+| Decisions where the site found the city's background document (cost, reasons, history) | 99.9% |
+| Test questions the AI answered correctly, citing real decisions (85 questions) | 96% |
 
-The eval asks 85 hand-written questions and checks two things for each answer: whether it contains the right facts, and whether every item it cites exists at the meeting it names. It includes questions the agent should decline. Of the three misses, one was a grading error, since fixed, and two were the agent being too cautious with information it had.
+Each weekly import ends with a quality check that fails the run, and sends an email, if data goes missing.
 
 ## What was hard
 
-- **The documents mislead quietly.** The minutes credited the opposition leader with moving 11 items she didn't, because her procedural requests came after the real motion. Another entry recorded a motion as "adopted" when council had only voted to send it to a committee. Both looked fine until checked against the source.
-- **The format drifts.** One meeting's minutes dropped a colon from a heading, and that meeting lost all its attendance without any error. A weekly check now fails when a meeting's minutes yield no attendance.
-- **Every fix has a test.** Each parsing problem found has a regression test built from real document excerpts, so a change in the city's format fails a test instead of corrupting data.
+- **File format changes:** One meeting's minutes dropped a colon from a heading, and that meeting lost all its attendance without any error. A weekly check now fails when a meeting's minutes yield no attendance.
+- **Large files:** One meeting's documents can run to 4,000 pages and 500 MB. Each item's write-up comes with pages of attachments, like cost spreadsheets and contracts. The site keeps the write-up and drops the attachments, which shrinks the data by about three quarters and keeps it on a free hosting plan.
+- **Votes without names:** When a vote is unanimous, the minutes just say "adopted unanimously" and don't list who voted. To still show how each councillor voted, the site counts everyone present at that sitting as voting yes, and labels it "inferred from attendance" so it's never mistaken for a recorded vote.
 
 ## Getting started
 
