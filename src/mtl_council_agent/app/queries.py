@@ -30,7 +30,8 @@ def stats(conn) -> dict:
             (select count(*) from meetings) as meetings,
             (select count(*) from agenda_items) as items,
             (select count(*) from item_votes) as recorded_votes,
-            (select count(*) from officials where role is not null) as members,
+            (select count(*) from officials where role is not null and current_member)
+                as members,
             (select max(meeting_date) from meetings) as latest_meeting
         """,
     )
@@ -149,16 +150,19 @@ def item(conn, item_id: int) -> dict | None:
     )
 
 
-def councillors(conn) -> list[dict]:
+def councillors(conn, include_former: bool = False) -> list[dict]:
+    """Current members; with include_former, also members who have left, whose
+    past decisions are still worth filtering by."""
     return _rows(
         conn,
         """
         select o.id, o.name, o.role, o.borough, o.district, o.party,
                (select count(*) from item_votes v where v.official_id = o.id) as recorded_votes
         from officials o
-        where o.role is not null
+        where o.role is not null and (o.current_member or %s)
         order by o.last_name, o.first_name
         """,
+        (include_former,),
     )
 
 

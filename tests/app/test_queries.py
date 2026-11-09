@@ -119,3 +119,25 @@ def test_meetings_note_lists_newest_first_and_flags_missing_minutes(conn):
     lines = note.splitlines()[1:]
     assert lines[0].startswith("- 2026-09-21 (ordinaire, 1 items, minutes NOT yet published")
     assert lines[1] == "- 2026-03-23 (ordinaire, 4 items, minutes published)"
+
+
+def test_a_member_dropped_from_the_roster_leaves_the_current_lists(conn):
+    from mtl_council_agent import roster
+    from mtl_council_agent.agent.tools import list_officials
+
+    rows = conn.execute(
+        "select first_name, last_name, role, borough, district, party from officials"
+        " where role is not null and last_name <> 'McCray'"
+    ).fetchall()
+    role = conn.execute("select role from officials where last_name = 'McCray'").fetchone()[0]
+    try:
+        roster.load_roster(conn, [roster.RosterMember(*row) for row in rows])
+        assert "Christopher McCray" not in [r["name"] for r in queries.councillors(conn)]
+        assert "Christopher McCray" not in [r[0] for r in list_officials(conn)]
+        # His past decisions can still be filtered by, and his record keeps its role.
+        assert "Christopher McCray" in [r["name"] for r in queries.councillors(conn, True)]
+        assert conn.execute(
+            "select role from officials where last_name = 'McCray'"
+        ).fetchone()[0] == role
+    finally:
+        conn.execute("update officials set current_member = true")
