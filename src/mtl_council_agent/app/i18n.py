@@ -143,9 +143,9 @@ STRINGS: dict[str, dict[str, str]] = {
     "nav.decisions": {"en": "Decisions", "fr": "Décisions"},
     "decisions.title": {"en": "Council decisions", "fr": "Décisions du conseil"},
     "decisions.subtitle": {
-        "en": "The latest first. Search by topic in English or French, or by exact words.",
-        "fr": "Les plus récentes d’abord. Cherchez par sujet en français ou en anglais, "
-              "ou par mots exacts.",
+        "en": "The latest first. Search in English or French, or by resolution or dossier number.",
+        "fr": "Les plus récentes d’abord. Cherchez en français ou en anglais, ou par numéro de "
+              "résolution ou de dossier.",
     },
     "decisions.search": {"en": "Search decisions", "fr": "Chercher des décisions"},
     "decisions.decided": {"en": "Decided only", "fr": "Décisions prises seulement"},
