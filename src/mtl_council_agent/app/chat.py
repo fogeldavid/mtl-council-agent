@@ -116,12 +116,14 @@ def _pool_turn(today: date, now: datetime) -> bool:
 def with_sources(text: str, documents: list[dict]) -> str:
     """Add database-owned links for the meetings the answer names, so an answer
     that found nothing doesn't list everything its searches touched. These cover
-    a whole meeting, not one claim, and the heading says so."""
+    a whole meeting, not one claim, and the heading says so. A document the
+    answer already links to (the model sometimes puts the minutes link on its
+    citation) isn't listed again."""
     named = dates_in(text)
     lines = [
         f"- [{fmt_date(date.fromisoformat(d['meeting_date']))} · {t('doc.' + d['doc_type'])}]"
         f"(<{d['url']}>)"  # Angle brackets keep query strings inside the URL.
-        for d in documents if d["meeting_date"] in named
+        for d in documents if d["meeting_date"] in named and d["url"] not in text
     ]
     return f"{text}\n\n{t('chat.sources')}\n\n" + "\n".join(lines) if lines else text
 
