@@ -261,7 +261,7 @@ def _minutes(it: dict, original: bool) -> None:
         )
         st.markdown(f"#### {t(heading)}")
         _paragraphs(clauses, original)
-    if it["decision_summary"] or not entry:
+    if it["decision_summary"] or not entry or not minutes_text.adds_to_resolved(it["minutes_text"]):
         return
     if clauses:
         with st.expander(t("minutes.full")):

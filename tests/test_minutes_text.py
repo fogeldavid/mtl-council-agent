@@ -172,3 +172,8 @@ def test_attendance_heading_without_a_colon_is_read_but_not_the_contents_line():
     assert len(sittings) == 1
     assert sittings[0].present == ["Soraya Martinez Ferrada", "Ericka Alneus", "Cathy Wong"]
     assert sittings[0].absent_excused == ["Benoit Langevin", "Sonny Moroz"]
+
+
+def test_a_full_entry_that_only_repeats_the_clauses_adds_nothing():
+    assert not minutes_text.adds_to_resolved(_items()["03.01"].text)
+    assert minutes_text.adds_to_resolved(_items()["65.02"].text)
