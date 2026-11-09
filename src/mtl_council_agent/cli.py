@@ -116,6 +116,11 @@ def quality_report(since: datetime | None, check: bool) -> None:
             failures.append(f"linkage {report.linkage:.1%} < 90%")
         if report.items_missing_title:
             failures.append(f"{report.items_missing_title} items missing a title")
+        if report.meetings_missing_attendance:
+            failures.append(
+                "no attendance read from the minutes of "
+                + ", ".join(report.meetings_missing_attendance)
+            )
         if report.officials_off_roster:
             failures.append(
                 f"{len(report.officials_off_roster)} officials not on the roster: "

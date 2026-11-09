@@ -125,7 +125,10 @@ _WITHDRAWAL_RE = re.compile(
 )
 _ITEM_REF_RE = re.compile(r"80\.01\s*\((?P<inner>\d{2}\.\d{2})\)|(?P<plain>\d{2}\.\d{2})")
 
-_SITTING_RE = re.compile(r"^[ \t]*PRÉSENCES[ \t]*:", re.MULTILINE)
+# "PRÉSENCES :" until the 2026-09-21 minutes, which dropped the colon. The
+# table of contents prints "PRÉSENCES ....... 3", so the heading must end its
+# line or carry the colon.
+_SITTING_RE = re.compile(r"^[ \t]*PRÉSENCES[ \t]*(?::|$)", re.MULTILINE)
 # "ABSENCE(S) AVEC MOTIF ...", "... SANS MOTIF ...", and, on 2026-04-20,
 # "ABSENCE - PERTE DU DROIT D'ASSISTER À LA SÉANCE EN VERTU DE L'ARTICLE 502
 # ..." for a member barred from sitting. The heading runs to the first colon.

@@ -141,3 +141,22 @@ def test_a_member_dropped_from_the_roster_leaves_the_current_lists(conn):
         ).fetchone()[0] == role
     finally:
         conn.execute("update officials set current_member = true")
+
+
+def test_quality_report_flags_minutes_with_no_attendance(conn):
+    from mtl_council_agent import quality
+
+    report = quality.build_report(conn, 0)
+    with_minutes = conn.execute(
+        "select count(distinct meeting_id) from documents where doc_type = 'minutes'"
+    ).fetchone()[0]
+    assert report.meetings_with_attendance + len(report.meetings_missing_attendance) >= with_minutes
+    try:
+        conn.execute("create temp table saved as select * from meeting_attendance")
+        conn.execute("delete from meeting_attendance")
+        report = quality.build_report(conn, 0)
+        assert len(report.meetings_missing_attendance) == with_minutes
+        assert "missing for minutes of" in report.format()
+    finally:
+        conn.execute("insert into meeting_attendance select * from saved")
+        conn.execute("drop table saved")
